@@ -1,0 +1,2941 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kouki Technology</title>
+<meta name="description" content="Kouki Technology - laptops, accessories, parts and software. Live prices and stock.">
+<meta property="og:title" content="Kouki Technology">
+<meta property="og:description" content="Laptops, accessories, parts and software. Live prices and stock.">
+<meta property="og:type" content="website">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#132227" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kouki">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23FFD84D'/%3E%3Cpath d='M17 33V16h17l19 19-17 17L17 33z' fill='none' stroke='%232A2100' stroke-width='4' stroke-linejoin='round'/%3E%3Ccircle cx='27' cy='26' r='3' fill='%232A2100'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@500;600;700&display=swap" media="print" onload="this.media='all'">
+<style>
+/* Layout: phone-first app shell. Sticky status header, scrolling content, fixed bottom tab bar
+   that turns into a side rail on wide screens. Yellow price tag = selling price;
+   plum + lock = manager-only numbers. */
+:root {
+  --bg:#F2F5F6; --surface:#FFFFFF; --surface-2:#E7EDEF; --ink:#10242B; --muted:#566A72; --line:#D2DCE0;
+  --brand:#0B6E7F; --brand-ink:#FFFFFF; --brand-soft:#DAEDF0;
+  --tag:#FFD84D; --tag-ink:#2A2100;
+  --private:#7A3568; --private-soft:#F4E6F0;
+  --good:#146F46; --good-soft:#DCF0E6; --warn:#8A4B00; --warn-soft:#FBEBCF; --bad:#B02E22; --bad-soft:#F9E0DC;
+  --shadow:rgb(8 24 30 / .14); --scrim:rgb(6 16 20 / .55);
+  --font-display:"Readex Pro","IBM Plex Sans Arabic",system-ui,"Segoe UI",Tahoma,sans-serif;
+  --font-body:"IBM Plex Sans Arabic",system-ui,"Segoe UI",Tahoma,sans-serif;
+  --r:14px; --r-sm:9px; --nav-h:62px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#0C1619; --surface:#132227; --surface-2:#1B3038; --ink:#E7EFF1; --muted:#93A8B0; --line:#27404A;
+    --brand:#45B9CB; --brand-ink:#04222A; --brand-soft:#123943;
+    --tag:#F0C63A; --tag-ink:#221A00;
+    --private:#DE98D0; --private-soft:#38203A;
+    --good:#56CB96; --good-soft:#103526; --warn:#F2AE4C; --warn-soft:#3A2A0C; --bad:#F48476; --bad-soft:#40201B;
+    --shadow:rgb(0 0 0 / .45); --scrim:rgb(0 0 0 / .62); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#0C1619; --surface:#132227; --surface-2:#1B3038; --ink:#E7EFF1; --muted:#93A8B0; --line:#27404A;
+  --brand:#45B9CB; --brand-ink:#04222A; --brand-soft:#123943;
+  --tag:#F0C63A; --tag-ink:#221A00;
+  --private:#DE98D0; --private-soft:#38203A;
+  --good:#56CB96; --good-soft:#103526; --warn:#F2AE4C; --warn-soft:#3A2A0C; --bad:#F48476; --bad-soft:#40201B;
+  --shadow:rgb(0 0 0 / .45); --scrim:rgb(0 0 0 / .62); color-scheme:dark;
+}
+* { box-sizing:border-box }
+html { -webkit-text-size-adjust:100% }
+body { background:var(--bg); color:var(--ink); font-family:var(--font-body); font-size:15px; line-height:1.5 }
+body.lock { overflow:hidden }
+body::before { content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); z-index:10; background:var(--surface) }
+button, input, textarea, select { font-family:inherit }
+:where(button,a,input,textarea,select):focus-visible { outline:2px solid var(--brand); outline-offset:2px }
+.gutter { padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)) }
+.ic { flex:none }
+.grow { flex:1; min-width:0 }
+.row { display:flex; align-items:center; gap:10px; flex-wrap:wrap }
+.stack { display:flex; flex-direction:column; gap:12px }
+.h { margin:0; font:600 17px/1.35 var(--font-display); text-wrap:balance }
+.h.small { font-size:15px }
+.sub { margin:0; color:var(--muted); font-size:13px }
+.lbl { font:600 12.5px var(--font-body); color:var(--muted) }
+.code { font-variant-numeric:tabular-nums; direction:ltr; unicode-bidi:isolate }
+.nm { min-width:0; overflow-wrap:anywhere; font-weight:500 }
+
+/* Login */
+.login { display:flex; flex-direction:column; gap:18px; max-width:440px; margin-inline:auto; padding-block:40px }
+.login-brand { display:flex; flex-direction:column; gap:6px }
+.logo { width:54px; height:54px; border-radius:14px 14px 14px 4px; background:var(--tag); color:var(--tag-ink); display:grid; place-items:center }
+.login-brand h1 { margin:8px 0 0; font:700 40px/1.15 var(--font-display) }
+.login-brand p { margin:0; color:var(--muted); max-width:34ch }
+.who { display:grid; gap:12px }
+.who button { display:grid; grid-template-columns:auto 1fr; gap:2px 14px; align-items:center; text-align:start; background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:16px; color:var(--ink); cursor:pointer }
+.who .wi { grid-row:1 / 3; width:46px; height:46px; border-radius:12px; display:grid; place-items:center; background:var(--brand-soft); color:var(--brand) }
+.who .admin .wi { background:var(--private-soft); color:var(--private) }
+.who b { font:600 17px var(--font-display) }
+.who small { color:var(--muted); font-size:13px; grid-column:2 }
+.demo-chip { color:var(--warn); background:var(--warn-soft); border-radius:99px; padding:4px 12px; font:600 12px var(--font-body) }
+
+/* Shell */
+.top { position:sticky; top:env(safe-area-inset-top,0px); z-index:5; background:var(--surface); border-bottom:1px solid var(--line) }
+.top-in { display:flex; align-items:center; gap:8px 10px; flex-wrap:wrap; padding-block:10px; max-width:1100px; margin-inline:auto }
+.brandmark { font:700 19px var(--font-display) }
+.role { font:600 11px var(--font-body); padding:2px 9px; border-radius:99px; background:var(--brand-soft); color:var(--brand) }
+.role.is-admin { background:var(--private-soft); color:var(--private) }
+.sync { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; margin-inline-start:auto }
+.dot { width:9px; height:9px; border-radius:50%; background:var(--good); flex:none }
+.dot.buy { background:var(--brand) }
+.dot.off { background:var(--muted) }
+.rate { font:600 13px var(--font-display); font-variant-numeric:tabular-nums; border:1px solid var(--line); background:var(--bg); color:var(--ink); border-radius:99px; padding:5px 12px; cursor:pointer; unicode-bidi:isolate }
+.rate:disabled { opacity:1; cursor:default }
+.demo-strip { background:var(--warn-soft); color:var(--warn); font:600 11.5px var(--font-body); text-align:center; padding:3px 16px }
+main { display:flex; flex-direction:column; gap:14px; max-width:1100px; margin-inline:auto; padding-block:14px calc(var(--nav-h) + 30px + env(safe-area-inset-bottom,0px)) }
+.nav { position:fixed; inset:auto 0 0 0; z-index:6; background:var(--surface); border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom,0px); padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)) }
+.nav-in { display:flex; max-width:560px; margin-inline:auto }
+.nav button { position:relative; flex:1; min-width:0; height:var(--nav-h); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; background:none; border:0; color:var(--muted); font:500 11.5px var(--font-body); cursor:pointer }
+.nav button[aria-current="page"] { color:var(--brand); font-weight:600 }
+.badge { position:absolute; top:7px; inset-inline-start:calc(50% + 6px); min-width:17px; height:17px; border-radius:99px; background:var(--tag); color:var(--tag-ink); font:700 10.5px/17px var(--font-display); font-style:normal; text-align:center; padding:0 4px }
+
+/* Controls */
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:var(--r-sm); padding:9px 14px; font:600 14px var(--font-body); cursor:pointer; min-height:42px; text-decoration:none }
+.btn.primary { background:var(--brand); border-color:var(--brand); color:var(--brand-ink) }
+.btn.ghost { background:none }
+.btn.danger { color:var(--bad) }
+.btn:disabled { opacity:.5; cursor:not-allowed }
+.x { width:36px; height:36px; flex:none; border-radius:8px; border:0; background:none; color:var(--muted); cursor:pointer; display:grid; place-items:center }
+.field { display:flex; flex-direction:column; gap:5px; min-width:0 }
+.field label { font:600 12.5px var(--font-body); color:var(--muted) }
+.input { width:100%; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:var(--r-sm); padding:10px 12px; font:400 15px var(--font-body); min-height:44px }
+textarea.input { min-height:130px; resize:vertical; line-height:1.6 }
+.input.mini { width:92px; min-height:38px; padding:6px 8px; text-align:center; font-variant-numeric:tabular-nums }
+.input.mini:invalid { border-color:var(--warn); background:var(--warn-soft) }
+input[type="checkbox"] { width:22px; height:22px; accent-color:var(--brand) }
+.seg { display:flex; background:var(--surface-2); border-radius:var(--r-sm); padding:3px; gap:3px }
+.seg button { flex:1; min-width:0; border:0; background:none; color:var(--muted); font:600 13px var(--font-body); padding:8px 6px; border-radius:7px; cursor:pointer }
+.seg button[aria-pressed="true"] { background:var(--surface); color:var(--ink); box-shadow:0 1px 2px var(--shadow) }
+.seg.small { flex:none }
+.seg.small button { padding:6px 14px }
+.search { display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:0 12px; height:48px; color:var(--muted) }
+.search input { flex:1; min-width:0; height:100%; border:0; background:none; color:var(--ink); font:400 15px var(--font-body); outline:none }
+.search:focus-within { border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-soft) }
+.chips { display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none }
+.chips::-webkit-scrollbar { display:none }
+.chip { flex:none; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:99px; padding:6px 14px; font:500 13px var(--font-body); cursor:pointer; white-space:nowrap; min-height:36px }
+.chip[aria-pressed="true"] { background:var(--ink); color:var(--bg); border-color:var(--ink) }
+.pill { display:inline-flex; align-items:center; gap:5px; border-radius:99px; padding:2px 10px; font:600 12px var(--font-body); font-variant-numeric:tabular-nums }
+.pill.ok { background:var(--good-soft); color:var(--good) }
+.pill.low { background:var(--warn-soft); color:var(--warn) }
+.pill.out { background:var(--bad-soft); color:var(--bad) }
+.pill.new { background:var(--brand-soft); color:var(--brand) }
+.asbtn { border:0; cursor:pointer; min-height:30px }
+
+/* Items */
+.grid { display:grid; gap:10px; grid-template-columns:minmax(0,1fr) }
+.grid > .empty { grid-column:1 / -1 }
+.item { background:var(--surface); border:1px solid var(--line); border-radius:var(--r); display:flex; flex-direction:column; min-width:0 }
+.item-main { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; width:100%; padding:12px 14px; background:none; border:0; border-radius:var(--r) var(--r) 0 0; color:inherit; text-align:start; cursor:pointer }
+.item-txt { display:flex; flex-direction:column; gap:6px; min-width:0 }
+.item-name { font:600 15px/1.4 var(--font-body); overflow-wrap:anywhere }
+.meta { display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; color:var(--muted); font-size:12.5px }
+.price { display:flex; flex-direction:column; align-items:flex-end; gap:3px; flex:none }
+.tag { background:var(--tag); color:var(--tag-ink); font:700 17px var(--font-display); font-variant-numeric:tabular-nums; padding:3px 10px; border-radius:6px 6px 6px 2px; direction:ltr; unicode-bidi:isolate; white-space:nowrap }
+.tag.big { font-size:22px; padding:4px 12px }
+.tag.sm { font-size:14.5px }
+.syp { font:500 12.5px var(--font-display); color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap }
+.syp.big { font-size:15px; color:var(--ink) }
+.item-foot { display:flex; align-items:center; justify-content:space-between; gap:10px; border-top:1px dashed var(--line); padding:8px 14px }
+.secret, .floor { display:inline-flex; align-items:center; flex-wrap:wrap; gap:4px 6px; min-width:0; font-size:12.5px; font-variant-numeric:tabular-nums }
+.secret { color:var(--private) }
+.floor { color:var(--muted) }
+.secret b, .floor b { font-weight:600 }
+.add { display:inline-flex; align-items:center; gap:5px; flex:none; border:1px solid var(--line); background:var(--bg); color:var(--ink); border-radius:99px; padding:5px 12px; font:600 12.5px var(--font-body); cursor:pointer; min-height:34px }
+@keyframes flash { from { box-shadow:0 0 0 3px var(--tag) } to { box-shadow:0 0 0 0 transparent } }
+.item.flash { animation:flash 1.8s ease-out }
+.empty { margin:0; text-align:center; color:var(--muted); padding:28px 12px; border:1px dashed var(--line); border-radius:var(--r) }
+
+/* Panels, quote, offers, overview */
+.panel { background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:14px; display:flex; flex-direction:column; gap:12px; min-width:0 }
+.qline, .orow, .prow { display:flex; align-items:center; gap:10px; padding:10px 0; border-top:1px solid var(--line) }
+.qline { flex-wrap:wrap }
+.qsum { font:600 15px var(--font-display); font-variant-numeric:tabular-nums }
+.stepper { display:inline-flex; align-items:center; border:1px solid var(--line); border-radius:var(--r-sm); overflow:hidden; margin-inline-start:auto }
+.stepper button { width:38px; height:38px; border:0; background:var(--surface-2); color:var(--ink); font:600 18px var(--font-display); cursor:pointer }
+.stepper output { min-width:44px; text-align:center; font:600 15px var(--font-display); font-variant-numeric:tabular-nums }
+.total { display:flex; justify-content:space-between; align-items:flex-end; gap:12px; border-top:2px solid var(--ink); padding-top:12px; font:600 15px var(--font-display) }
+.quote-text { min-height:110px; font-size:13px }
+.pin { display:inline-flex; align-items:center; gap:6px; flex:none }
+.cur { font-size:12px; color:var(--muted) }
+.manual { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap }
+.manual .field:first-child { flex:1 1 180px }
+.manual .field:nth-child(2) { flex:0 1 110px }
+.kpis { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px }
+.kpi { background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:12px 14px; display:flex; flex-direction:column; gap:2px; min-width:0; text-align:start; color:inherit; font-size:inherit }
+.kpi span { color:var(--muted); font-size:12.5px }
+.kpi b { font:700 20px var(--font-display); font-variant-numeric:tabular-nums; overflow-wrap:anywhere }
+.kpi small { color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums }
+button.kpi { cursor:pointer }
+.feed { list-style:none; margin:0; padding:0 }
+.feed li { display:flex; align-items:center; gap:10px; padding:10px 0; border-top:1px solid var(--line) }
+.feed time { color:var(--muted); font-size:12.5px }
+
+/* Detail sheet and toast */
+.scrim { position:fixed; inset:0; z-index:20; background:var(--scrim); display:flex; align-items:flex-end; justify-content:center }
+.sheet { background:var(--surface); color:var(--ink); width:100%; max-width:560px; max-height:88%; overflow:auto; border-radius:18px 18px 0 0; display:flex; flex-direction:column; gap:14px; padding-top:18px; padding-bottom:calc(18px + env(safe-area-inset-bottom,0px)); padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)) }
+.facts { margin:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 14px }
+.facts div { min-width:0 }
+.facts dt { color:var(--muted); font-size:12px }
+.facts dd { margin:0; font:600 14.5px var(--font-body); font-variant-numeric:tabular-nums; overflow-wrap:anywhere }
+.private-box { background:var(--private-soft); color:var(--private); border-radius:var(--r); padding:12px 14px; display:flex; flex-direction:column; gap:10px }
+.private-box dt { color:var(--private); opacity:.85 }
+.priv-title { font:600 12.5px var(--font-body); gap:6px }
+.toast { position:fixed; left:0; right:0; bottom:calc(var(--nav-h) + 14px + env(safe-area-inset-bottom,0px)); z-index:30; display:flex; justify-content:center; pointer-events:none; padding-inline:16px }
+.toast span { background:var(--ink); color:var(--bg); padding:9px 16px; border-radius:99px; font:500 13.5px var(--font-body); box-shadow:0 6px 20px var(--shadow) }
+
+/* Unlock screen */
+.unlock { max-width:360px }
+.backbtn { align-self:flex-start; padding-inline:10px }
+.flip { display:inline-flex }
+[dir="rtl"] .flip { transform:scaleX(-1) }
+.bio { display:flex; flex-direction:column; gap:10px }
+.pinbox { display:flex; flex-direction:column; gap:10px; align-items:center }
+.dots { display:flex; gap:14px }
+.dots i { width:16px; height:16px; border-radius:50%; border:2px solid var(--muted) }
+.dots i.on { background:var(--ink); border-color:var(--ink) }
+.dots.err i { border-color:var(--bad) }
+.pad { display:grid; grid-template-columns:repeat(3,72px); gap:12px; direction:ltr }
+.pad button { height:60px; border-radius:16px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 22px var(--font-display); cursor:pointer; display:grid; place-items:center }
+.who .guest .wi { background:var(--surface-2); color:var(--ink) }
+.exitbtn { min-height:34px; padding:4px 12px; font-size:13px }
+
+/* Lowest price for employees: unlabelled, shown only on request */
+.peek { display:inline-flex; align-items:center; justify-content:center; min-width:44px; min-height:34px; border:0; border-radius:99px; background:var(--surface-2); color:var(--muted); cursor:pointer }
+.fcode { color:var(--muted); font:500 12.5px var(--font-display); letter-spacing:.08em }
+.floor.code { display:inline-block }
+
+.item-main { flex:1 }
+.qline > .grow { flex:1 1 180px }
+.grid > .more { grid-column:1 / -1 }
+.qform { align-items:end }
+.qform.even { grid-template-columns:repeat(2,minmax(0,1fr)) }
+
+/* Quote form, totals and the printable preview */
+.qform { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:10px }
+.sumline { display:flex; justify-content:space-between; gap:12px; padding:5px 0; color:var(--muted); font-variant-numeric:tabular-nums }
+.sheet.doc { max-width:640px }
+.doc-prev { display:flex; flex-direction:column; gap:10px }
+.doc-prev img { display:block; width:100%; border:1px solid var(--line); border-radius:6px }
+.facts.one { grid-template-columns:minmax(0,1fr) }
+
+@media (min-width:700px) {
+  .scrim { align-items:center }
+  .sheet { border-radius:18px }
+  .grid { grid-template-columns:repeat(2,minmax(0,1fr)) }
+}
+@media (min-width:900px) {
+  .shell { padding-inline-start:92px }
+  .nav { inset:0 auto 0 auto; inset-inline-start:0; width:92px; border-top:0; border-inline-end:1px solid var(--line); padding:calc(env(safe-area-inset-top,0px) + 76px) env(safe-area-inset-right,0px) 0 env(safe-area-inset-left,0px) }
+  .nav-in { flex-direction:column; gap:4px }
+  .nav button { flex:none; width:100% }
+  main { padding-bottom:30px }
+  .toast { bottom:24px }
+  .kpis { grid-template-columns:repeat(4,minmax(0,1fr)) }
+}
+@media (min-width:1100px) { .grid { grid-template-columns:repeat(3,minmax(0,1fr)) } }
+@media (prefers-reduced-motion: reduce) { .item.flash { animation:none } }
+
+/* Base rules for a page that stands on its own */
+:root { color-scheme:light }
+html { padding-top:env(safe-area-inset-top,0px) }
+body { margin:0 }
+img { max-width:100% }
+[hidden] { display:none !important }
+
+/* Sign-in, waiting and lock screens */
+.signin { display:flex; flex-direction:column; gap:12px }
+.signin .btn { min-height:46px; font-size:15px }
+.msg { margin:0; color:var(--bad); font:600 13px var(--font-body); min-height:20px }
+.or { display:flex; align-items:center; gap:12px; color:var(--muted); font-size:12.5px }
+.or::before, .or::after { content:""; flex:1; height:1px; background:var(--line) }
+.center { align-items:center; text-align:center; padding-block:72px }
+.center .logo { margin-inline:auto }
+.spin { width:34px; height:34px; border-radius:50%; border:3px solid var(--line); border-top-color:var(--brand); animation:spin .9s linear infinite }
+@keyframes spin { to { transform:rotate(360deg) } }
+@media (prefers-reduced-motion: reduce) { .spin { animation-duration:4s } }
+
+/* Small additions */
+.person { display:flex; flex-direction:column; min-width:0 }
+.person small { color:var(--muted); font-size:12px; overflow-wrap:anywhere }
+.check { display:flex; align-items:center; gap:10px; cursor:pointer }
+.check input { width:20px; height:20px; accent-color:var(--brand); flex:none }
+.tag.none { background:var(--surface-2); color:var(--muted) }
+.add:disabled { opacity:.45; cursor:not-allowed }
+
+/* Storefront: header, shelves, item cards with a drawn cover (the accounting program holds no photos) */
+:root { --tint-a:#DAEDF0; --tint-b:#FBEFCB; --tint-c:#E2EEDC; --tint-d:#E7E5F4; --tint-e:#F2E6DD }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --tint-a:#123943; --tint-b:#3A3013; --tint-c:#1C3323; --tint-d:#2B2942; --tint-e:#3A2B22 }
+}
+:root[data-theme="dark"] { --tint-a:#123943; --tint-b:#3A3013; --tint-c:#1C3323; --tint-d:#2B2942; --tint-e:#3A2B22 }
+.brandbtn { display:inline-flex; align-items:center; gap:9px; min-width:0; background:none; border:0; padding:0; color:inherit; cursor:pointer; border-radius:10px }
+.brandbtn .brandmark { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:18px }
+.logo.sm { width:34px; height:34px; border-radius:10px 10px 10px 3px; flex:none }
+.iconbtn { position:relative; width:44px; height:44px; flex:none; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); display:grid; place-items:center; cursor:pointer }
+.iconbtn .badge { top:-6px; inset-inline-start:auto; inset-inline-end:-6px }
+.shell.guest .top-in { flex-wrap:nowrap }
+.searchrow { padding-block:0 10px }
+.searchrow .search { height:46px }
+.shell.member .brandbtn .brandmark { display:none }
+@media (min-width:640px) { .shell.member .brandbtn .brandmark { display:inline } }
+body.no-nav main { padding-bottom:calc(30px + env(safe-area-inset-bottom,0px)) }
+body.no-nav .shell { padding-inline-start:0 }
+body.no-nav .toast { bottom:calc(24px + env(safe-area-inset-bottom,0px)) }
+.chips.cats { padding-bottom:4px }
+.chip.cat { display:inline-flex; align-items:center; gap:7px; font-weight:600 }
+.hero { background:var(--brand); color:var(--brand-ink); border-radius:var(--r); padding:20px 18px; display:flex; flex-direction:column; gap:14px }
+.hero h1 { margin:0; font:700 26px/1.2 var(--font-display); text-wrap:balance }
+.hero p { margin:6px 0 0; max-width:46ch; opacity:.92 }
+.hero-meta { display:flex; flex-wrap:wrap; gap:8px }
+.hero .note { border:1px solid currentColor; border-radius:99px; padding:3px 12px; font:600 12.5px var(--font-body) }
+.hero .btn { align-self:flex-start; background:var(--tag); border-color:var(--tag); color:var(--tag-ink) }
+.shelf { display:flex; flex-direction:column; gap:10px; min-width:0 }
+.shelf-row { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(150px,44%); gap:10px; overflow-x:auto; padding-bottom:8px; scroll-snap-type:x proximity; scrollbar-width:thin }
+.shelf-row > * { scroll-snap-align:start }
+.btn.sm { min-height:34px; padding:4px 12px; font-size:13px }
+.toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap }
+.sortbox { display:inline-flex; align-items:center; gap:8px }
+.select { border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:var(--r-sm); padding:6px 10px; font:600 13px var(--font-body); min-height:38px }
+.grid.store { grid-template-columns:repeat(2,minmax(0,1fr)) }
+.pcard .item-main { flex-direction:column; align-items:stretch; justify-content:flex-start; gap:8px; padding:10px 10px 8px }
+.cover { position:relative; display:grid; place-items:center; aspect-ratio:4 / 3; border-radius:10px; color:var(--ink); overflow:hidden }
+.cover .ic { opacity:.72 }
+.cover.big { aspect-ratio:auto; height:150px; flex:none }
+.cbrand { position:absolute; inset-block-start:8px; inset-inline-start:10px; font:700 11px var(--font-display); letter-spacing:.06em; direction:ltr; opacity:.72 }
+.k-a { background:var(--tint-a) }
+.k-b { background:var(--tint-b) }
+.k-c { background:var(--tint-c) }
+.k-d { background:var(--tint-d) }
+.k-e { background:var(--tint-e) }
+.pcard .item-name { font:500 13.5px/1.45 var(--font-body); display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden }
+.specs { display:flex; flex-wrap:wrap; gap:4px }
+.specs i { font:600 11px var(--font-body); font-style:normal; background:var(--surface-2); border-radius:6px; padding:2px 7px; white-space:nowrap }
+.pcard .price { align-items:flex-start; margin-top:auto }
+.pcard .tag { font-size:16px }
+.pcard .secret { padding:0 10px 8px; font-size:12px }
+.pcard .item-foot { padding:8px 10px; gap:6px; flex-wrap:wrap }
+.pcard .pill { font-size:11.5px }
+.pcard .add { width:40px; height:40px; padding:0; justify-content:center; border-radius:12px; margin-inline-start:auto; background:var(--brand); border-color:var(--brand); color:var(--brand-ink) }
+.sheet.product { max-width:640px }
+@media (min-width:700px) {
+  .shelf-row { grid-auto-columns:210px }
+  .grid.store { grid-template-columns:repeat(3,minmax(0,1fr)) }
+  .hero { padding:28px 26px }
+  .hero h1 { font-size:32px }
+}
+@media (min-width:1000px) { .grid.store { grid-template-columns:repeat(4,minmax(0,1fr)) } }
+
+/* Printing shows the quote pages only */
+#print-area { display:none }
+@media print {
+  html, body { background:#fff; padding:0 }
+  body::before { display:none }
+  body > *:not(#print-area) { display:none !important }
+  #print-area { display:block }
+  #print-area img { display:block; width:100%; break-after:page }
+  @page { size:A4; margin:0 }
+}
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+<div id="sheet" class="scrim" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<div id="print-area"></div>
+
+<script>
+(function () {
+'use strict';
+
+/* ---------- UI text. Arabic lives only in LOCALES.ar, LEXICON and DEMO. ---------- */
+var LOCALES = {
+  en: {
+    lang_name: 'English',
+    app_name: 'Kouki Technology',
+    tagline: 'Stock and prices, live from the shop.',
+    demo_strip: 'Demo data. Your real stock appears after linking.',
+    login_title: 'Who is signing in?',
+    as_admin: 'Manager',
+    as_admin_d: 'Sees everything: cost, profit, supplier offers, settings.',
+    as_staff: 'Employee',
+    as_staff_d: 'Sees selling prices and stock only.',
+    login_note: 'In the real app each person signs in with their own name and password.',
+    role_admin: 'Manager',
+    role_staff: 'Employee',
+    live: 'Live',
+    paused: 'Paused',
+    rate_chip_label: 'Exchange rate',
+    tab_items: 'Items',
+    tab_quote: 'Quote',
+    tab_offers: 'Offers',
+    tab_overview: 'Overview',
+    tab_settings: 'Settings',
+    search_ph: 'Search by name, code or barcode',
+    all: 'All',
+    low_only: 'Low stock',
+    in_stock: '{n} in stock',
+    low_stock: 'Only {n} left',
+    out_stock: 'Out of stock',
+    cost: 'Cost',
+    margin: 'Margin',
+    profit_unit: 'Profit per unit',
+    floor: 'Lowest price',
+    add_quote: 'Add',
+    added: 'Added to the quote',
+    no_items: 'No items match your search.',
+    code: 'Code',
+    barcode: 'Barcode',
+    category: 'Category',
+    stock_value: 'Stock value at cost',
+    best_offer: 'Best supplier offer',
+    none_yet: 'None yet',
+    admin_only: 'Manager only',
+    close: 'Close',
+    quote_title: 'Customer quote',
+    quote_empty: 'Add items from the Items tab to build a quote.',
+    total: 'Total',
+    copy: 'Copy text',
+    copied: 'Copied',
+    copy_fail: 'Select the text below and copy it.',
+    whatsapp: 'Open in WhatsApp',
+    clear: 'Clear',
+    offers_title: 'Supplier offers',
+    offers_sub: 'Goods you do not stock yet. Each offer is compared with your cost.',
+    m_paste: 'Paste text',
+    m_file: 'Excel file',
+    m_manual: 'By hand',
+    supplier: 'Supplier name',
+    supplier_ph: 'e.g. Al Noor Energy',
+    paste_label: 'Paste the price list as you received it',
+    paste_ph: 'One item per line, for example:\nSolar panel 550W - 78$\nInverter 5kW 410 USD',
+    default_cur: 'Prices without a currency are in',
+    usd: 'USD',
+    syp: 'SYP',
+    syp_unit: 'SYP',
+    file_label: 'Choose an Excel or CSV file',
+    file_hint: 'The first sheet is read: item name in one column, price in another.',
+    file_fail: 'Could not read this file. Check the connection and the file type.',
+    item_name: 'Item name',
+    price: 'Price',
+    add_row: 'Add to list',
+    preview: 'Review before saving ({n})',
+    missing_hint: 'Yellow boxes have no price. Type one or remove the row.',
+    save_n: 'Save {n} items',
+    need_supplier: 'Enter the supplier name first.',
+    saved_n: 'Saved {n} items',
+    cheaper: '{p}% below your cost',
+    pricier: '{p}% above your cost',
+    same: 'Same as your cost',
+    new_item: 'Not in your stock',
+    no_offers: 'No offers saved yet.',
+    remove: 'Remove',
+    kpi_cost: 'Stock at cost',
+    kpi_sell: 'Stock at selling price',
+    kpi_profit: 'Expected profit',
+    kpi_alert: 'Low or out of stock',
+    activity: 'Live activity',
+    activity_sub: 'Every sale or purchase in the accounting program lands here.',
+    sold: 'Sold {n} × {name}',
+    bought: 'Purchased {n} × {name}',
+    sim_now: 'Simulate a sale',
+    set_money: 'Prices and currency',
+    rate_label: 'Exchange rate: SYP per 1 USD',
+    syp_mode: 'Show SYP as',
+    syp_new: 'New lira',
+    syp_old: 'Old lira',
+    discount_label: 'Largest discount employees may give (%)',
+    set_staff: 'Employees',
+    staff_add_ph: 'New employee name',
+    add: 'Add',
+    active: 'Active',
+    blocked: 'Blocked',
+    set_app: 'App',
+    language: 'Language',
+    live_demo: 'Simulate live sales (demo)',
+    sign_out: 'Sign out',
+    as_guest: 'Guest',
+    as_guest_d: 'Browse items and prices. No sign-in needed.',
+    role_guest: 'Guest',
+    unlock_title: 'Confirm it is you',
+    back: 'Back',
+    pin_label: 'Enter the PIN',
+    pin_wrong: 'Wrong PIN. Try again.',
+    pin_demo: 'Demo PIN: {p}',
+    bio_checking: 'Checking this device...',
+    bio_yes: 'This device supports fingerprint or face unlock.',
+    bio_no: 'This device has no fingerprint or face unlock. Use the PIN.',
+    bio_login: 'Use fingerprint or face',
+    bio_hint: 'Sign in with the PIN once, then turn it on in Settings.',
+    bio_title: 'Fingerprint or face unlock',
+    bio_enable: 'Turn on for this device',
+    bio_disable: 'Turn off',
+    bio_on: 'Fingerprint or face unlock is on',
+    bio_off: 'Turned off',
+    bio_blocked: 'The fingerprint prompt could not open here. This preview may block it; the installed app opens it.',
+    bio_fail: 'Not recognised. Use the PIN.',
+    set_security: 'Security',
+    lock_label: 'Lock after no activity',
+    lock_off: 'Never',
+    minutes: '{n} min',
+    locked: 'Locked after no activity',
+    exit: 'Exit',
+    avail: 'Available',
+    limited: 'Limited quantity',
+    floor_show: 'Show reference',
+    ref: 'Ref',
+    share_price: 'Send price on WhatsApp',
+    request_title: 'Price request',
+    request_empty: 'Add the items you like, then send the request to the shop.',
+    send_shop: 'Send to the shop on WhatsApp',
+    customer: 'Customer name',
+    discount_pct: 'Discount %',
+    disc_capped: 'Discount lowered to your limit',
+    subtotal: 'Subtotal',
+    discount: 'Discount',
+    pdf: 'PDF file',
+    pdf_save: 'Save PDF',
+    pdf_saved: 'PDF saved',
+    pdf_unavailable: 'Saving files is not available in this view.',
+    pdf_fail: 'The PDF could not be saved.',
+    doc_title: 'Quotation',
+    doc_no: 'No.',
+    doc_date: 'Date',
+    doc_item: 'Item',
+    doc_qty: 'Qty',
+    doc_price: 'Price',
+    doc_total: 'Total',
+    doc_rate: 'Exchange rate',
+    doc_valid: 'Valid for {n} days.',
+    doc_page: 'Page {a} of {b}',
+    set_shop: 'Shop',
+    shop_name: 'Shop name',
+    shop_phone: 'WhatsApp number with country code',
+    shop_note: 'Line at the bottom of quotes',
+    valid_days: 'Quotes are valid for (days)',
+    floor_mode: 'How employees see the lowest price',
+    floor_peek: 'Hidden, tap to peek',
+    floor_code: 'Letter code',
+    code_word: 'Code word (10 different letters)',
+    code_bad: 'Type 10 different letters.',
+    code_ex: 'Example: {a} shows as {b}',
+    skipped: '{n} lines without a price were skipped',
+    set_data: 'Data',
+    data_demo: 'Showing demo data.',
+    data_real: '{n} items from {name}, exported {time}.',
+    load_file: 'Load the data file',
+    load_hint: 'Choose the data file the export saved on the desktop. It stays on this device.',
+    load_ok: 'Loaded {n} items',
+    load_bad: 'This is not a valid data file.',
+    back_demo: 'Back to demo data',
+    real_strip: 'Your data as of {time}. Live updates start after the cloud link.',
+    from_file: 'File',
+    set_pricing: 'Selling prices',
+    def_margin: 'Profit % added to cost',
+    group_margin: 'A different profit % for a group (empty = the general one)',
+    show_group: 'Show',
+    low_at: 'Low-stock alert at quantity',
+    in_stock_only: 'In stock',
+    more: 'Show more',
+    pending: 'Not final',
+    last_buy: 'Last purchase',
+    last_sale: 'Last sale',
+    min_max: 'lowest {a}, highest {b}',
+    other_wh: 'In other warehouses',
+    extra_cost: 'Add to cost ($), e.g. shipping',
+    manual_price: 'Manual selling price ($)',
+    auto_price: 'Empty price = automatic: {p}',
+    activity_later: 'Live activity appears here after the cloud link.',
+    signin_title: 'Staff sign-in',
+    signin_sub: 'The manager and the employees each sign in with their own account.',
+    email: 'Email',
+    password: 'Password',
+    signin_btn: 'Sign in',
+    signing_in: 'Signing in...',
+    bad_login: 'Wrong email or password.',
+    too_many: 'Too many tries. Wait a minute and try again.',
+    net_fail: 'No connection. Check the internet and try again.',
+    guest_btn: 'Browse as a guest',
+    guest_d: 'Items and prices only. No sign-in needed.',
+    or: 'or',
+    loading: 'Loading...',
+    retry: 'Try again',
+    wait_title: 'Waiting for the manager',
+    wait_text: 'The account {email} exists. The manager has to approve it before the stock appears.',
+    wait_check: 'Check again',
+    lock_title: 'Locked',
+    lock_text: 'Confirm it is you to continue.',
+    session_over: 'You were signed out. Sign in again.',
+    pc_on: 'Shop computer connected',
+    pc_off: 'Shop computer offline',
+    no_net: 'No connection',
+    stale_strip: 'The shop computer is not connected. Stock as it was at {time}.',
+    no_price: 'No price',
+    ask_price: 'Ask for the price',
+    cant_add: 'This item has no price yet.',
+    save_fail: 'Not saved. Check the connection.',
+    set_sync: 'Link to the accounting program',
+    sync_info: '{n} items from {name}.',
+    sync_last: 'Last change received: {time}',
+    refresh: 'Refresh now',
+    rate_books: 'The exchange rate comes from the accounting program: {rate}',
+    set_guest: 'Guests',
+    guest_allow: 'Let guests browse items and prices',
+    emp_hint: 'To add an employee: create the account in the cloud dashboard, then approve it here.',
+    emp_wait: 'Waiting',
+    emp_you: 'You',
+    make_admin_q: 'Give {name} full manager access (cost, settings, employees)?',
+    ev_out: 'Out {n} x {name}',
+    ev_in: 'In {n} x {name}',
+    activity_sub2: 'Every change of quantity in the accounting program lands here.',
+    no_activity: 'No stock movements yet.',
+    print: 'Print',
+    share_pdf: 'Share the file',
+    bio_no2: 'This device has no fingerprint or face unlock.',
+    bio_hint2: 'When it is on, the app asks for your fingerprint or face each time it opens, instead of a password.',
+    bio_fail2: 'Not recognised. Try again, or sign out and use the password.',
+    bio_blocked2: 'The fingerprint prompt could not open on this device.',
+    unlock_btn: 'Unlock with fingerprint or face',
+    lock_note: 'Locking works only while fingerprint or face unlock is on.',
+    tab_request: 'Request',
+    last_admin: 'The only manager account cannot be switched off or changed.',
+    store_tagline: 'New and used laptops, accessories, parts and software.',
+    in_stock_now: '{n} items in stock now',
+    staff_signin: 'Staff sign-in',
+    back_store: 'Back to the store',
+    new_arrivals: 'New arrivals',
+    see_all: 'See all',
+    sort_by: 'Sort',
+    sort_new: 'Newest',
+    sort_low: 'Price: low to high',
+    sort_high: 'Price: high to low',
+    sort_name: 'Name',
+    results_n: '{n} items',
+    spec_gen: 'Gen {n}',
+    spec_cpu: 'Processor',
+    spec_ram: 'Memory',
+    spec_storage: 'Storage',
+    spec_gpu: 'Graphics',
+    spec_screen: 'Screen',
+    spec_brand: 'Brand',
+    spec_touch: 'Touch',
+    ask_whatsapp: 'Ask on WhatsApp',
+    copy_link: 'Copy link',
+    link_copied: 'Link copied',
+    similar: 'Similar items',
+    ask_item: 'Hello, I am asking about: {name} ({code})',
+    continue_shop: 'Continue browsing',
+    add_request: 'Add to my request',
+    added_request: 'Added to your request',
+    show_out: 'Show sold-out items too'
+  },
+  ar: {
+    lang_name: 'العربية',
+    app_name: 'Kouki Technology',
+    tagline: 'البضاعة والأسعار مباشرة من المحل.',
+    demo_strip: 'بيانات تجريبية. بضاعتك الحقيقية تظهر بعد الربط.',
+    login_title: 'من يسجّل الدخول؟',
+    as_admin: 'المسؤول',
+    as_admin_d: 'يرى كل شيء: رأس المال، الربح، عروض الشركات، الإعدادات.',
+    as_staff: 'موظف',
+    as_staff_d: 'يرى أسعار البيع والمخزون فقط.',
+    login_note: 'في النسخة الحقيقية يدخل كل شخص بحسابه الخاص.',
+    role_admin: 'مسؤول',
+    role_staff: 'موظف',
+    live: 'مباشر',
+    paused: 'متوقف',
+    rate_chip_label: 'سعر الصرف',
+    tab_items: 'البضاعة',
+    tab_quote: 'عرض سعر',
+    tab_offers: 'العروض',
+    tab_overview: 'نظرة عامة',
+    tab_settings: 'الإعدادات',
+    search_ph: 'ابحث بالاسم أو المواصفات أو الباركود',
+    all: 'الكل',
+    low_only: 'قليل المخزون',
+    in_stock: 'متوفر {n}',
+    low_stock: 'بقي {n} فقط',
+    out_stock: 'غير متوفر',
+    cost: 'رأس المال',
+    margin: 'هامش الربح',
+    profit_unit: 'ربح القطعة',
+    floor: 'أقل سعر',
+    add_quote: 'أضف',
+    added: 'تمت الإضافة',
+    no_items: 'لا توجد بضاعة مطابقة للبحث.',
+    code: 'الرمز',
+    barcode: 'الباركود',
+    category: 'الصنف',
+    stock_value: 'قيمة المخزون برأس المال',
+    best_offer: 'أفضل عرض من الشركات',
+    none_yet: 'لا يوجد بعد',
+    admin_only: 'للمسؤول فقط',
+    close: 'إغلاق',
+    quote_title: 'عرض سعر للزبون',
+    quote_empty: 'أضف بضاعة من تبويب البضاعة لتجهيز عرض سعر.',
+    total: 'المجموع',
+    copy: 'نسخ النص',
+    copied: 'تم النسخ',
+    copy_fail: 'حدّد النص في الأسفل وانسخه.',
+    whatsapp: 'واتساب',
+    clear: 'تفريغ',
+    offers_title: 'عروض الشركات',
+    offers_sub: 'بضاعة ليست عندك بعد. كل عرض يُقارن برأس مالك.',
+    m_paste: 'لصق نص',
+    m_file: 'ملف إكسل',
+    m_manual: 'يدوي',
+    supplier: 'اسم الشركة',
+    supplier_ph: 'مثال: شركة المدار للحواسيب',
+    paste_label: 'الصق قائمة الأسعار كما وصلتك',
+    paste_ph: 'كل جهاز في سطر مع مواصفاته وسعره، مثلاً:\nHP EliteBook 840 G8 i5 16GB 512GB - 285$\nبلايستيشن 5 سليم 495 دولار',
+    default_cur: 'الأسعار بدون عملة هي بـ',
+    usd: 'دولار',
+    syp: 'ليرة',
+    syp_unit: 'ل.س',
+    file_label: 'اختر ملف إكسل',
+    file_hint: 'تُقرأ الورقة الأولى. إن وُجد عمود عنوانه السعر يُعتمد، وباقي الأعمدة تصبح المواصفات.',
+    file_fail: 'تعذّرت قراءة الملف. تأكد من الاتصال ومن نوع الملف.',
+    item_name: 'اسم المادة ومواصفاتها',
+    price: 'السعر',
+    add_row: 'أضف إلى القائمة',
+    preview: 'راجع قبل الحفظ ({n})',
+    missing_hint: 'الخانات الصفراء بلا سعر. اكتب السعر أو احذف السطر.',
+    save_n: 'حفظ {n} مادة',
+    need_supplier: 'اكتب اسم الشركة أولاً.',
+    saved_n: 'تم حفظ {n} مادة',
+    cheaper: 'أرخص من رأس مالك بـ {p}%',
+    pricier: 'أغلى من رأس مالك بـ {p}%',
+    same: 'يساوي رأس مالك',
+    new_item: 'غير موجودة عندك',
+    no_offers: 'لا توجد عروض محفوظة بعد.',
+    remove: 'حذف',
+    kpi_cost: 'المخزون برأس المال',
+    kpi_sell: 'المخزون بسعر البيع',
+    kpi_profit: 'الربح المتوقع',
+    kpi_alert: 'قليل أو منتهٍ',
+    activity: 'الحركة المباشرة',
+    activity_sub: 'كل بيع أو شراء في برنامج المحاسبة يصل إلى هنا.',
+    sold: 'بيع {n} × {name}',
+    bought: 'شراء {n} × {name}',
+    sim_now: 'جرّب عملية بيع',
+    set_money: 'الأسعار والعملة',
+    rate_label: 'سعر الصرف: كم ليرة للدولار الواحد',
+    syp_mode: 'عرض الليرة',
+    syp_new: 'ليرة جديدة',
+    syp_old: 'ليرة قديمة',
+    discount_label: 'أكبر خصم مسموح للموظف (%)',
+    set_staff: 'الموظفون',
+    staff_add_ph: 'اسم الموظف الجديد',
+    add: 'إضافة',
+    active: 'فعّال',
+    blocked: 'موقوف',
+    set_app: 'التطبيق',
+    language: 'اللغة',
+    live_demo: 'محاكاة مبيعات مباشرة (تجريبي)',
+    sign_out: 'تسجيل الخروج',
+    as_guest: 'زائر',
+    as_guest_d: 'تصفّح البضاعة والأسعار بدون تسجيل دخول.',
+    role_guest: 'زائر',
+    unlock_title: 'تأكيد الهوية',
+    back: 'رجوع',
+    pin_label: 'أدخل الرمز',
+    pin_wrong: 'الرمز غير صحيح. حاول مرة أخرى.',
+    pin_demo: 'رمز التجربة: {p}',
+    bio_checking: 'جارٍ فحص الجهاز...',
+    bio_yes: 'هذا الجهاز يدعم الدخول بالبصمة أو الوجه.',
+    bio_no: 'هذا الجهاز لا يدعم البصمة أو الوجه. استخدم الرمز.',
+    bio_login: 'الدخول بالبصمة أو الوجه',
+    bio_hint: 'ادخل بالرمز مرة واحدة، ثم فعّلها من الإعدادات.',
+    bio_title: 'الدخول بالبصمة أو الوجه',
+    bio_enable: 'تفعيل على هذا الجهاز',
+    bio_disable: 'إيقاف',
+    bio_on: 'تم تفعيل الدخول بالبصمة أو الوجه',
+    bio_off: 'تم الإيقاف',
+    bio_blocked: 'تعذّر فتح نافذة البصمة هنا. قد تمنعها هذه المعاينة، والتطبيق المثبّت يفتحها.',
+    bio_fail: 'لم يتم التعرّف. استخدم الرمز.',
+    set_security: 'الأمان',
+    lock_label: 'قفل التطبيق بعد عدم الاستخدام',
+    lock_off: 'بدون',
+    minutes: '{n} د',
+    locked: 'تم القفل لعدم الاستخدام',
+    exit: 'خروج',
+    avail: 'متوفر',
+    limited: 'كمية محدودة',
+    floor_show: 'إظهار المرجع',
+    ref: 'مرجع',
+    share_price: 'إرسال السعر عبر واتساب',
+    request_title: 'طلب عرض سعر',
+    request_empty: 'أضف ما يعجبك من البضاعة، ثم أرسل الطلب إلى المحل.',
+    send_shop: 'إرسال إلى المحل عبر واتساب',
+    customer: 'اسم الزبون',
+    discount_pct: 'الخصم %',
+    disc_capped: 'تم تخفيض الخصم إلى الحد المسموح لك',
+    subtotal: 'المجموع قبل الخصم',
+    discount: 'الخصم',
+    pdf: 'نسخة للطباعة',
+    pdf_save: 'حفظ الملف',
+    pdf_saved: 'تم حفظ الملف',
+    pdf_unavailable: 'حفظ الملفات غير متاح في هذه المعاينة.',
+    pdf_fail: 'تعذّر حفظ الملف.',
+    doc_title: 'عرض سعر',
+    doc_no: 'الرقم',
+    doc_date: 'التاريخ',
+    doc_item: 'المادة',
+    doc_qty: 'الكمية',
+    doc_price: 'السعر',
+    doc_total: 'المجموع',
+    doc_rate: 'سعر الصرف',
+    doc_valid: 'هذا العرض صالح لمدة {n} أيام.',
+    doc_page: 'صفحة {a} من {b}',
+    set_shop: 'المحل',
+    shop_name: 'اسم المحل',
+    shop_phone: 'رقم واتساب مع رمز الدولة',
+    shop_note: 'سطر يُطبع أسفل عروض الأسعار',
+    valid_days: 'مدة صلاحية العرض (أيام)',
+    floor_mode: 'طريقة عرض أقل سعر للموظف',
+    floor_peek: 'مخفي، يظهر بنقرة',
+    floor_code: 'كود بالأحرف',
+    code_word: 'كلمة الكود (10 أحرف مختلفة)',
+    code_bad: 'اكتب 10 أحرف مختلفة.',
+    code_ex: 'مثال: {a} يظهر هكذا {b}',
+    skipped: 'تم تجاهل {n} سطر بدون سعر',
+    set_data: 'البيانات',
+    data_demo: 'المعروض الآن بيانات تجريبية.',
+    data_real: '{n} مادة من ملف {name}، بتاريخ {time}.',
+    load_file: 'تحميل ملف البيانات',
+    load_hint: 'اختر ملف البيانات الذي حفظه التصدير على سطح المكتب. يبقى على هذا الجهاز فقط.',
+    load_ok: 'تم تحميل {n} مادة',
+    load_bad: 'هذا ليس ملف بيانات صالحاً.',
+    back_demo: 'العودة إلى البيانات التجريبية',
+    real_strip: 'بياناتك حتى {time}. التحديث المباشر يبدأ بعد ربط السحابة.',
+    from_file: 'ملف',
+    set_pricing: 'تسعير البيع',
+    def_margin: 'نسبة الربح فوق رأس المال (%)',
+    group_margin: 'نسبة ربح خاصة بمجموعة (فارغ = النسبة العامة)',
+    show_group: 'إظهار',
+    low_at: 'تنبيه قلة المخزون عند الكمية',
+    in_stock_only: 'المتوفر فقط',
+    more: 'عرض المزيد',
+    pending: 'غير نهائي',
+    last_buy: 'آخر شراء',
+    last_sale: 'آخر بيع',
+    min_max: 'الأقل {a}، الأعلى {b}',
+    other_wh: 'في مستودعات أخرى',
+    extra_cost: 'زيادة على رأس المال ($) مثل الشحن',
+    manual_price: 'سعر بيع يدوي ($)',
+    auto_price: 'السعر الفارغ = تلقائي: {p}',
+    activity_later: 'تظهر الحركة المباشرة هنا بعد ربط السحابة.',
+    signin_title: 'دخول الموظفين',
+    signin_sub: 'المدير والموظفون يدخلون كلٌّ بحسابه.',
+    email: 'البريد الإلكتروني',
+    password: 'كلمة المرور',
+    signin_btn: 'دخول',
+    signing_in: 'جارٍ الدخول...',
+    bad_login: 'البريد أو كلمة المرور غير صحيحة.',
+    too_many: 'محاولات كثيرة. انتظر دقيقة ثم حاول.',
+    net_fail: 'لا يوجد اتصال. تحقق من الإنترنت وحاول مجدداً.',
+    guest_btn: 'تصفّح كزائر',
+    guest_d: 'المواد والأسعار فقط، بدون تسجيل دخول.',
+    or: 'أو',
+    loading: 'جارٍ التحميل...',
+    retry: 'حاول مجدداً',
+    wait_title: 'بانتظار موافقة المدير',
+    wait_text: 'الحساب {email} موجود. يجب أن يوافق عليه المدير قبل أن تظهر البضاعة.',
+    wait_check: 'تحقّق الآن',
+    lock_title: 'مقفول',
+    lock_text: 'أكّد هويتك للمتابعة.',
+    session_over: 'تم تسجيل خروجك. سجّل الدخول من جديد.',
+    pc_on: 'كمبيوتر المحل متصل',
+    pc_off: 'كمبيوتر المحل غير متصل',
+    no_net: 'لا يوجد اتصال',
+    stale_strip: 'كمبيوتر المحل غير متصل. البضاعة كما كانت {time}.',
+    no_price: 'بدون سعر',
+    ask_price: 'اسأل عن السعر',
+    cant_add: 'هذه المادة بدون سعر بعد.',
+    save_fail: 'لم يتم الحفظ. تحقق من الاتصال.',
+    set_sync: 'الربط مع برنامج المحاسبة',
+    sync_info: '{n} مادة من {name}.',
+    sync_last: 'آخر تغيير وصل: {time}',
+    refresh: 'تحديث الآن',
+    rate_books: 'سعر الصرف يأتي من برنامج المحاسبة: {rate}',
+    set_guest: 'الزوّار',
+    guest_allow: 'السماح للزوّار بتصفّح المواد والأسعار',
+    emp_hint: 'لإضافة موظف: أنشئ حسابه من لوحة السحابة، ثم وافق عليه هنا.',
+    emp_wait: 'بانتظار الموافقة',
+    emp_you: 'أنت',
+    make_admin_q: 'هل تريد إعطاء {name} صلاحيات المدير كاملة (رأس المال، الإعدادات، الموظفين)؟',
+    ev_out: 'خرج {n} × {name}',
+    ev_in: 'دخل {n} × {name}',
+    activity_sub2: 'كل تغيّر بالكمية في برنامج المحاسبة يظهر هنا.',
+    no_activity: 'لا توجد حركات بعد.',
+    print: 'طباعة',
+    share_pdf: 'مشاركة الملف',
+    bio_no2: 'هذا الجهاز لا يدعم البصمة أو الوجه.',
+    bio_hint2: 'عند تفعيلها يطلب التطبيق بصمتك أو وجهك كل مرة يُفتح، بدل كلمة المرور.',
+    bio_fail2: 'لم يتم التعرّف. حاول مجدداً، أو سجّل الخروج وادخل بكلمة المرور.',
+    bio_blocked2: 'تعذّر فتح نافذة البصمة على هذا الجهاز.',
+    unlock_btn: 'افتح بالبصمة أو الوجه',
+    lock_note: 'القفل يعمل فقط عند تفعيل البصمة أو الوجه.',
+    tab_request: 'الطلب',
+    last_admin: 'لا يمكن تعطيل حساب المدير الوحيد أو تغييره.',
+    store_tagline: 'لابتوبات جديدة ومستعملة، إكسسوارات، قطع وبرامج.',
+    in_stock_now: '{n} مادة متوفرة الآن',
+    staff_signin: 'دخول الموظفين',
+    back_store: 'العودة إلى المتجر',
+    new_arrivals: 'وصل حديثاً',
+    see_all: 'عرض الكل',
+    sort_by: 'الترتيب',
+    sort_new: 'الأحدث',
+    sort_low: 'السعر: من الأقل',
+    sort_high: 'السعر: من الأعلى',
+    sort_name: 'الاسم',
+    results_n: '{n} مادة',
+    spec_gen: 'جيل {n}',
+    spec_cpu: 'المعالج',
+    spec_ram: 'الرام',
+    spec_storage: 'التخزين',
+    spec_gpu: 'كرت الشاشة',
+    spec_screen: 'الشاشة',
+    spec_brand: 'الماركة',
+    spec_touch: 'لمس',
+    ask_whatsapp: 'اسأل على واتساب',
+    copy_link: 'نسخ الرابط',
+    link_copied: 'تم نسخ الرابط',
+    similar: 'مواد مشابهة',
+    ask_item: 'مرحباً، أستفسر عن: {name} ({code})',
+    continue_shop: 'متابعة التصفّح',
+    add_request: 'أضف إلى طلبي',
+    added_request: 'أُضيفت إلى طلبك',
+    show_out: 'عرض المواد غير المتوفرة أيضاً'
+  }
+};
+
+/* Words the offer parser must recognise: currencies as regex sources, the rest as plain words. */
+var LEXICON = {
+  /* Storefront reading of item names. */
+  letters: '\\u0600-\\u06FF',          // the Arabic letter block, for word edges
+  article: 'ال',
+  inch: 'inch|"|انش|إنش|بوصة',
+  touch: 'touch|تاتش|لمس',
+  /* What an item is, guessed from its name: picks the drawing on its card. The first match wins. */
+  kinds: [
+    ['gamepad', ['playstation', 'ps4', 'ps5', 'xbox', 'بلايستيشن', 'بلايستشن', 'بلاي ستيشن', 'جويستيك', 'جويستك', 'يد تحكم', 'controller']],
+    ['wifi', ['راوتر', 'router', 'تيبي لينك', 'تي بي لينك', 'tp link', 'd link', 'مقوي', 'access point', 'واي فاي', 'wifi']],
+    ['scan', ['باركود', 'barcode', 'كاشير']],
+    ['mouse', ['ماوس', 'mouse']],
+    ['keyboard', ['كيبورد', 'keyboard', 'لوحة مفاتيح']],
+    ['bag', ['حقيبة', 'شنطة', 'سليف', 'bag', 'sleeve']],
+    ['plug', ['شاحن', 'charger', 'adapter', 'ادابتر']],
+    ['headset', ['سماعة', 'سماعات', 'هيدفون', 'headset', 'headphone', 'ايربودز', 'earbuds']],
+    ['speaker', ['سبيكر', 'speaker', 'مكبر']],
+    ['watch', ['ساعة', 'watch']],
+    ['print', ['طابعة', 'printer', 'حبر']],
+    ['chip', ['ddr', 'ddr3l', 'ddr4l', 'رام', 'ram', 'ذاكرة', 'كرت']],
+    ['drive', ['هارد', 'hdd', 'ssd', 'nvme', 'فلاشة', 'flash', 'ميموري', 'سواقة', 'كادي']],
+    ['monitor', ['شاشة', 'شاشاة', 'screen', 'monitor']],
+    ['battery', ['بطارية', 'battery']],
+    ['fan', ['مروحة', 'مراوح', 'تبريد', 'معجونة', 'cooler', 'cooling']],
+    ['cable', ['وصلة', 'كبل', 'كابل', 'cable', 'hub', 'تحويلة']],
+    ['shield', ['kaspersky', 'eset', 'antivirus', 'مضاد', 'اشتراك', 'office', 'اوفيس', 'ويندوز', 'windows', 'icloud', 'gemini', 'سوفت', 'software']],
+    ['wrench', ['صيانة', 'اصلاح', 'repair']],
+    ['laptop', ['لابتوب', 'لاب توب', 'laptop', 'notebook', 'macbook', 'ماك بوك']]
+  ],
+  /* Drawing for a whole group in the group row, when its name is not itself a kind of item. */
+  groupIcons: [['mouse', ['اكسسوار', 'اكسسوارات', 'accessories']], ['chip', ['قطع', 'parts']]],
+  /* Brand id, the label shown, and the spellings that mean it. */
+  brands: [
+    ['dell', 'DELL', ['dell', 'ديل']], ['hp', 'HP', ['hp', 'اتش بي']], ['lenovo', 'Lenovo', ['lenovo', 'لينوفو', 'thinkpad', 'ideapad']],
+    ['asus', 'ASUS', ['asus', 'اسوس', 'vivobook', 'zenbook']], ['acer', 'Acer', ['acer', 'ايسر']], ['msi', 'MSI', ['msi']],
+    ['apple', 'Apple', ['apple', 'macbook', 'ابل', 'ماك بوك', 'icloud']], ['samsung', 'Samsung', ['samsung', 'سامسونج']],
+    ['toshiba', 'Toshiba', ['toshiba', 'توشيبا']], ['sony', 'Sony', ['sony', 'playstation', 'سوني', 'بلايستيشن']],
+    ['microsoft', 'Microsoft', ['microsoft', 'surface', 'office', 'اوفيس', 'windows', 'ويندوز']],
+    ['havit', 'Havit', ['havit', 'هافيت']], ['meetion', 'Meetion', ['meetion']], ['a4tech', 'A4Tech', ['a4tech', 'a4 tech', 'اي فور تك']],
+    ['twolf', 'T-WOLF', ['t wolf', 'تي وولف']], ['ugreen', 'UGREEN', ['ugreen', 'يوغرين']], ['razer', 'Razer', ['razer', 'ريزر']],
+    ['logitech', 'Logitech', ['logitech', 'لوجيتك']], ['kingston', 'Kingston', ['kingston']], ['crucial', 'Crucial', ['crucial']],
+    ['wd', 'WD', ['wd', 'western digital']], ['lexar', 'Lexar', ['lexar']], ['oscoo', 'OSCOO', ['oscoo', 'اوسكو']],
+    ['kaspersky', 'Kaspersky', ['kaspersky']], ['eset', 'ESET', ['eset']], ['hunter', 'Hunter', ['hunter']],
+    ['tplink', 'TP-Link', ['tp link', 'تيبي لينك', 'تي بي لينك']], ['dlink', 'D-Link', ['d link', 'دي لينك']]
+  ],
+  usd: '\\$|usd|دولار(?:ات)?',
+  syp: 'syp|s\\.p\\.?|ل\\s*\\.?\\s*س\\.?|لير[ةه](?:\\s*سوري[ةه])?',
+  /* How the Syrian pound is named in the accounting data (normalised text). */
+  sypName: 'ليره|سوري|syp|ل\\.س',
+  /* Column titles in a supplier's sheet, matched against normalised text: the price column, and columns left out of the name. */
+  priceHead: 'price|cost|usd|\\$|سعر|دولار',
+  skipHead: 'qty|quantity|stock|count|كميه|عدد|^#$|^no\\.?$|^م$|^ت$',
+  /* A number followed by one of these is a spec, not a price. */
+  units: ['w', 'kw', 'v', 'a', 'ah', 'mah', 'wh', 'hz', 'mm', 'cm', 'inch', 'kg', 'g', 'gb', 'tb', 'mb',
+    'ssd', 'hdd', 'nvme', 'ram', 'emmc', 'fhd', 'hd', 'uhd', 'qhd', 'oled', 'ips', 'touch', 'gen', 'core', 'cores',
+    'cell', 'cells', 'year', 'years', 'month', 'months', 'day', 'days', 'pcs', 'pc', 'th', 'nd', 'rd', 'st',
+    'واط', 'وات', 'فولت', 'أمبير', 'هرتز', 'ملم', 'سم', 'إنش', 'بوصة', 'جيجا', 'غيغا', 'تيرا', 'رام',
+    'سنة', 'سنوات', 'شهر', 'أشهر', 'يوم', 'أيام', 'قطعة', 'قطع'],
+  /* A number right after one of these is part of a model name. */
+  leads: ['gen', 'core', 'ryzen', 'rtx', 'gtx', 'ps', 'playstation', 'xbox', 'ddr', 'win', 'windows',
+    'slim', 'pro', 'max', 'air', 'جيل', 'بلايستيشن', 'ويندوز', 'موديل', 'سليم'],
+  /* Words ignored when two item names are compared. */
+  filler: ['gb', 'tb', 'ssd', 'hdd', 'nvme', 'ram', 'laptop', 'notebook', 'inch', 'fhd', 'hd', 'with', 'and', 'the',
+    'لابتوب', 'جيجا', 'واط', 'إنش', 'مع']
+};
+
+
+/* ---------- State ---------- */
+var STORE_KEY = 'raff-app-v1';
+/* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
+   what each account may read, and a guest key can read the guest catalog only. */
+var CLOUD = { url: 'https://uogjnknguwhevbjjdysm.supabase.co', key: 'sb_publishable_LWI-49Y5BCYEV6kHIuA5Og_ymPaIhN1', pollMs: 10000 };
+var state = {
+  lang: /^en/i.test(navigator.language || '') ? 'en' : 'ar',
+  screen: 'boot',       // boot | login | waiting | locked | offline | app
+  role: null, me: null, session: null, busy: false, authMsg: '',
+  tab: 'items', query: '', cat: 'all', lowOnly: false, peekId: null, sheetId: null,
+  sort: 'new', brand: '', cpu: '', ram: '',   // storefront order and filters
+  rate: 0,              // new SYP per 1 USD, from the accounting program
+  sypMode: 'new',       // shown as 'new' lira or 'old' lira (x100)
+  sypAuto: true,
+  maxDiscount: 5, guestOn: true,
+  shop: { name: 'Kouki Technology', phone: '', note: '', validDays: 3 },
+  floorMode: 'peek',    // how employees see the lowest price: 'peek' or 'code'
+  codeWord: 'BLACKHORSE',
+  lockMin: 5,           // minutes of no activity before the app locks (only with fingerprint or face on), 0 = never
+  bio: { supported: null, ids: {} },
+  items: [], offers: [], people: [], events: [], cats: [],
+  quote: {}, gquote: {}, quoteDisc: 0, quoteCustomer: '',
+  offerMode: 'paste', pasteText: '', supplier: '', draft: [], draftCur: 'USD', skipped: 0,
+  inStockOnly: true, limit: 60,
+  curs: {}, baseCur: 0, whs: {},
+  sync: { version: null, syncedAt: null, seenAt: null, company: '', failed: false },
+  /* The manager's pricing rules, kept in the cloud (the accounting data has no selling prices). */
+  pricing: { defMargin: 12, margins: {}, hidden: {}, manual: {}, extra: {}, lowAt: 1 }
+};
+
+/* Kept on this device only: language, the open quote, the lock choice and the sign-in session. */
+function stored() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || 'null') || {}; } catch (e) { return {}; } }
+function load() {
+  var s = stored();
+  if (s.lang === 'ar' || s.lang === 'en') state.lang = s.lang;
+  if (s.quote && typeof s.quote === 'object') state.quote = s.quote;
+  if (s.quoteDisc >= 0 && s.quoteDisc <= 100) state.quoteDisc = s.quoteDisc;
+  if (typeof s.quoteCustomer === 'string') state.quoteCustomer = s.quoteCustomer;
+  if (s.lockMin >= 0) state.lockMin = s.lockMin;
+  if (s.bioIds && typeof s.bioIds === 'object') state.bio.ids = s.bioIds;
+  if (s.session && s.session.rt && s.session.uid) state.session = s.session;
+}
+function save() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      lang: state.lang, quote: state.quote, quoteDisc: state.quoteDisc, quoteCustomer: state.quoteCustomer,
+      lockMin: state.lockMin, bioIds: state.bio.ids, session: state.session
+    }));
+  } catch (e) { /* storage unavailable: nothing is remembered on this device */ }
+}
+
+/* ---------- Helpers ---------- */
+function $(sel) { return document.querySelector(sel); }
+function t(key, vars) {
+  var s = (LOCALES[state.lang] && LOCALES[state.lang][key]) || LOCALES.en[key] || key;
+  if (vars) Object.keys(vars).forEach(function (k) { s = s.split('{' + k + '}').join(vars[k]); });
+  return s;
+}
+function esc(v) {
+  return String(v).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function num(n, d) { return Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+function usd(n) { return '$' + num(n, 2); }
+function sypFactor() { return state.sypMode === 'old' ? 100 : 1; }
+function sypOf(usdValue) { return num(Math.round(usdValue * state.rate * sypFactor()), 0) + ' ' + t('syp_unit'); }
+function two(n) { return ('0' + n).slice(-2); }
+function clock(ts) { var d = new Date(ts); return two(d.getHours()) + ':' + two(d.getMinutes()); }
+/* Time of day for today, day and month in front for older moments. */
+function when(ts) {
+  if (!ts) return '';
+  var d = new Date(ts), now = new Date();
+  if (isNaN(d)) return '';
+  return (d.toDateString() === now.toDateString() ? '' : two(d.getDate()) + '/' + two(d.getMonth() + 1) + ' ') + clock(d);
+}
+function isAdmin() { return state.role === 'admin'; }
+function isGuest() { return state.role === 'guest'; }
+function byId(id) { for (var i = 0; i < state.items.length; i++) if (state.items[i].id === id) return state.items[i]; return null; }
+function catOf(it) {
+  for (var i = 0; i < state.cats.length; i++) if (state.cats[i].id === it.cat) return state.cats[i];
+  return { id: '', name: '' };
+}
+function catName(c) { return c.name || ''; }
+function totalQty(it) { var n = it.qty; (it.other || []).forEach(function (o) { n += o.n; }); return Math.max(0, n); }
+function uniq(a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }); }
+function hasPrice(it) { return it.sell > 0; }
+
+/* Arabic-aware text normalisation so a search for one spelling finds the other. */
+function toLatinDigits(s) {
+  return String(s)
+    .replace(/[٠-٩]/g, function (d) { return String(d.charCodeAt(0) - 0x0660); })
+    .replace(/[۰-۹]/g, function (d) { return String(d.charCodeAt(0) - 0x06F0); })
+    .replace(/٫/g, '.').replace(/٬/g, ',');
+}
+function normalize(s) {
+  return toLatinDigits(s).toLowerCase()
+    .replace(/[ً-ْـ]/g, '')        // diacritics and tatweel
+    .replace(/[آأإ]/g, 'ا')   // alef variants
+    .replace(/ى/g, 'ي')                 // alef maqsura -> ya
+    .replace(/ة/g, 'ه')                 // ta marbuta -> ha
+    .replace(/ؤ/g, 'و').replace(/ئ/g, 'ي')
+    .replace(/\s+/g, ' ').trim();
+}
+function wordSet(list) { var o = {}; list.forEach(function (u) { o[normalize(u)] = true; }); return o; }
+var UNITS = wordSet(LEXICON.units), LEADS = wordSet(LEXICON.leads), FILLER = wordSet(LEXICON.filler);
+
+/* Name -> comparable tokens. "i5-1135G7 16GB" becomes 5, 1135, 7, 16 so two spellings of one spec agree. */
+function tokensOf(s) {
+  return uniq(normalize(s).replace(/([^\d\s])(\d)/g, '$1 $2').replace(/(\d)([^\d\s])/g, '$1 $2')
+    .replace(/[^a-z0-9؀-ۿ]+/g, ' ').split(' ')
+    .filter(function (x) { return x && !FILLER[x] && (x.length > 1 || /\d/.test(x)); }));
+}
+function isNumTok(x) { return /^\d+$/.test(x); }
+function prep(it) {
+  var c = catOf(it);
+  it._hay = normalize([it.name, it.code, it.barcode || '', c.name || ''].join(' '));
+  it._tok = tokensOf(it.name);
+  it._num = it._tok.filter(isNumTok);
+  it._word = it._tok.filter(function (x) { return !isNumTok(x); });
+  describe(it);
+}
+
+/* ---------- Stock and price rules ---------- */
+function stockState(it) { return it.stock || (it.qty <= 0 ? 'out' : (it.qty <= it.min ? 'low' : 'ok')); }
+function stockLabel(it) {
+  var s = stockState(it);
+  if (s === 'out') return t('out_stock');
+  if (isGuest()) return t(s === 'low' ? 'limited' : 'avail');   // guests never see exact quantities
+  return t(s === 'low' ? 'low_stock' : 'in_stock', { n: num(it.qty, 0) });
+}
+function marginPct(it) { return it.sell > 0 ? (it.sell - it.cost) / it.sell * 100 : 0; }
+function floorPrice(it) { return (it.sell || 0) * (1 - state.maxDiscount / 100); }
+
+/* Letter code for the lowest price: digit 1..9,0 -> letters 1..10 of the code word. */
+function validWord(w) { return typeof w === 'string' && w.length === 10 && !/[\s\d]/.test(w) && uniq(w.split('')).length === 10; }
+function encodePrice(v) {
+  var w = state.codeWord, s = (Math.round(v * 100) / 100).toFixed(2).replace(/\.00$/, '');
+  return s.replace(/\d/g, function (d) { return w.charAt(d === '0' ? 9 : Number(d) - 1); }).replace('.', '-');
+}
+
+/* ---------- The manager's price rules ----------
+   The cloud works the prices out with these same rules; the app repeats them only to show the manager
+   the effect of an edit at once, before the cloud confirms it. */
+/* Automatic prices are rounded up: to 1 from 20, to 0.50 from 5, to 0.05 below that. */
+function roundUp(v) {
+  var step = v >= 20 ? 1 : (v >= 5 ? 0.5 : 0.05);
+  return Math.round(Math.ceil(v / step - 1e-9) * step * 100) / 100;
+}
+function marginOf(cat) { var m = state.pricing.margins[cat]; return m >= 0 ? Number(m) : state.pricing.defMargin; }
+function autoPrice(it) { return it.cost > 0 ? roundUp(it.cost * (1 + marginOf(it.cat) / 100)) : null; }
+function resolveItem(it) {
+  if (!it.raw) return;
+  var base = it.raw.cost, b = it.buy;
+  it.pending = false;
+  /* A purchase in a foreign currency that the month-end closing has not converted yet: the cost table
+     still holds the foreign amount, so the converted purchase price is used and the item is marked. */
+  if (b && b.cur && b.cur !== state.baseCur && b.curPrice > 0 && b.usd > 0 && Math.abs(base - b.curPrice) <= b.curPrice * 0.005) {
+    base = b.usd;
+    it.pending = true;
+  } else if (!(base > 0) && b && b.usd > 0) base = b.usd;
+  it.extra = Number(state.pricing.extra[it.id]) || 0;
+  it.cost = base + it.extra;
+  var manual = Number(state.pricing.manual[it.id]);
+  it.auto = !(manual > 0);
+  it.sell = it.auto ? autoPrice(it) : manual;
+}
+function reprice() { if (isAdmin()) state.items.forEach(resolveItem); }
+
+/* ---------- From cloud rows to what the screens show ---------- */
+function applySettings(rows) {
+  var shop = { name: 'Kouki Technology', phone: '', note: '', validDays: 3 }, auto = true;
+  state.guestOn = true; state.maxDiscount = 5; state.floorMode = 'peek'; state.codeWord = 'BLACKHORSE'; state.pricing.lowAt = 1;
+  (rows || []).forEach(function (r) {
+    var v = r.value || {};
+    if (r.key === 'shop') {
+      ['name', 'phone', 'note'].forEach(function (k) { if (typeof v[k] === 'string') shop[k] = v[k]; });
+      if (v.validDays > 0) shop.validDays = v.validDays;
+    } else if (r.key === 'guest') state.guestOn = v.enabled !== false;
+    else if (r.key === 'money') { if (v.sypMode === 'old' || v.sypMode === 'new') { state.sypMode = v.sypMode; auto = false; } }
+    else if (r.key === 'floor') {
+      if (v.maxDiscount >= 0 && v.maxDiscount <= 100) state.maxDiscount = Number(v.maxDiscount);
+      if (v.lowAt >= 0) state.pricing.lowAt = Number(v.lowAt);
+      if (v.mode === 'peek' || v.mode === 'code') state.floorMode = v.mode;
+      if (validWord(v.codeWord)) state.codeWord = v.codeWord;
+    }
+  });
+  state.shop = shop;
+  state.sypAuto = auto;
+}
+function applyCurrencies(list) {
+  var syp = null, reSyp = new RegExp(LEXICON.sypName, 'i');
+  state.curs = {}; state.baseCur = 0;
+  (list || []).forEach(function (c) {
+    state.curs[c.id] = c;
+    if (!state.baseCur && Math.abs(c.rate - 1) < 1e-9) state.baseCur = c.id;
+    if (!syp && reSyp.test(normalize(c.name + ' ' + (c.code || '')))) syp = c;
+  });
+  if (syp && syp.rate > 0) {   // the accounting rate is per old or new lira; the app keeps new lira per dollar
+    var perUsd = 1 / syp.rate;
+    state.rate = perUsd > 2000 ? perUsd / 100 : perUsd;
+    if (state.sypAuto) state.sypMode = perUsd > 2000 ? 'old' : 'new';
+  }
+}
+/* d: the rows as they came from the cloud. A guest gets catalog rows; an account gets item rows, and the
+   manager also cost and rule rows. */
+function applyCloud(d) {
+  var names = {}, used = {}, main = 0, costs = {}, p = state.pricing;
+  applySettings(d.settings);
+  applyCurrencies(d.currencies);
+  state.whs = {};
+  (d.warehouses || []).forEach(function (w) { state.whs[w.id] = w.name; if (!main || w.id < main) main = w.id; });
+  (d.groups || []).forEach(function (g) { names[g.id] = g.name; });
+  p.margins = {}; p.hidden = {}; p.manual = {}; p.extra = {}; p.defMargin = 12;
+  if (d.rules && d.rules[0] && d.rules[0].default_margin >= 0) p.defMargin = Number(d.rules[0].default_margin);
+  (d.groupPricing || []).forEach(function (g) {
+    if (g.margin !== null && g.margin >= 0) p.margins[g.group_id] = Number(g.margin);
+    if (g.hidden) p.hidden[g.group_id] = true;
+  });
+  (d.itemPricing || []).forEach(function (r) {
+    if (r.manual_price > 0) p.manual['m' + r.item_id] = Number(r.manual_price);
+    if (r.extra > 0) p.extra['m' + r.item_id] = Number(r.extra);
+  });
+  (d.costs || []).forEach(function (c) { costs[c.item_id] = c; });
+  state.items = (d.items || []).map(function (r) {
+    var it = { id: 'm' + r.id, code: r.code || '', barcode: r.barcode || '', cat: String(r.group_id), name: String(r.name),
+      sell: r.sell === null || r.sell === undefined ? null : Number(r.sell), auto: !r.manual, min: p.lowAt, qty: 0, other: [] };
+    if (r.stock) {   // guest catalog: a word instead of a quantity
+      it.stock = r.stock;
+      it.qty = r.stock === 'out' ? 0 : 1;
+    } else {
+      var q = r.qty_by || {}, k, c = costs[r.id];
+      it.qty = Number(r.qty) || 0;
+      for (k in q) if (Number(k) !== main && q[k] > 0) it.other.push({ wh: state.whs[k] || String(k), n: Number(q[k]) });
+      if (c) {
+        it.raw = { cost: Number(c.cost_raw) || 0 };
+        it.cost = Number(c.cost) || 0;
+        it.pending = !!c.pending;
+        it.extra = p.extra[it.id] || 0;
+        it.buy = c.buy_usd > 0 ? { usd: Number(c.buy_usd), cur: c.buy_cur, curPrice: Number(c.buy_cur_price) || 0, date: c.buy_date || '' } : null;
+        it.sale = c.sale_usd > 0 ? { usd: Number(c.sale_usd), min: Number(c.sale_min) || 0, max: Number(c.sale_max) || 0, date: c.sale_date || '' } : null;
+      } else if (isAdmin()) { it.raw = { cost: 0 }; it.cost = 0; it.pending = false; it.extra = 0; it.buy = null; it.sale = null; }
+    }
+    used[it.cat] = true;
+    return it;
+  });
+  state.cats = Object.keys(used).map(function (id) { return { id: id, name: names[id] || id }; })
+    .sort(function (a, b) { return a.name < b.name ? -1 : 1; });
+  if (state.cat !== 'all' && !used[state.cat]) state.cat = 'all';
+  state.items.forEach(prep);
+  state.offers = (d.offers || []).map(function (o) { return { id: o.id, supplier: o.supplier, name: o.name, price: Number(o.price), cur: o.cur === 'SYP' ? 'SYP' : 'USD' }; });
+  state.people = d.people || [];
+  state.events = d.events || [];
+  if (d.status) {
+    state.sync.version = d.status.version;
+    state.sync.syncedAt = d.status.synced_at || d.status.syncedAt || null;
+    state.sync.seenAt = d.status.seen_at || d.status.seenAt || null;
+    state.sync.company = d.status.company || '';
+  }
+  /* a quote keeps only items that still exist and have a price */
+  [state.quote, state.gquote].forEach(function (c) { Object.keys(c).forEach(function (id) { var it = byId(id); if (!it || !hasPrice(it)) delete c[id]; }); });
+}
+
+/* ---------- Quote ---------- */
+/* A guest's price request is kept apart from the staff quote and starts empty for every guest. */
+function cart() { return isGuest() ? state.gquote : state.quote; }
+function quoteLines() {
+  var c = cart();
+  return Object.keys(c).map(function (id) { return { it: byId(id), n: c[id] }; })
+    .filter(function (l) { return l.it && l.n > 0 && hasPrice(l.it); });
+}
+function discountCap() { return isAdmin() ? 100 : (isGuest() ? 0 : state.maxDiscount); }
+function quoteCalc() {
+  var lines = quoteLines(), sub = 0;
+  lines.forEach(function (l) { sub += l.it.sell * l.n; });
+  var pct = Math.max(0, Math.min(state.quoteDisc || 0, discountCap()));
+  var disc = Math.round(sub * pct) / 100;
+  return { lines: lines, sub: sub, pct: pct, disc: disc, total: sub - disc };
+}
+function quoteNo() {
+  var d = new Date();
+  return 'Q' + two(d.getFullYear() % 100) + two(d.getMonth() + 1) + two(d.getDate()) + '-' + two(d.getHours()) + two(d.getMinutes());
+}
+
+/* ---------- Supplier offer parser ----------
+   Turns one line such as "HP EliteBook 840 G8 i5 16GB 512GB - 285$" into { name, price, cur }.
+   Numbers glued to letters (16GB, i5-1135G7, G8) are specs and never count as the price. */
+var EDGE = '(?=$|[\\s\\d.,:;)\\-|\\u060C\\u061B])';
+var RE_USD = new RegExp('(^|[\\s\\d|])(?:' + LEXICON.usd + ')' + EDGE, 'gi');
+var RE_SYP = new RegExp('(^|[\\s\\d|])(?:' + LEXICON.syp + ')' + EDGE, 'gi');
+var RE_NUM = /(^|[\s|:=(–—-])(?:(USD|SYP)\s*)?(\d+(?:[.,]\d+)*)(?:\s*(USD|SYP))?(?=$|[\s|),;،]|\.(?:\s|$))/g;
+
+function toNumber(s, cur) {
+  if (/^\d{1,3}(?:,\d{3})+(?:\.\d+)?$/.test(s)) return parseFloat(s.replace(/,/g, ''));
+  if (cur === 'SYP' && /^\d{1,3}(?:\.\d{3})+$/.test(s)) return parseFloat(s.replace(/\./g, ''));
+  return parseFloat(s.replace(',', '.'));
+}
+function parseOfferLine(raw, defCur) {
+  var line = toLatinDigits(raw).replace(/[‎‏]/g, '').replace(/\t+/g, ' | ').trim();
+  if (!line) return null;
+  line = line.replace(RE_SYP, '$1 SYP ').replace(RE_USD, '$1 USD ');
+  line = line.replace(/^\s*(?:[-*•▪◦]+|\d{1,3}\s*[.)\-])\s+/, '');   // bullets and list numbers
+  var m, marked = null, plain = null;
+  RE_NUM.lastIndex = 0;
+  while ((m = RE_NUM.exec(line))) {
+    var start = m.index + m[1].length, end = m.index + m[0].length, cur = m[4] || m[2] || null;
+    var hit = { start: start, end: end, cur: cur, value: toNumber(m[3], cur || defCur) };
+    if (cur) { marked = hit; continue; }
+    var next = /^\s*([a-z؀-ۿ]+)/i.exec(line.slice(end));
+    var prev = /([a-z؀-ۿ]+)\s*$/i.exec(line.slice(0, start));
+    if ((next && UNITS[normalize(next[1])]) || (prev && LEADS[normalize(prev[1])])) continue;   // "65 W", "Gen 2"
+    plain = hit;
+  }
+  if (plain && !marked) {   // a number without a currency only counts near the end of the line or after a separator
+    var tail = line.slice(plain.end).trim().split(/\s+/).filter(Boolean).length;
+    if (tail > 2 && !/[-:=|–—]\s*$/.test(line.slice(0, plain.start))) plain = null;
+  }
+  var chosen = marked || plain;
+  var name = chosen ? line.slice(0, chosen.start) + ' ' + line.slice(chosen.end) : line;
+  name = name.replace(/\b(?:USD|SYP)\b/g, ' ').replace(/\s*\|\s*/g, ' ')
+    .replace(/[\s:=\-–—،,.]+$/, '').replace(/^[\s:=\-–—]+/, '')
+    .replace(/\s+/g, ' ').trim();
+  if (!name) return null;
+  return {
+    name: name,
+    price: chosen && chosen.value > 0 ? chosen.value : null,
+    cur: (chosen && chosen.cur) || defCur,
+    explicit: !!(chosen && chosen.cur)
+  };
+}
+function parseOfferText(text, defCur) {
+  var rows = String(text).split(/\r?\n/).map(function (l) { return parseOfferLine(l, defCur); }).filter(Boolean);
+  var marked = rows.filter(function (r) { return r.explicit; }).length;
+  /* When the supplier writes a currency on most lines, a line without one is a heading or a note. */
+  if (marked >= 3 && marked >= rows.length * 0.6) rows.forEach(function (r) { if (!r.explicit) r.price = null; });
+  return rows;
+}
+function setDraft(rows) {
+  state.draft = rows.filter(function (r) { return r.price != null; });
+  state.skipped = rows.length - state.draft.length;
+}
+
+/* ---------- Matching an offer to an item already in stock ----------
+   Every spec number of the shorter name must appear in the longer one (16/512 never matches 8/256),
+   and the two names must share a brand or model word. */
+function matchItem(name) {
+  var a = tokensOf(name);
+  if (!a.length) return null;
+  var an = a.filter(isNumTok), aw = a.filter(function (x) { return !isNumTok(x); }), best = null, bestScore = 0;
+  state.items.forEach(function (it) {
+    var small = an.length <= it._num.length ? an : it._num, large = small === an ? it._num : an;
+    if (!small.every(function (x) { return large.indexOf(x) !== -1; })) return;
+    var words = aw.filter(function (x) { return it._word.indexOf(x) !== -1; }).length;
+    if (!words) return;
+    var score = (words + small.length) / Math.min(a.length, it._tok.length);
+    if (score > bestScore) { bestScore = score; best = it; }
+  });
+  return bestScore >= 0.7 ? best : null;
+}
+function offerUsd(o) { return o.cur === 'SYP' ? o.price / (state.rate * sypFactor()) : o.price; }
+function bestOfferFor(it) {
+  var best = null;
+  state.offers.forEach(function (o) {
+    if (matchItem(o.name) !== it) return;
+    var u = offerUsd(o);
+    if (!best || u < best.usd) best = { supplier: o.supplier, usd: u };
+  });
+  return best;
+}
+function cmpPill(u, cost) {
+  if (!(cost > 0)) return '<span class="pill new">' + t('new_item') + '</span>';
+  var p = (u - cost) / cost * 100;
+  if (Math.abs(p) < 0.05) return '<span class="pill new">' + t('same') + '</span>';
+  return p < 0
+    ? '<span class="pill ok">' + t('cheaper', { p: num(-p, 1) }) + '</span>'
+    : '<span class="pill out">' + t('pricier', { p: num(p, 1) }) + '</span>';
+}
+
+/* ---------- Storefront: what an item is, read from its name ----------
+   The accounting program holds a name, a group and a price, no pictures and no spec fields. A name such as
+   "DELL PRECISION 7550 I9-10885H 16 512 NVIDIA 6GB" still says a lot, so the card gets a picture for the
+   kind of item, the brand, and spec chips. Reading is cautious: when unsure, nothing is shown. */
+function wordRe(list) {   // whole words; Arabic words may carry the article, Latin words may end in digits (ddr4)
+  var edge = '[^a-z0-9' + LEXICON.letters + ']';
+  return new RegExp('(?:^|' + edge + ')(?:' + LEXICON.article + ')?(?:' + list.map(function (w) {
+    return normalize(w).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '[ -]?');
+  }).join('|') + ')\\d*(?=$|' + edge + ')');
+}
+var KINDS = LEXICON.kinds.map(function (k) { return { icon: k[0], re: wordRe(k[1]) }; });
+var BRANDS = LEXICON.brands.map(function (b) { return { id: b[0], label: b[1], re: wordRe(b[2]) }; });
+var GROUP_ICONS = LEXICON.groupIcons.map(function (k) { return { icon: k[0], re: wordRe(k[1]) }; });
+var TINTS = { laptop: 'a', gamepad: 'a', monitor: 'a', mouse: 'b', keyboard: 'b', bag: 'b', headset: 'b', speaker: 'b', watch: 'b',
+  plug: 'c', chip: 'c', drive: 'c', battery: 'c', fan: 'c', cable: 'c', print: 'c', wifi: 'c', scan: 'd', shield: 'd', wrench: 'e', box: 'e' };
+var RAM_SIZES = [4, 6, 8, 12, 16, 20, 24, 32, 40, 48, 64], DISK_SIZES = [120, 128, 240, 250, 256, 480, 500, 512, 750, 1000, 1024, 2000];
+var RE_INCH = new RegExp('[^0-9.](1[0-8](?:\\.\\d)?) ?(?:' + LEXICON.inch + ')'), RE_TOUCH = new RegExp(LEXICON.touch);
+
+function genOf(model) {   // "10885h" -> 10, "8250u" -> 8, "1135g7" -> 11, "11" -> 11
+  var d = /^\d+/.exec(model || '');
+  if (!d) return 0;
+  d = d[0];
+  if (d.length <= 2) return Number(d);
+  return Number(d.length >= 5 || d.charAt(0) === '1' ? d.slice(0, 2) : d.charAt(0));
+}
+function specsOf(name) {
+  var s = ' ' + toLatinDigits(name).toLowerCase().replace(/[\\\/|,()]+/g, ' ').replace(/\s+/g, ' ') + ' ', sp = {}, m, at = -1;
+  /* "i7-11800h", "i7 11800h", "i7-11", "i7 11th"; a bare "i5 8 256" keeps 8 for the memory */
+  if ((m = /[^a-z0-9](i[3579])(?:[ -]?(\d{4,5}[a-z]{0,2}\d?)|-(\d{1,2})|[ -]?(\d{1,2})(?:th|rd|nd|st))?(?=[^a-z0-9])/.exec(s))) {
+    sp.cpu = m[1]; sp.cpuLabel = 'Core ' + m[1]; sp.gen = genOf(m[2] || m[3] || m[4]); at = m.index + m[0].length;
+  } else if ((m = /[^a-z0-9]ryzen ?([3579])(?:[ -]?\d{4}[a-z]{0,2})?(?=[^a-z0-9])/.exec(s)) || (m = /[^a-z0-9]r([3579])[ -]?\d{4}[a-z]{0,2}(?=[^a-z0-9])/.exec(s))) {
+    sp.cpu = 'ryzen'; sp.cpuLabel = 'Ryzen ' + m[1]; at = m.index + m[0].length;   // "ryzen 5 5500u", "r7-7445hs"
+  } else if ((m = /[^a-z0-9]ultra ?([579])(?:[ -]?\d{3}[a-z]{0,2})?(?=[^a-z0-9])/.exec(s))) {
+    sp.cpu = 'ultra'; sp.cpuLabel = 'Core Ultra ' + m[1]; at = m.index + m[0].length;
+  } else if ((m = /[^a-z0-9]core ([3579]) ?\d{3} ?[a-z]{0,2}(?=[^a-z0-9])/.exec(s))) {
+    sp.cpu = 'i' + m[1]; sp.cpuLabel = 'Core ' + m[1]; at = m.index + m[0].length;   // the newer "Core 7 150U" naming
+  } else if ((m = /[^a-z0-9](celeron|pentium|xeon|atom)(?=[^a-z0-9])/.exec(s))) {
+    sp.cpu = m[1]; sp.cpuLabel = m[1].charAt(0).toUpperCase() + m[1].slice(1); at = m.index + m[0].length;
+  }
+  if (at < 0) return null;   // no processor in the name: not read as a computer
+  var g = /[^a-z0-9](nvidia|rtx|gtx|quadro|radeon|intel|iris|uhd|amd)(?=[^a-z])/.exec(s.slice(at)), tail = g ? s.slice(at + g.index) : '';
+  var mid = (g ? s.slice(at, at + g.index) : s.slice(at)) + ' ', re = /(\d+(?:\.\d+)?) ?(tb|gb|g)?(?=[^a-z0-9.])/g, n, disk;
+  mid = mid.replace(/[^a-z0-9]i[3579][ -]?[a-z0-9]*/g, ' ');   // a second processor option is not a size
+  while ((m = re.exec(mid))) {
+    n = Number(m[1]);
+    if (!sp.ram && m[2] !== 'tb' && RAM_SIZES.indexOf(n) !== -1) sp.ram = n;
+    else if (!disk && (m[2] === 'tb' || DISK_SIZES.indexOf(n) !== -1)) disk = m[2] === 'tb' ? n * 1000 : n;
+  }
+  if (disk) sp.disk = disk >= 1000 ? (Math.round(disk / 100) / 10) + 'TB' : disk + 'GB';
+  if (/[^a-z](nvme|ssd)(?=[^a-z])/.test(s)) sp.diskKind = 'SSD'; else if (/[^a-z]hdd(?=[^a-z])/.test(s)) sp.diskKind = 'HDD';
+  if ((m = /(rtx|gtx) ?-?(\d{3,4})( ?ti)?/.exec(tail))) sp.gpu = m[1].toUpperCase() + ' ' + m[2] + (m[3] ? ' Ti' : '');
+  else if ((m = /(?:nvidia|quadro)[^0-9]*?([a-z]?\d{3,4}[a-z]?)?[^0-9]*?(\d{1,2}) ?gb?(?=[^a-z0-9])/.exec(tail))) sp.gpu = 'NVIDIA ' + (m[1] ? m[1].toUpperCase() + ' ' : '') + m[2] + 'GB';
+  else if (/nvidia|quadro/.test(tail)) sp.gpu = 'NVIDIA';
+  else if (/iris/.test(tail)) sp.gpu = 'Intel Iris Xe';
+  else if (/radeon/.test(tail)) sp.gpu = 'Radeon';
+  else if (/uhd|intel/.test(tail)) sp.gpu = 'Intel UHD';
+  if ((m = /scr ?(1[0-8](?:\.\d)?)(?=[^0-9])/.exec(s)) || (m = RE_INCH.exec(s))) sp.screen = m[1] + '"';
+  if (RE_TOUCH.test(s)) sp.touch = true;
+  return sp;
+}
+/* Adds to an item: the kind (its picture), the brand, the spec chips. Called whenever data arrives. */
+function describe(it) {
+  var norm = normalize(it.name), cat = normalize(catName(catOf(it))), i, sp = specsOf(it.name);
+  it.kind = ''; it.brand = ''; it.brandName = ''; it.sp = sp; it.chips = [];
+  for (i = 0; i < KINDS.length && !it.kind; i++) if (KINDS[i].re.test(norm)) it.kind = KINDS[i].icon;
+  if (!it.kind) {
+    if (sp) it.kind = 'laptop';
+    else for (i = 0; i < KINDS.length && !it.kind; i++) if (KINDS[i].re.test(cat)) it.kind = KINDS[i].icon;
+  }
+  it.kind = it.kind || 'box';
+  it.tint = TINTS[it.kind] || 'e';
+  for (i = 0; i < BRANDS.length && !it.brand; i++) if (BRANDS[i].re.test(norm)) { it.brand = BRANDS[i].id; it.brandName = BRANDS[i].label; }
+  if (sp) {
+    it.chips.push(sp.cpuLabel.replace('Core ', '') + (sp.gen ? ' · ' + t('spec_gen', { n: sp.gen }) : ''));
+    if (sp.ram) it.chips.push(sp.ram + 'GB');
+    if (sp.disk) it.chips.push(sp.disk + (sp.diskKind ? ' ' + sp.diskKind : ''));
+    if (sp.gpu && !/^Intel/.test(sp.gpu)) it.chips.push(sp.gpu);
+    if (sp.touch) it.chips.push(t('spec_touch'));
+  }
+}
+
+/* ---------- Storefront: order, filters, look-alikes ---------- */
+function idNum(it) { return Number(it.id.slice(1)); }
+function sorted(list) {
+  var s = state.sort, a = list.slice();
+  function price(it) { return hasPrice(it) ? it.sell : Infinity; }
+  if (s === 'low') a.sort(function (x, y) { return price(x) - price(y) || idNum(y) - idNum(x); });
+  else if (s === 'high') a.sort(function (x, y) { return (hasPrice(y) ? y.sell : -1) - (hasPrice(x) ? x.sell : -1) || idNum(y) - idNum(x); });
+  else if (s === 'name') a.sort(function (x, y) { return x.name.localeCompare(y.name, state.lang); });
+  else a.sort(function (x, y) { return idNum(y) - idNum(x); });   // highest number = entered last = newest
+  return a;
+}
+/* Values of one property among the listed items, most common first; shown as filter chips. */
+function facet(list, get, least) {
+  var count = {}, out = [];
+  list.forEach(function (it) { var v = get(it); if (v) count[v] = (count[v] || 0) + 1; });
+  Object.keys(count).forEach(function (v) { if (count[v] >= (least || 1)) out.push({ v: v, n: count[v] }); });
+  return out.sort(function (a, b) { return b.n - a.n || (a.v < b.v ? -1 : 1); });
+}
+function similarTo(it) {
+  var p = hasPrice(it) ? it.sell : 0;
+  return state.items.filter(function (o) { return o !== it && o.cat === it.cat && o.qty > 0 && hasPrice(o) && (it.kind === o.kind); })
+    .sort(function (a, b) { return Math.abs(a.sell - p) - Math.abs(b.sell - p); }).slice(0, 8);
+}
+function shopWa(text) { return 'https://wa.me/' + state.shop.phone.replace(/\D/g, '') + '?text=' + encodeURIComponent(text); }
+function itemLink(it) { return location.origin + location.pathname + '#p' + idNum(it); }
+
+/* ---------- Links to one item: "#p123" opens it, and the phone's back button closes it ---------- */
+var hashByApp = false;
+function routeHash() {
+  var m = /^#p(\d+)$/.exec(location.hash);
+  if (state.screen !== 'app') return;
+  if (m && byId('m' + m[1])) { if (state.sheetId !== 'm' + m[1]) openItem('m' + m[1]); }
+  else if (state.sheetId) closeSheet(true);
+}
+function setItemHash(it) {
+  var h = '#p' + idNum(it);
+  if (location.hash === h) return;
+  if (/^#p\d+$/.test(location.hash)) history.replaceState(null, '', h);   // moving from one open item to another adds no step
+  else { hashByApp = true; location.hash = h; }
+}
+function clearItemHash() {
+  if (!/^#p\d+$/.test(location.hash)) return;
+  if (hashByApp) { hashByApp = false; history.back(); }
+  else history.replaceState(null, '', location.pathname + location.search);
+}
+
+/* ---------- Talking to the cloud ----------
+   Every request carries the public key. A signed-in account adds its own short-lived token, and the cloud
+   checks on each request what that account may read or change. */
+function http(method, path, opt) {
+  opt = opt || {};
+  var headers = { apikey: CLOUD.key }, init = { method: method, headers: headers, cache: 'no-store' }, timer = null;
+  if (opt.body !== undefined) { headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(opt.body); }
+  if (opt.token) headers.Authorization = 'Bearer ' + opt.token;
+  if (opt.prefer) headers.Prefer = opt.prefer;
+  if (window.AbortController) {
+    var ctl = new AbortController();
+    init.signal = ctl.signal;
+    timer = setTimeout(function () { ctl.abort(); }, 25000);
+  }
+  return fetch(CLOUD.url + path, init).then(function (r) {
+    return r.text().then(function (text) {
+      clearTimeout(timer);
+      var json = null;
+      try { json = text ? JSON.parse(text) : null; } catch (e) { json = null; }
+      return { ok: r.ok, status: r.status, json: json };
+    });
+  }).catch(function () { clearTimeout(timer); throw { net: true }; });
+}
+
+/* ---------- Session ---------- */
+function setSession(j) {
+  state.session = { at: j.access_token, rt: j.refresh_token, exp: Math.floor(Date.now() / 1000) + (Number(j.expires_in) || 3600),
+    uid: j.user && j.user.id, email: (j.user && j.user.email) || '' };
+  save();
+}
+var refreshing = null;
+function refresh() {
+  if (refreshing) return refreshing;
+  var rt = state.session && state.session.rt;
+  refreshing = http('POST', '/auth/v1/token?grant_type=refresh_token', { body: { refresh_token: rt } }).then(function (r) {
+    refreshing = null;
+    if (r.ok && r.json && r.json.access_token) { setSession(r.json); return true; }
+    if (r.status >= 400 && r.status < 500 && r.status !== 429) {
+      var other = stored().session;   // another tab of this app may have renewed the session a moment ago
+      if (other && other.rt && other.rt !== rt && other.exp - Date.now() / 1000 > 90) { state.session = other; return true; }
+      throw { gone: true };
+    }
+    throw { net: true };
+  }, function (e) { refreshing = null; throw e; });
+  return refreshing;
+}
+function token() {
+  var s = state.session;
+  if (!s) return Promise.reject({ gone: true });
+  if (s.at && s.exp - Date.now() / 1000 > 90) return Promise.resolve(s.at);
+  return refresh().then(function () { return state.session.at; });
+}
+/* A call as the signed-in account (or as a guest when nobody is signed in). A refused token is renewed once. */
+function api(method, path, body, prefer) {
+  if (isGuest() || !state.session) return http(method, path, { body: body, prefer: prefer });
+  function go(again) {
+    return token().then(function (tk) { return http(method, path, { token: tk, body: body, prefer: prefer }); }).then(function (r) {
+      if (r.status === 401 && !again) { state.session.exp = 0; return go(true); }
+      if (r.status === 401) throw { gone: true };
+      return r;
+    });
+  }
+  return go(false);
+}
+function need(r) { if (!r.ok) throw { status: r.status }; return r.json; }
+/* Reads a whole list, a thousand rows at a time (the cloud caps one answer at a thousand). */
+function pages(path) {
+  var out = [], size = 1000;
+  function page(off) {
+    return api('GET', path + (path.indexOf('?') < 0 ? '?' : '&') + 'limit=' + size + '&offset=' + off).then(function (r) {
+      if (!r.ok || !Array.isArray(r.json)) throw { status: r.status };
+      out = out.concat(r.json);
+      return r.json.length === size ? page(off + size) : out;
+    });
+  }
+  return page(0);
+}
+
+/* ---------- Reading ---------- */
+function fetchData() {
+  if (isGuest()) {
+    return Promise.all([pages('/rest/v1/rpc/catalog?order=id'), pages('/rest/v1/rpc/catalog_groups?order=id'),
+      http('POST', '/rest/v1/rpc/shop_info', { body: {} }).then(need), pages('/rest/v1/app_settings?select=key,value&order=key')])
+      .then(function (a) { var info = a[2] || {}; return { items: a[0], groups: a[1], currencies: info.currencies, settings: a[3], status: info }; });
+  }
+  var jobs = [pages('/rest/v1/items?select=id,group_id,code,barcode,name,qty,qty_by,sell,manual&gone=is.false&order=id'),
+    pages('/rest/v1/item_groups?select=*&order=id'), pages('/rest/v1/currencies?select=*&order=id'), pages('/rest/v1/warehouses?select=*&order=id'),
+    pages('/rest/v1/app_settings?select=key,value&order=key'), api('GET', '/rest/v1/sync_status?select=*').then(need)];
+  if (isAdmin()) {
+    jobs.push(pages('/rest/v1/item_costs?select=*&order=item_id'), pages('/rest/v1/item_pricing?select=*&order=item_id'),
+      pages('/rest/v1/group_pricing?select=*&order=group_id'), api('GET', '/rest/v1/pricing_rules?select=*').then(need),
+      pages('/rest/v1/offers?select=*&order=created_at.desc,id'), pages('/rest/v1/profiles?select=*&order=created_at,id'),
+      api('GET', '/rest/v1/stock_events?select=*&order=id.desc&limit=40').then(need));
+  }
+  return Promise.all(jobs).then(function (a) {
+    return { items: a[0], groups: a[1], currencies: a[2], warehouses: a[3], settings: a[4], status: (a[5] || [])[0] || null,
+      costs: a[6], itemPricing: a[7], groupPricing: a[8], rules: a[9], offers: a[10], people: a[11], events: a[12] };
+  });
+}
+var reloading = null;
+function reload() {
+  if (!reloading) {
+    reloading = fetchData().then(function (d) { reloading = null; applyCloud(d); softRepaint(); },
+      function (e) { reloading = null; throw e; });
+  }
+  return reloading;
+}
+function netState(failed) {
+  if (state.sync.failed !== failed) { state.sync.failed = failed; paintHeader(); }
+}
+/* Asked every few seconds while the app is on screen: one small number that grows when anything changed. */
+var polling = false;
+function poll() {
+  if (state.screen !== 'app' || document.hidden || polling) return;
+  polling = true;
+  var ask = isGuest()
+    ? http('POST', '/rest/v1/rpc/shop_info', { body: {} }).then(function (r) {
+        return r.ok && r.json ? { version: r.json.version, synced_at: r.json.syncedAt, seen_at: r.json.seenAt } : null;
+      })
+    : api('GET', '/rest/v1/sync_status?select=version,synced_at,seen_at').then(function (r) {
+        return r.ok && Array.isArray(r.json) ? (r.json[0] || { lost: true }) : null;
+      });
+  ask.then(function (s) {
+    polling = false;
+    if (!s) { netState(true); return; }
+    if (s.lost) { recheck(); return; }   // the manager switched this account off
+    netState(false);
+    state.sync.syncedAt = s.synced_at; state.sync.seenAt = s.seen_at;
+    if (s.version !== state.sync.version) reload().catch(function (e) { if (e && e.gone) sessionLost(); else netState(true); });
+    else paintHeader();
+  }, function (e) { polling = false; if (e && e.gone) sessionLost(); else netState(true); });
+}
+
+/* ---------- Signing in and out ---------- */
+function clearAccount() {
+  state.session = null; state.me = null; state.role = null; state.busy = false; state.peekId = null;
+  state.items = []; state.offers = []; state.people = []; state.events = []; state.cats = [];
+  state.sync.version = null;
+  save();
+}
+function sessionLost() {
+  if (isGuest()) return;
+  clearAccount();
+  state.screen = 'login'; state.authMsg = t('session_over');
+  closeSheet(); render();
+}
+/* After a sign-in, or when a saved session is picked up again: who is this, and what may they see. */
+function startSession() {
+  state.busy = true;
+  return api('POST', '/rest/v1/rpc/whoami', {}).then(function (r) {
+    if (!r.ok) throw { status: r.status };
+    if (!r.json) throw { gone: true };
+    state.me = r.json;
+    if (!r.json.active) { state.busy = false; state.role = null; state.screen = 'waiting'; render(); return null; }
+    state.role = r.json.role === 'admin' ? 'admin' : 'staff';
+    return fetchData().then(function (d) {
+      applyCloud(d);
+      state.busy = false; state.screen = 'app'; state.tab = 'items'; state.authMsg = '';
+      state.cat = 'all'; state.query = ''; state.brand = ''; state.cpu = ''; state.ram = ''; state.lowOnly = false; state.inStockOnly = true;
+      lastAct = Date.now();
+      render(); window.scrollTo(0, 0); routeHash();
+    });
+  }).catch(function (e) {
+    state.busy = false;
+    if (e && e.gone) { sessionLost(); return; }
+    state.role = null; state.screen = 'offline'; render();
+  });
+}
+function signIn(email, password) {
+  if (state.busy) return;
+  state.busy = true; state.authMsg = ''; state.email = email;
+  paintSignIn();
+  http('POST', '/auth/v1/token?grant_type=password', { body: { email: email, password: password } }).then(function (r) {
+    if (r.ok && r.json && r.json.access_token) { setSession(r.json); state.role = null; state.items = []; state.screen = 'boot'; render(); return startSession(); }
+    state.busy = false;
+    state.authMsg = t(r.status === 429 ? 'too_many' : (r.status >= 400 && r.status < 500 ? 'bad_login' : 'net_fail'));
+    paintSignIn();
+  }, function () { state.busy = false; state.authMsg = t('net_fail'); paintSignIn(); });
+}
+/* The app opens as a store for everyone. When the manager has closed the guest door, the sign-in form shows instead. */
+function enterGuest() {
+  if (state.busy) return;
+  state.role = 'guest'; state.busy = true; state.screen = 'boot'; state.inStockOnly = true; state.lowOnly = false;
+  render();
+  fetchData().then(function (d) {
+    applyCloud(d);
+    state.busy = false;
+    if (!state.guestOn) { state.role = null; state.items = []; state.screen = 'login'; state.authMsg = ''; render(); return; }
+    state.screen = 'app'; state.tab = 'items';
+    render(); window.scrollTo(0, 0); routeHash();
+  }, function () { state.busy = false; state.screen = 'offline'; render(); });
+}
+function signOut() {
+  flushLater();
+  var s = state.session;
+  if (s && s.at) http('POST', '/auth/v1/logout?scope=local', { token: s.at }).catch(function () { /* the saved session is dropped either way */ });
+  clearAccount();
+  state.authMsg = ''; state.cat = 'all'; state.query = ''; state.brand = ''; state.cpu = ''; state.ram = '';
+  closeSheet();
+  enterGuest();   // back to the store, as any visitor
+}
+/* The cloud stopped answering this account: find out whether it was switched off. */
+function recheck() {
+  api('POST', '/rest/v1/rpc/whoami', {}).then(function (r) {
+    if (r.ok && r.json && !r.json.active) { state.me = r.json; state.role = null; state.screen = 'waiting'; closeSheet(); render(); }
+    else if (r.ok && r.json && r.json.active && state.screen === 'waiting') startSession();
+  }, function (e) { if (e && e.gone) sessionLost(); });
+}
+/* Shop name and the guest switch, read before anyone signs in. */
+function fetchPublic() {
+  http('GET', '/rest/v1/app_settings?select=key,value').then(function (r) {
+    if (!r.ok || !Array.isArray(r.json) || state.role) return;
+    applySettings(r.json);
+    var g = $('#guest-box'), n = $('#shop-line');
+    if (g) g.hidden = !state.guestOn;
+    if (n) n.textContent = state.shop.name;
+  }, function () { /* the sign-in screen works without it */ });
+}
+
+/* ---------- Writing (manager) ----------
+   The screen changes at once; if the cloud refuses or cannot be reached, the manager is told and the
+   screen goes back to what the cloud holds. */
+function sent(promise) {
+  return promise.then(function (r) {
+    if (!r.ok) throw r;
+    setTimeout(poll, 1200);
+    return r;
+  }).catch(function (e) {
+    if (e && e.gone) { sessionLost(); return null; }
+    toast(t(e && e.json && /only manager/.test(e.json.message || '') ? 'last_admin' : 'save_fail'));
+    reload().catch(function () { /* still offline: the next successful check repairs the screen */ });
+    return null;
+  });
+}
+var laterJobs = {};
+function later(key, fn) {
+  if (laterJobs[key]) clearTimeout(laterJobs[key].timer);
+  laterJobs[key] = { fn: fn, timer: setTimeout(function () { delete laterJobs[key]; fn(); }, 700) };
+}
+function flushLater() {
+  Object.keys(laterJobs).forEach(function (k) { clearTimeout(laterJobs[k].timer); var fn = laterJobs[k].fn; delete laterJobs[k]; fn(); });
+}
+function savePricing(id) {
+  var rid = Number(id.slice(1)), manual = Number(state.pricing.manual[id]) || 0, extra = Number(state.pricing.extra[id]) || 0;
+  sent(manual > 0 || extra > 0
+    ? api('POST', '/rest/v1/item_pricing?on_conflict=item_id', [{ item_id: rid, manual_price: manual > 0 ? manual : null, extra: extra }], 'resolution=merge-duplicates,return=minimal')
+    : api('DELETE', '/rest/v1/item_pricing?item_id=eq.' + rid, undefined, 'return=minimal'));
+}
+function saveGroup(cat) {
+  later('group-' + cat, function () {
+    var m = state.pricing.margins[cat], hidden = !!state.pricing.hidden[cat], has = m >= 0;
+    sent(has || hidden
+      ? api('POST', '/rest/v1/group_pricing?on_conflict=group_id', [{ group_id: Number(cat), margin: has ? Number(m) : null, hidden: hidden }], 'resolution=merge-duplicates,return=minimal')
+      : api('DELETE', '/rest/v1/group_pricing?group_id=eq.' + Number(cat), undefined, 'return=minimal'));
+  });
+}
+function saveRules() {
+  later('rules', function () { sent(api('PATCH', '/rest/v1/pricing_rules?id=eq.1', { default_margin: state.pricing.defMargin }, 'return=minimal')); });
+}
+function saveSetting(key) {
+  var scope = key === 'floor' ? 'staff' : 'public';
+  later('set-' + key, function () {
+    var value = key === 'shop' ? { name: state.shop.name, phone: state.shop.phone, note: state.shop.note, validDays: state.shop.validDays }
+      : key === 'guest' ? { enabled: state.guestOn }
+      : key === 'money' ? { sypMode: state.sypMode }
+      : { maxDiscount: state.maxDiscount, lowAt: state.pricing.lowAt, mode: state.floorMode, codeWord: state.codeWord };
+    sent(api('POST', '/rest/v1/app_settings?on_conflict=key', [{ key: key, scope: scope, value: value }], 'resolution=merge-duplicates,return=minimal'));
+  });
+}
+function addOffers(rows) {
+  return sent(api('POST', '/rest/v1/offers', rows, 'return=representation')).then(function (r) {
+    if (!r || !Array.isArray(r.json)) return 0;
+    r.json.forEach(function (o) { state.offers.unshift({ id: o.id, supplier: o.supplier, name: o.name, price: Number(o.price), cur: o.cur === 'SYP' ? 'SYP' : 'USD' }); });
+    return r.json.length;
+  });
+}
+function removeOffer(id) { sent(api('DELETE', '/rest/v1/offers?id=eq.' + encodeURIComponent(id), undefined, 'return=minimal')); }
+function setPerson(id, patch) { return sent(api('PATCH', '/rest/v1/profiles?id=eq.' + encodeURIComponent(id), patch, 'return=minimal')); }
+
+/* ---------- Icons (24px stroke set) ---------- */
+var ICONS = {
+  box: 'M3 8l9-5 9 5v8l-9 5-9-5V8z M3 8l9 5 9-5 M12 13v8',
+  tag: 'M3 12V4h8l10 10-8 8L3 12z M7.5 8.5h.01',
+  list: 'M6 3h12v18l-3-2-3 2-3-2-3 2V3z M9 8h6 M9 12h6',
+  pulse: 'M3 12h4l3-8 4 16 3-8h4',
+  sliders: 'M4 7h10 M18 7h2 M4 17h4 M12 17h8 M16 5v4 M10 15v4',
+  search: 'M11 4a7 7 0 1 0 0 14a7 7 0 0 0 0-14z M20 20l-4-4',
+  lock: 'M6 11h12v9H6z M9 11V8a3 3 0 0 1 6 0v3',
+  user: 'M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8z M4 21c1-4 4-6 8-6s7 2 8 6',
+  plus: 'M12 5v14 M5 12h14',
+  copy: 'M9 9h11v11H9z M5 15V4h11',
+  chat: 'M4 5h16v11H9l-5 4V5z',
+  x: 'M6 6l12 12 M18 6L6 18',
+  dots: 'M5 11a1 1 0 1 0 0 2a1 1 0 0 0 0-2z M12 11a1 1 0 1 0 0 2a1 1 0 0 0 0-2z M19 11a1 1 0 1 0 0 2a1 1 0 0 0 0-2z',
+  finger: 'M12 10v5 M8.5 15.5c0-3.5.2-7.5 3.5-7.5s3.5 4 3.5 7.5 M5.5 13.5C5.5 8.5 7.5 5 12 5s6.5 3.5 6.5 8.5 M9.5 19.5c.8-1 1.2-2.4 1.2-4 M14.3 19.8c.4-1 .7-2.2.8-3.5',
+  back: 'M15 6l-6 6 6 6',
+  file: 'M7 3h7l4 4v14H7z M14 3v4h4 M10 13h5 M10 17h5',
+  send: 'M4 12l16-8-6 16-3-7z',
+  print: 'M7 9V4h10v5 M7 17H4v-7h16v7h-3 M7 14h10v6H7z',
+  refresh: 'M20 12a8 8 0 1 1-2.5-5.8 M20 4v5h-5',
+  cart: 'M3 5h2.5l2.2 10h9.6l2.2-7H7 M9.5 19.5h.01 M16.5 19.5h.01',
+  home: 'M4 11l8-7 8 7 M6 10v10h12V10 M10 20v-5h4v5',
+  laptop: 'M5 5h14v10H5z M2.5 18.5h19',
+  mouse: 'M12 3a5 5 0 0 1 5 5v8a5 5 0 0 1-10 0V8a5 5 0 0 1 5-5z M12 7v3',
+  keyboard: 'M3 7h18v10H3z M7 11h.01 M11 11h.01 M15 11h.01 M7.5 14h9',
+  bag: 'M5 8h14l1 12H4L5 8z M9 8V6a3 3 0 0 1 6 0v2',
+  plug: 'M9 3v5 M15 3v5 M6 8h12v3a6 6 0 0 1-12 0V8z M12 17v4',
+  headset: 'M4 14v-2a8 8 0 0 1 16 0v2 M4 14h3v5H5a1 1 0 0 1-1-1v-4z M20 14h-3v5h2a1 1 0 0 0 1-1v-4z',
+  speaker: 'M7 3h10v18H7z M12 11a3 3 0 1 0 0 6a3 3 0 0 0 0-6z M12 7h.01',
+  watch: 'M8 7h8v10H8z M9 7l1-4h4l1 4 M9 17l1 4h4l1-4 M12 10v2.5l1.5 1',
+  chip: 'M7 7h10v10H7z M10 3v4 M14 3v4 M10 17v4 M14 17v4 M3 10h4 M3 14h4 M17 10h4 M17 14h4',
+  drive: 'M4 5h16v14H4z M4 14h16 M8 17h.01 M12 17h4',
+  monitor: 'M3 5h18v11H3z M9 20h6 M12 16v4',
+  battery: 'M3 8h15v8H3z M21 11v2 M7 11v2 M10.5 11v2',
+  fan: 'M12 9a3 3 0 1 0 0 6a3 3 0 0 0 0-6z M12 9V3.5a3 3 0 0 1 3 3 M15 12h5.5a3 3 0 0 1-3 3 M12 15v5.5a3 3 0 0 1-3-3 M9 12H3.5a3 3 0 0 1 3-3',
+  cable: 'M9 3v5 M15 3v5 M7 8h10v4a5 5 0 0 1-5 5v4',
+  shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z M9 12l2 2 4-4',
+  wifi: 'M3.5 9.5a12 12 0 0 1 17 0 M6.5 13a8 8 0 0 1 11 0 M9.5 16.5a4 4 0 0 1 5 0 M12 20h.01',
+  scan: 'M4 6v12 M7.5 6v12 M11 6v12 M13.5 6v12 M17 6v12 M20 6v12',
+  wrench: 'M14.5 5.5a4.5 4.5 0 0 0-5.3 5.8L4 16.5 7.5 20l5.2-5.2a4.5 4.5 0 0 0 5.8-5.3l-3 3-2.5-2.5 3-3a4.5 4.5 0 0 0-1.5-1.5z',
+  gamepad: 'M7 8h10a4 4 0 0 1 4 4v2.5a2.5 2.5 0 0 1-4.6 1.4L15.5 14h-7l-.9 1.9A2.5 2.5 0 0 1 3 14.5V12a4 4 0 0 1 4-4z M8 10v3 M6.5 11.5h3 M16 11h.01'
+};
+function icon(name, size) {
+  var s = size || 20;
+  return '<svg class="ic" width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="none" d="' + ICONS[name] + '"/></svg>';
+}
+
+/* ---------- Fingerprint or face unlock (the device's own check) ----------
+   It protects the saved session on this device: when it is on, the app asks for the fingerprint or the
+   face each time it opens and after a quiet period. The password is still what the cloud checks. */
+function rnd(n) { var a = new Uint8Array(n); crypto.getRandomValues(a); return a; }
+function b64(buf) { return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))); }
+function unb64(s) { var bin = atob(s), a = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return a; }
+function bioId() { return state.session ? state.bio.ids[state.session.uid] : null; }
+function bioCheck() {
+  function done(ok) {
+    state.bio.supported = !!ok;
+    if (state.screen === 'app' && state.tab === 'settings') softRepaint();
+  }
+  try {
+    if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+      PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(done, function () { done(false); });
+      return;
+    }
+  } catch (e) { /* treated as not supported */ }
+  done(false);
+}
+function bioEnroll() {
+  var s = state.session;
+  if (!s) return;
+  try {
+    navigator.credentials.create({ publicKey: {
+      challenge: rnd(32), rp: { name: 'Raff' },
+      user: { id: rnd(16), name: s.email || 'raff', displayName: (state.me && state.me.name) || s.email || 'Raff' },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+      timeout: 60000
+    } }).then(function (cred) {
+      state.bio.ids[s.uid] = b64(cred.rawId);
+      save(); toast(t('bio_on')); paintTab();
+    }, function () { toast(t('bio_blocked2')); });
+  } catch (e) { toast(t('bio_blocked2')); }
+}
+function bioUnlock() {
+  var id = bioId();
+  if (!id) { unlocked(); return; }
+  try {
+    navigator.credentials.get({ publicKey: {
+      challenge: rnd(32), userVerification: 'required', timeout: 60000,
+      allowCredentials: [{ type: 'public-key', id: unb64(id) }]
+    } }).then(unlocked, function () { toast(t('bio_fail2')); });
+  } catch (e) { toast(t('bio_fail2')); }
+}
+function unlocked() {
+  lastAct = Date.now();
+  if (state.role) { state.screen = 'app'; render(); poll(); }   // locked while in use: the data is still here
+  else { state.screen = 'boot'; render(); startSession(); }     // locked at start: load now
+}
+function lockApp() {
+  state.screen = 'locked'; state.peekId = null;
+  closeSheet(); render(); window.scrollTo(0, 0);
+}
+
+/* ---------- Screens before the app ---------- */
+function brand() {
+  return '<div class="login-brand"><span class="logo">' + icon('tag', 30) + '</span><h1 id="shop-line">' + esc(state.shop.name) + '</h1><p>' + t('store_tagline') + '</p></div>';
+}
+function langBtn() {
+  var other = state.lang === 'ar' ? 'en' : 'ar';
+  return '<button class="btn ghost" data-action="lang">' + LOCALES[other].lang_name + '</button>';
+}
+function loginHtml() {
+  return '<div class="gutter"><div class="login">' + brand() +
+    '<div><h2 class="h">' + t('signin_title') + '</h2><p class="sub">' + t('signin_sub') + '</p></div>' +
+    '<form class="signin" data-form="signin" novalidate>' +
+    '<div class="field"><label for="si-email">' + t('email') + '</label><input class="input" id="si-email" type="email" inputmode="email" dir="ltr" autocomplete="username" autocapitalize="none" spellcheck="false" required value="' + esc(state.email || '') + '"></div>' +
+    '<div class="field"><label for="si-pass">' + t('password') + '</label><input class="input" id="si-pass" type="password" dir="ltr" autocomplete="current-password" required></div>' +
+    '<p class="msg" id="si-msg" role="alert">' + esc(state.authMsg) + '</p>' +
+    '<button class="btn primary" id="si-go" type="submit"' + (state.busy ? ' disabled' : '') + '>' + icon('lock', 18) + '<span>' + t(state.busy ? 'signing_in' : 'signin_btn') + '</span></button></form>' +
+    '<div id="guest-box"' + (state.guestOn ? '' : ' hidden') + ' class="stack"><div class="or">' + t('or') + '</div>' +
+    '<button class="btn" data-action="guest">' + icon('back', 18) + t('back_store') + '</button></div>' +
+    '<div class="row">' + langBtn() + '</div></div></div>';
+}
+function paintSignIn() {
+  var b = $('#si-go'), m = $('#si-msg');
+  if (!b) { render(); return; }
+  b.disabled = state.busy;
+  b.lastChild.textContent = t(state.busy ? 'signing_in' : 'signin_btn');
+  m.textContent = state.authMsg;
+}
+function noticeHtml(ic, title, text, buttons) {
+  return '<div class="gutter"><div class="login center"><span class="logo">' + icon(ic, 30) + '</span>' +
+    '<div><h2 class="h">' + title + '</h2>' + (text ? '<p class="sub">' + text + '</p>' : '') + '</div>' + buttons + '</div></div>';
+}
+function bootHtml() {
+  return '<div class="gutter"><div class="login center"><span class="spin" role="status" aria-label="' + t('loading') + '"></span><p class="sub">' + t('loading') + '</p></div></div>';
+}
+function outBtn() { return '<button class="btn ghost danger" data-action="logout">' + t('sign_out') + '</button>'; }
+function waitHtml() {
+  return noticeHtml('user', t('wait_title'), t('wait_text', { email: '<span class="code">' + esc((state.session && state.session.email) || '') + '</span>' }),
+    '<button class="btn primary" data-action="recheck">' + icon('refresh', 18) + t('wait_check') + '</button>' + outBtn());
+}
+function lockHtml() {
+  return noticeHtml('lock', t('lock_title'), t('lock_text'),
+    '<button class="btn primary" data-action="unlock">' + icon('finger', 20) + t('unlock_btn') + '</button>' + outBtn());
+}
+function offlineHtml() {
+  return noticeHtml('pulse', t('no_net'), t('net_fail'),
+    '<button class="btn primary" data-action="retry">' + icon('refresh', 18) + t('retry') + '</button>' + outBtn());
+}
+
+/* ---------- Shell ----------
+   A guest sees a storefront: shop name, search, a request basket and, in the corner, the staff door.
+   An account sees the same shelves with its own extras, plus the work tabs at the bottom. */
+function shellHtml() {
+  var guest = isGuest();
+  var tabs = isAdmin() ? ['items', 'quote', 'offers', 'overview', 'settings'] : (guest ? [] : ['items', 'quote', 'settings']);
+  var icons = { items: 'box', quote: 'list', offers: 'tag', overview: 'pulse', settings: 'sliders' };
+  var head = '<button class="brandbtn" data-action="home" aria-label="' + esc(state.shop.name) + '"><span class="logo sm">' + icon('tag', 18) + '</span>' +
+    '<span class="brandmark" dir="auto">' + esc(state.shop.name) + '</span></button>';
+  if (guest) {
+    head += '<span class="grow"></span>' +
+      '<button class="iconbtn" data-action="cart" aria-label="' + t('request_title') + '">' + icon('cart', 22) + '<i class="badge" id="qbadge" hidden></i></button>' +
+      '<button class="iconbtn" data-action="account" aria-label="' + t('staff_signin') + '" title="' + t('staff_signin') + '">' + icon('user', 22) + '</button>';
+  } else {
+    head += '<span class="role' + (isAdmin() ? ' is-admin' : '') + '">' + t('role_' + state.role) + '</span><span class="sync" id="sync"></span>' +
+      '<button class="rate" id="rate-chip" data-action="rate" aria-label="' + t('rate_chip_label') + '"' + (isAdmin() ? '' : ' disabled') + '></button>';
+  }
+  return '<div class="shell ' + (guest ? 'guest' : 'member') + '"><header class="top"><div class="top-in gutter">' + head + '</div>' +
+    (state.tab === 'items' ? '<div class="top-in gutter searchrow"><label class="search grow" for="q">' + icon('search') + '<input id="q" type="search" data-input="q" autocomplete="off" enterkeyhint="search" placeholder="' +
+      esc(t('search_ph')) + '" value="' + esc(state.query) + '"></label></div>' : '') +
+    '<div class="demo-strip" id="strip" hidden></div></header>' +
+    '<main class="gutter" id="main"></main></div>' +
+    (tabs.length ? '<nav class="nav" aria-label="Main"><div class="nav-in">' + tabs.map(function (k) {
+      return '<button data-action="tab" data-tab="' + k + '"' + (state.tab === k ? ' aria-current="page"' : '') + '>' + icon(icons[k], 22) +
+        '<span>' + t('tab_' + k) + '</span>' + (k === 'quote' ? '<i class="badge" id="qbadge" hidden></i>' : '') + '</button>';
+    }).join('') + '</div></nav>' : '');
+}
+/* The shop computer says "I am here" every minute; three silent minutes mean it is off or offline. */
+function pcOnline() { var s = state.sync.seenAt ? new Date(state.sync.seenAt).getTime() : 0; return s > 0 && Date.now() - s < 180000; }
+function paintHeader() {
+  var s = $('#sync'), strip = $('#strip'), chip = $('#rate-chip');
+  if (!strip) return;
+  var on = pcOnline() && !state.sync.failed;
+  if (s) {
+    s.innerHTML = '<i class="dot' + (on ? '' : ' off') + '"></i>' + t(state.sync.failed ? 'no_net' : (on ? 'live' : 'paused')) +
+      (state.sync.syncedAt ? ' · <span class="code">' + esc(when(state.sync.syncedAt)) + '</span>' : '');
+    s.title = t(state.sync.failed ? 'no_net' : (on ? 'pc_on' : 'pc_off'));
+  }
+  if (chip) chip.textContent = state.rate > 0 ? '$1 = ' + sypOf(1) : '';
+  var stale = !isGuest() && !state.sync.failed && !pcOnline() && state.sync.syncedAt;   // staff need to know; a customer does not
+  strip.hidden = !stale;
+  if (stale) strip.textContent = t('stale_strip', { time: when(state.sync.syncedAt) });
+}
+function paintBadge() {
+  var b = $('#qbadge');
+  if (!b) return;
+  var n = quoteLines().length;
+  b.textContent = n;
+  b.hidden = !n;
+}
+function render() {
+  document.documentElement.lang = state.lang;
+  document.documentElement.dir = state.lang === 'ar' ? 'rtl' : 'ltr';
+  document.title = state.shop.name || 'Kouki Technology';
+  var root = $('#root'), before = { boot: bootHtml, login: loginHtml, waiting: waitHtml, locked: lockHtml, offline: offlineHtml };
+  document.body.classList.toggle('no-nav', state.screen !== 'app' || isGuest());
+  if (state.screen !== 'app') { root.innerHTML = before[state.screen](); return; }
+  root.innerHTML = shellHtml();
+  paintTab();
+  paintBadge();
+}
+function paintTab() {
+  var m = $('#main');
+  if (!m) return;
+  var open = isAdmin() ? null : (isGuest() ? { items: 1, quote: 1 } : { items: 1, quote: 1, settings: 1 });
+  if (open && !open[state.tab]) state.tab = 'items';
+  var views = { items: viewItems, quote: viewQuote, offers: viewOffers, overview: viewOverview, settings: viewSettings };
+  m.innerHTML = views[state.tab]();
+  if (state.tab === 'items') paintItems();
+  if (state.tab === 'offers') { paintDraft(); paintOffers(); }
+  paintHeader();
+}
+/* New data arrived while the app is open: refresh what is on screen without disturbing someone who is typing. */
+function softRepaint() {
+  if (state.screen !== 'app') return;
+  var a = document.activeElement, typing = !!a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.id !== 'q';
+  paintHeader(); paintBadge();
+  if (state.tab === 'items') paintItems();
+  else if (!typing) paintTab();
+  if (state.sheetId) {   // an open item is redrawn only when something shown in it changed
+    var it = byId(state.sheetId);
+    if (!it) closeSheet(); else if (!typing && sheetSig(it) !== state.sheetSig) openItem(state.sheetId);
+  }
+}
+function sheetSig(it) { return [it.name, it.sell, it.qty, it.cost, it.pending, it.stock, state.rate, state.sypMode, state.lang].join('|'); }
+
+/* ---------- Store: home shelves, or a list with order and filters ---------- */
+function isHome() { return isGuest() && state.cat === 'all' && !state.query.trim() && !state.brand && !state.cpu && !state.ram; }
+function viewItems() { return '<div id="store" class="stack"></div>'; }
+/* Group + search + stock switches; the brand and spec chips are counted on this list and then narrow it. */
+function baseItems() {
+  var q = normalize(state.query).split(' ').filter(Boolean);
+  return state.items.filter(function (it) {
+    return (state.cat === 'all' || it.cat === state.cat) &&
+      (!state.inStockOnly || it.qty > 0) && (!state.lowOnly || isGuest() || stockState(it) === 'low') &&
+      q.every(function (tok) { return it._hay.indexOf(tok) !== -1; });
+  });
+}
+function narrow(list) {
+  return list.filter(function (it) {
+    return (!state.brand || it.brand === state.brand) && (!state.cpu || (it.sp && it.sp.cpu === state.cpu)) && (!state.ram || (it.sp && String(it.sp.ram) === state.ram));
+  });
+}
+function visibleItems() { return narrow(baseItems()); }
+function catKind(c) {
+  var n = normalize(catName(c)), i;
+  for (i = 0; i < GROUP_ICONS.length; i++) if (GROUP_ICONS[i].re.test(n)) return GROUP_ICONS[i].icon;
+  for (i = 0; i < KINDS.length; i++) if (KINDS[i].re.test(n)) return KINDS[i].icon;
+  return 'box';
+}
+function catStrip() {
+  return '<div class="chips cats" role="group">' + [{ id: 'all', name: t('all'), ic: 'home' }].concat(state.cats.map(function (c) {
+    return { id: c.id, name: catName(c), ic: catKind(c) };
+  })).map(function (c) {
+    return '<button class="chip cat" data-action="cat" data-cat="' + esc(c.id) + '" aria-pressed="' + (state.cat === c.id) + '">' + icon(c.ic, 18) + '<span dir="auto">' + esc(c.name) + '</span></button>';
+  }).join('') + '</div>';
+}
+function shelf(title, list, cat) {
+  return '<section class="shelf"><div class="row"><h2 class="h grow" dir="auto">' + esc(title) + '</h2>' +
+    (cat ? '<button class="btn ghost sm" data-action="cat" data-cat="' + esc(cat) + '">' + t('see_all') + '</button>' : '') + '</div>' +
+    '<div class="shelf-row">' + list.map(function (it) { return itemCard(it); }).join('') + '</div></section>';
+}
+function homeHtml() {
+  var stock = state.items.filter(function (it) { return it.qty > 0 && hasPrice(it); }), fresh = sortedBy('new', stock);
+  var h = '<section class="hero"><div><h1>' + esc(state.shop.name) + '</h1><p>' + t('store_tagline') + '</p></div>' +
+    '<div class="hero-meta"><span class="note">' + t('in_stock_now', { n: stock.length }) + '</span>' +
+    (state.rate > 0 ? '<span class="note code">$1 = ' + sypOf(1) + '</span>' : '') + '</div>' +
+    (state.shop.phone ? '<a class="btn" target="_blank" rel="noopener" href="' + esc(shopWa(state.shop.name)) + '">' + icon('chat', 18) + t('whatsapp') + '</a>' : '') + '</section>';
+  if (!stock.length) return h + '<p class="empty">' + t('no_items') + '</p>';
+  h += shelf(t('new_arrivals'), fresh.slice(0, 12), null);
+  state.cats.forEach(function (c) {
+    var list = fresh.filter(function (it) { return it.cat === c.id; });
+    if (list.length) h += shelf(catName(c), list.slice(0, 12), c.id);
+  });
+  return h;
+}
+function sortedBy(mode, list) { var keep = state.sort; state.sort = mode; var out = sorted(list); state.sort = keep; return out; }
+function chipRow(action, attr, options, current) {
+  return options.map(function (o) {
+    return '<button class="chip" data-action="' + action + '" data-' + attr + '="' + esc(o.v) + '" aria-pressed="' + (String(current) === String(o.v)) + '">' + esc(o.label) + '</button>';
+  }).join('');
+}
+function listHtml() {
+  var base = baseItems(), list = sorted(narrow(base)), rest = list.length - state.limit;
+  var brands = facet(base, function (it) { return it.brand; }, 2).slice(0, 10), cpus = facet(base, function (it) { return it.sp && it.sp.cpu; }, 1),
+    rams = facet(base, function (it) { return it.sp && it.sp.ram; }, 1).sort(function (a, b) { return a.v - b.v; });
+  var label = {};
+  BRANDS.forEach(function (b) { label[b.id] = b.label; });
+  var filters = '<button class="chip" data-action="instock" aria-pressed="' + state.inStockOnly + '">' + t('in_stock_only') + '</button>' +
+    (isGuest() ? '' : '<button class="chip" data-action="low" aria-pressed="' + state.lowOnly + '">' + t('low_only') + '</button>') +
+    (cpus.length > 1 ? chipRow('cpu', 'v', cpus.map(function (c) { return { v: c.v, label: c.v === 'ryzen' ? 'Ryzen' : (/^i\d$/.test(c.v) ? 'Core ' + c.v : c.v.charAt(0).toUpperCase() + c.v.slice(1)) }; }), state.cpu) : '') +
+    (rams.length > 1 ? chipRow('ram', 'v', rams.map(function (r) { return { v: r.v, label: r.v + 'GB' }; }), state.ram) : '') +
+    (brands.length > 1 ? chipRow('brand', 'v', brands.map(function (b) { return { v: b.v, label: label[b.v] || b.v }; }), state.brand) : '');
+  return '<div class="toolbar"><span class="sub grow">' + t('results_n', { n: list.length }) + '</span>' +
+    '<label class="sortbox"><span class="sub">' + t('sort_by') + '</span><select class="select" id="sort" data-change="sort" aria-label="' + t('sort_by') + '">' +
+    ['new', 'low', 'high', 'name'].map(function (s) { return '<option value="' + s + '"' + (state.sort === s ? ' selected' : '') + '>' + t('sort_' + s) + '</option>'; }).join('') + '</select></label></div>' +
+    '<div class="chips" role="group">' + filters + '</div>' +
+    '<div class="grid store" id="item-list">' + (list.length
+      ? list.slice(0, state.limit).map(function (it) { return itemCard(it); }).join('') +
+        (rest > 0 ? '<button class="btn more" data-action="more">' + t('more') + ' (' + rest + ')</button>' : '')
+      : '<p class="empty">' + t('no_items') + '</p>' +
+        (state.inStockOnly && narrow(baseAll()).length ? '<button class="btn more" data-action="instock">' + t('show_out') + '</button>' : '')) + '</div>';
+}
+/* The same list without the "in stock only" switch: tells an empty shelf from a shelf that is only sold out. */
+function baseAll() { var keep = state.inStockOnly; state.inStockOnly = false; var out = baseItems(); state.inStockOnly = keep; return out; }
+function paintItems() {
+  var el = $('#store');
+  if (!el) return;
+  var row = el.querySelector('.cats'), x = row ? row.scrollLeft : 0;
+  el.innerHTML = catStrip() + (isHome() ? homeHtml() : listHtml());
+  row = el.querySelector('.cats');
+  if (row && x) row.scrollLeft = x;
+}
+
+/* ---------- One item on a shelf ---------- */
+/* Employees only: the lowest price carries no label and does not stay on screen. */
+function floorHtml(it) {
+  if (!hasPrice(it)) return '';
+  var f = floorPrice(it);
+  if (state.floorMode === 'code') return '<span class="fcode code">' + esc(encodePrice(f)) + '</span>';
+  if (state.peekId === it.id) return '<span class="floor code"><b>' + usd(f) + '</b> · ' + sypOf(f) + '</span>';
+  return '<button class="peek" data-action="peek" data-id="' + it.id + '" aria-label="' + t('floor_show') + '">' + icon('dots', 18) + '</button>';
+}
+var peekTimer;
+function refreshPeek() {
+  if (state.tab === 'items') paintItems();
+  if (state.sheetId) openItem(state.sheetId);
+}
+function peek(id) {
+  state.peekId = id;
+  refreshPeek();
+  clearTimeout(peekTimer);
+  peekTimer = setTimeout(function () { state.peekId = null; refreshPeek(); }, 3000);
+}
+function priceHtml(it, big) {
+  var b = big ? ' big' : '';
+  if (!hasPrice(it)) return '<span class="tag none' + b + '">' + t(isGuest() ? 'ask_price' : 'no_price') + '</span>';
+  return '<span class="tag' + b + '">' + usd(it.sell) + '</span><span class="syp' + b + '">' + sypOf(it.sell) + '</span>';
+}
+function coverHtml(it, big) {
+  return '<span class="cover k-' + it.tint + (big ? ' big' : '') + '">' + icon(it.kind, big ? 72 : 44) +
+    (it.brandName ? '<b class="cbrand">' + esc(it.brandName) + '</b>' : '') + '</span>';
+}
+function chipsHtml(it, all) {
+  var list = all ? it.chips : it.chips.slice(0, 3);
+  return list.length ? '<span class="specs">' + list.map(function (c) { return '<i>' + esc(c) + '</i>'; }).join('') + '</span>' : '';
+}
+function itemCard(it) {
+  var extra = isAdmin()
+    ? '<div class="secret">' + icon('lock', 13) + t('cost') + ' <b>' + usd(it.cost) + '</b>' + (hasPrice(it) ? ' · <b>' + num(marginPct(it), 1) + '%</b>' : '') +
+      (it.pending ? ' <span class="pill low">' + t('pending') + '</span>' : '') + '</div>'
+    : '';
+  return '<article class="item pcard" data-card="' + it.id + '">' +
+    '<button class="item-main" data-action="open" data-id="' + it.id + '">' + coverHtml(it) +
+    '<span class="item-name" dir="auto">' + esc(it.name) + '</span>' + chipsHtml(it) +
+    '<span class="price">' + priceHtml(it) + '</span></button>' + extra +
+    '<div class="item-foot"><span class="pill ' + stockState(it) + '">' + stockLabel(it) + '</span>' + (isAdmin() || isGuest() ? '' : floorHtml(it)) +
+    '<button class="add" data-action="add" data-id="' + it.id + '" aria-label="' + addLabel() + '" title="' + addLabel() + '"' + (hasPrice(it) ? '' : ' disabled') + '>' + icon('plus', 18) + '</button></div></article>';
+}
+
+/* ---------- One item, opened ---------- */
+function addLabel() { return t(isGuest() ? 'add_request' : 'add_quote'); }
+function fact(k, v) { return '<div><dt>' + k + '</dt><dd>' + v + '</dd></div>'; }
+/* Manager only: where the cost comes from, and the stock held elsewhere. */
+function realFacts(it) {
+  var h = '', b = it.buy, sl = it.sale, cur;
+  function ltr(v) { return '<span class="code">' + esc(v) + '</span>'; }   // numbers and dates keep their own order inside Arabic text
+  if (b && b.usd > 0) {
+    cur = state.curs[b.cur];
+    h += fact(t('last_buy'), (b.cur && b.cur !== state.baseCur && b.curPrice > 0 ? ltr(num(b.curPrice, 2)) + ' ' + esc(cur ? cur.name : '') + ' = ' : '') +
+      ltr(usd(b.usd)) + (b.date ? ' · ' + ltr(b.date) : ''));
+  }
+  if (sl && sl.usd > 0) {
+    h += fact(t('last_sale'), ltr(usd(sl.usd)) + (sl.date ? ' · ' + ltr(sl.date) : '') + ' · ' + t('min_max', { a: ltr(usd(sl.min)), b: ltr(usd(sl.max)) }));
+  }
+  if (it.other.length) {
+    h += fact(t('other_wh'), it.other.map(function (o) { return '<span dir="auto">' + esc(o.wh) + ': ' + num(o.n, 0) + '</span>'; }).join(' · '));
+  }
+  return h;
+}
+function priceInputs(it) {
+  var extra = state.pricing.extra[it.id], manual = state.pricing.manual[it.id], auto = autoPrice(it);
+  var attrs = ' type="number" inputmode="decimal" min="0" step="any" data-id="' + it.id + '"';
+  return '<div class="qform even"><div class="field"><label for="px-extra">' + t('extra_cost') + '</label><input class="input" id="px-extra" data-change="extra"' + attrs + ' value="' + (extra > 0 ? extra : '') + '"></div>' +
+    '<div class="field"><label for="px-manual">' + t('manual_price') + '</label><input class="input" id="px-manual" data-change="manual"' + attrs + ' value="' + (manual > 0 ? manual : '') + '"></div></div>' +
+    '<p class="sub">' + t('auto_price', { p: auto === null ? t('no_price') : usd(auto) }) + '</p>';
+}
+function specFacts(it) {
+  var sp = it.sp, h = it.brandName ? fact(t('spec_brand'), esc(it.brandName)) : '';
+  function ltr(v) { return '<span class="code">' + esc(v) + '</span>'; }
+  if (!sp) return h;
+  h += fact(t('spec_cpu'), ltr(sp.cpuLabel) + (sp.gen ? ' · ' + t('spec_gen', { n: sp.gen }) : ''));
+  if (sp.ram) h += fact(t('spec_ram'), ltr(sp.ram + 'GB'));
+  if (sp.disk) h += fact(t('spec_storage'), ltr(sp.disk + (sp.diskKind ? ' ' + sp.diskKind : '')));
+  if (sp.gpu) h += fact(t('spec_gpu'), ltr(sp.gpu));
+  if (sp.screen) h += fact(t('spec_screen'), ltr(sp.screen) + (sp.touch ? ' · ' + t('spec_touch') : ''));
+  return h;
+}
+function openItem(id) {
+  var it = byId(id);
+  if (!it) return;
+  var priced = hasPrice(it), like = similarTo(it);
+  var facts = specFacts(it) + fact(t('code'), '<span class="code">' + esc(it.code) + '</span>') +
+    (isGuest() || !it.barcode ? '' : fact(t('barcode'), '<span class="code">' + esc(it.barcode) + '</span>')) +
+    fact(t('category'), '<span dir="auto">' + esc(catName(catOf(it))) + '</span>') +
+    (isAdmin() || isGuest() || !priced ? '' : fact(t('ref'), floorHtml(it)));
+  var html = '<div class="sheet product" role="dialog" aria-modal="true" aria-label="' + esc(it.name) + '">' +
+    '<div class="row"><h2 class="h grow" dir="auto">' + esc(it.name) + '</h2><button class="x" id="sheet-close" data-action="close" aria-label="' + t('close') + '">' + icon('x') + '</button></div>' +
+    coverHtml(it, true) +
+    '<div class="row">' + priceHtml(it, true) + '<span class="pill ' + stockState(it) + '">' + stockLabel(it) + '</span></div>' +
+    '<dl class="facts">' + facts + '</dl>';
+  if (isAdmin()) {
+    var best = bestOfferFor(it), f = floorPrice(it);
+    html += '<div class="private-box"><div class="row priv-title">' + icon('lock', 15) + t('admin_only') + '</div><dl class="facts">' +
+      fact(t('cost'), usd(it.cost) + ' · ' + sypOf(it.cost) + (it.pending ? ' <span class="pill low">' + t('pending') + '</span>' : '')) +
+      (priced ? fact(t('profit_unit'), usd(it.sell - it.cost)) + fact(t('margin'), num(marginPct(it), 1) + '%') + fact(t('floor'), usd(f) + ' · ' + sypOf(f)) : '') + '</dl>' +
+      '<dl class="facts one">' + fact(t('stock_value'), usd(it.cost * totalQty(it))) +
+      fact(t('best_offer'), best ? '<span dir="auto">' + esc(best.supplier) + '</span> · ' + usd(best.usd) + ' ' + cmpPill(best.usd, it.cost) : t('none_yet')) +
+      realFacts(it) + '</dl>' + priceInputs(it) + '</div>';
+  }
+  var line = it.name + (priced ? '\n' + usd(it.sell) + ' (' + sypOf(it.sell) + ')' : '');
+  html += '<div class="row"><button class="btn primary grow" data-action="add" data-id="' + it.id + '" data-close="1"' + (priced ? '' : ' disabled') + '>' + icon('plus', 18) + addLabel() + '</button>' +
+    (isGuest()
+      ? (state.shop.phone ? '<a class="btn grow" target="_blank" rel="noopener" href="' + esc(shopWa(t('ask_item', { name: it.name, code: it.code }) + '\n' + itemLink(it))) + '">' + icon('chat', 18) + t('ask_whatsapp') + '</a>' : '')
+      : '<a class="btn grow" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(line + '\n' + state.shop.name + '\n' + itemLink(it)) + '">' + icon('send', 18) + t('share_price') + '</a>') +
+    '<button class="btn" data-action="copylink" data-id="' + it.id + '">' + icon('copy', 18) + t('copy_link') + '</button></div>';
+  if (like.length) html += '<section class="shelf"><h3 class="h small">' + t('similar') + '</h3><div class="shelf-row">' + like.map(function (o) { return itemCard(o); }).join('') + '</div></section>';
+  html += '</div>';
+  var sh = $('#sheet');
+  sh.innerHTML = html;
+  sh.hidden = false;
+  var fresh = state.sheetId !== id;
+  state.sheetId = id;
+  state.sheetSig = sheetSig(it);
+  document.body.classList.add('lock');
+  setItemHash(it);
+  if (fresh) {
+    sh.firstChild.scrollTop = 0;
+    var c = $('#sheet-close');
+    if (c) c.focus();
+  }
+}
+function closeSheet(fromRoute) {
+  var sh = $('#sheet'), wasItem = !!state.sheetId;
+  sh.hidden = true;
+  sh.innerHTML = '';
+  state.sheetId = null;
+  document.body.classList.remove('lock');
+  if (wasItem && !fromRoute) clearItemHash();
+}
+
+/* ---------- Quote for a customer, or a guest's price request ---------- */
+function quoteText() {
+  var q = quoteCalc(), guest = isGuest(), who = state.quoteCustomer.trim();
+  var out = [state.shop.name, t(guest ? 'request_title' : 'quote_title') + ' ' + quoteNo() + ' · ' + new Date().toLocaleDateString('en-GB')];
+  if (!guest && who) out.push(t('customer') + ': ' + who);
+  q.lines.forEach(function (l) { out.push('- ' + l.it.name + ' × ' + l.n + ' = ' + usd(l.it.sell * l.n)); });
+  if (q.disc > 0) {
+    out.push(t('subtotal') + ': ' + usd(q.sub));
+    out.push(t('discount') + ' ' + num(q.pct, 1) + '%: -' + usd(q.disc));
+  }
+  out.push(t('total') + ': ' + usd(q.total) + ' (' + sypOf(q.total) + ')');
+  if (!guest) out.push(t('doc_valid', { n: state.shop.validDays }));
+  return out.join('\n');
+}
+function waLink(text, toShop) {
+  return 'https://wa.me/' + (toShop ? state.shop.phone.replace(/\D/g, '') : '') + '?text=' + encodeURIComponent(text);
+}
+function sumHtml(q) {
+  return (q.disc > 0
+    ? '<div class="sumline"><span>' + t('subtotal') + '</span><span class="code">' + usd(q.sub) + '</span></div>' +
+      '<div class="sumline"><span>' + t('discount') + ' ' + num(q.pct, 1) + '%</span><span class="code">-' + usd(q.disc) + '</span></div>'
+    : '') +
+    '<div class="total"><span>' + t('total') + '</span><span class="price"><span class="tag big">' + usd(q.total) + '</span><span class="syp big">' + sypOf(q.total) + '</span></span></div>';
+}
+function viewQuote() {
+  var q = quoteCalc(), guest = isGuest(), title = t(guest ? 'request_title' : 'quote_title');
+  var backBtn = guest ? '<button class="btn" data-action="home">' + icon('back', 18) + t('continue_shop') + '</button>' : '';
+  if (!q.lines.length) return '<section class="panel"><h2 class="h">' + title + '</h2><p class="empty">' + t(guest ? 'request_empty' : 'quote_empty') + '</p>' + backBtn + '</section>';
+  var rows = q.lines.map(function (l) {
+    var tot = l.it.sell * l.n;
+    return '<div class="qline"><div class="grow"><div class="nm" dir="auto">' + esc(l.it.name) + '</div><div class="meta"><span class="code">' + usd(l.it.sell) + ' × ' + l.n + '</span></div></div>' +
+      '<div class="price"><b class="qsum code">' + usd(tot) + '</b><span class="syp">' + sypOf(tot) + '</span></div>' +
+      '<div class="stepper"><button data-action="qdec" data-id="' + l.it.id + '" aria-label="-1">−</button><output>' + l.n + '</output>' +
+      '<button data-action="qinc" data-id="' + l.it.id + '" aria-label="+1">+</button></div></div>';
+  }).join('');
+  var text = quoteText();
+  var form = guest ? '' : '<div class="qform"><div class="field"><label for="q-cust">' + t('customer') + '</label><input class="input" id="q-cust" data-input="qcust" dir="auto" autocomplete="off" value="' + esc(state.quoteCustomer) + '"></div>' +
+    '<div class="field"><label for="q-disc">' + t('discount_pct') + '</label><input class="input" id="q-disc" data-input="qdisc" type="number" inputmode="decimal" min="0" max="100" step="any" value="' + (state.quoteDisc || '') + '"></div></div>';
+  var copyBtn = '<button class="btn grow" data-action="copy">' + icon('copy', 18) + t('copy') + '</button>';
+  var actions = guest
+    ? (state.shop.phone ? '<a class="btn primary grow" id="wa-link" target="_blank" rel="noopener" href="' + esc(waLink(text, true)) + '">' + icon('chat', 18) + t('send_shop') + '</a>' : '') + copyBtn
+    : '<button class="btn primary grow" data-action="doc">' + icon('file', 18) + t('pdf') + '</button>' + copyBtn +
+      '<a class="btn grow" id="wa-link" target="_blank" rel="noopener" href="' + esc(waLink(text, false)) + '">' + icon('chat', 18) + t('whatsapp') + '</a>';
+  return '<section class="panel"><h2 class="h">' + title + '</h2><div>' + rows + '</div>' + form + '<div id="q-sum">' + sumHtml(q) + '</div>' +
+    '<div class="row">' + actions + '<button class="btn ghost danger" data-action="qclear">' + t('clear') + '</button></div>' +
+    '<textarea class="input quote-text" id="quote-text" readonly dir="auto" hidden>' + esc(text) + '</textarea>' + backBtn + '</section>';
+}
+function paintQuoteSum() {
+  var el = $('#q-sum');
+  if (!el) return;
+  el.innerHTML = sumHtml(quoteCalc());
+  var text = quoteText(), a = $('#wa-link'), ta = $('#quote-text');
+  if (a) a.href = waLink(text, isGuest());
+  if (ta) ta.value = text;
+}
+function copyQuote() {
+  var text = quoteText();
+  function fail() {
+    var ta = $('#quote-text');
+    if (ta) { ta.hidden = false; ta.focus(); ta.select(); }
+    toast(t('copy_fail'));
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function () { toast(t('copied')); }, fail);
+  } else fail();
+}
+
+/* ---------- Printable quote: drawn on A4 canvases, shown as a preview, saved as a PDF or printed ----------
+   The browser shapes Arabic text on the canvas; each page then goes into the PDF as one JPEG. */
+var docPages = [];
+function fontsReady() {
+  try {
+    if (document.fonts && document.fonts.load) {
+      var all = Promise.all(['700 44px "Readex Pro"', '400 23px "IBM Plex Sans Arabic"', '600 23px "IBM Plex Sans Arabic"']
+        .map(function (f) { return document.fonts.load(f); })).then(null, function () {});
+      /* fonts that cannot be fetched must not hold the quote back */
+      return Promise.race([all, new Promise(function (res) { setTimeout(res, 2500); })]);
+    }
+  } catch (e) { /* draw with fallback fonts */ }
+  return Promise.resolve();
+}
+function drawQuotePages() {
+  var W = 1190, H = 1684, M = 84, rtl = state.lang === 'ar', q = quoteCalc();
+  var FB = '"IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif', FD = '"Readex Pro", ' + FB;
+  var INK = '#10242B', MUTE = '#5B6B72', LINE = '#D5DDE1', BAND = '#EEF3F4', TAG = '#FFD84D';   // ink on white paper
+  var pages = [], ctx, y;
+  function sx(d) { return rtl ? W - M - d : M + d; }   // d px in from the edge where a line starts
+  function ex(d) { return rtl ? M + d : W - M - d; }   // d px in from the edge where a line ends
+  function text(s, x, yy, font, color, side) {
+    s = String(s);
+    ctx.font = font;
+    ctx.fillStyle = color;
+    ctx.direction = /[֐-ࣿ]/.test(s) ? 'rtl' : 'ltr';
+    ctx.textAlign = side === 'center' ? 'center' : ((side === 'start') === rtl ? 'right' : 'left');
+    ctx.fillText(s, x, yy);
+  }
+  function wrap(s, font, maxW) {
+    ctx.font = font;
+    var lines = [], cur = '';
+    String(s).split(/\s+/).forEach(function (w) {
+      var next = cur ? cur + ' ' + w : w;
+      if (cur && ctx.measureText(next).width > maxW) { lines.push(cur); cur = w; } else cur = next;
+    });
+    if (cur) lines.push(cur);
+    return lines.slice(0, 3);
+  }
+  function rule(yy, color, h) { ctx.fillStyle = color; ctx.fillRect(M, yy, W - 2 * M, h); }
+  function newPage() {
+    var cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    ctx = cv.getContext('2d');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, W, H);
+    pages.push(cv);
+    text(state.shop.name, sx(0), M + 40, '700 44px ' + FD, INK, 'start');
+    if (state.shop.phone) text(state.shop.phone, sx(0), M + 78, '400 22px ' + FB, MUTE, 'start');
+    text(t('doc_title'), ex(0), M + 36, '600 34px ' + FD, INK, 'end');
+    text(t('doc_no') + ' ' + quoteNo(), ex(0), M + 72, '400 22px ' + FB, MUTE, 'end');
+    text(t('doc_date') + ' ' + new Date().toLocaleDateString('en-GB'), ex(0), M + 102, '400 22px ' + FB, MUTE, 'end');
+    rule(M + 124, TAG, 6);
+    y = M + 176;
+  }
+  function tableHead() {
+    rule(y - 32, BAND, 48);
+    var f = '600 22px ' + FB;
+    text(t('doc_item'), sx(16), y, f, INK, 'start');
+    text(t('doc_qty'), ex(430), y, f, INK, 'center');
+    text(t('doc_price'), ex(215), y, f, INK, 'end');
+    text(t('doc_total'), ex(16), y, f, INK, 'end');
+    y += 54;
+  }
+  function sumRow(label, value, strong) {
+    text(label, ex(250), y, (strong ? '600 26px ' : '400 23px ') + FB, INK, 'end');
+    text(value, ex(16), y, strong ? '700 30px ' + FD : '400 23px ' + FB, INK, 'end');
+    y += strong ? 46 : 38;
+  }
+  newPage();
+  var who = state.quoteCustomer.trim(), body = '400 23px ' + FB;
+  if (who) { text(t('customer') + ': ' + who, sx(0), y, '400 24px ' + FB, INK, 'start'); y += 52; }
+  tableHead();
+  q.lines.forEach(function (l) {
+    var lines = wrap(l.it.name, body, W - 2 * M - 506), rowH = lines.length * 32 + 26;
+    if (y + rowH > H - M - 80) { newPage(); tableHead(); }
+    lines.forEach(function (ln, k) { text(ln, sx(16), y + k * 32, body, INK, 'start'); });
+    text(l.n, ex(430), y, body, INK, 'center');
+    text(usd(l.it.sell), ex(215), y, body, INK, 'end');
+    text(usd(l.it.sell * l.n), ex(16), y, '600 23px ' + FB, INK, 'end');
+    rule(y + (lines.length - 1) * 32 + 18, LINE, 1);
+    y += rowH;
+  });
+  if (y + 260 > H - M - 80) newPage();
+  y += 24;
+  if (q.disc > 0) {
+    sumRow(t('subtotal'), usd(q.sub));
+    sumRow(t('discount') + ' ' + num(q.pct, 1) + '%', '-' + usd(q.disc));
+  }
+  sumRow(t('total'), usd(q.total), true);
+  text(sypOf(q.total), ex(16), y, '600 24px ' + FB, INK, 'end');
+  y += 38;
+  text(t('doc_rate') + ': $1 = ' + sypOf(1), ex(16), y, '400 20px ' + FB, MUTE, 'end');
+  pages.forEach(function (p, i) {
+    ctx = p.getContext('2d');
+    rule(H - M - 44, LINE, 1);
+    text(t('doc_valid', { n: state.shop.validDays }) + (state.shop.note ? ' ' + state.shop.note : ''), sx(0), H - M - 10, '400 20px ' + FB, MUTE, 'start');
+    text(t('doc_page', { a: i + 1, b: pages.length }), ex(0), H - M - 10, '400 20px ' + FB, MUTE, 'end');
+  });
+  return pages;
+}
+function strBytes(s) { var a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i) & 255; return a; }
+function dataUrlBytes(url) { return strBytes(atob(url.split(',')[1])); }
+/* Minimal PDF 1.4 writer: one A4 page per JPEG image. */
+function pdfFromJpegs(imgs) {
+  var parts = [], offs = [], pos = 0, total = 3 + imgs.length * 3;
+  function push(x) { var b = typeof x === 'string' ? strBytes(x) : x; parts.push(b); pos += b.length; }
+  function obj(n, body) { offs[n] = pos; push(n + ' 0 obj\n' + body + '\nendobj\n'); }
+  push('%PDF-1.4\n');
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2, '<< /Type /Pages /Kids [' + imgs.map(function (im, i) { return (3 + i * 3) + ' 0 R'; }).join(' ') + '] /Count ' + imgs.length + ' >>');
+  imgs.forEach(function (im, i) {
+    var p = 3 + i * 3, draw = 'q 595 0 0 842 0 0 cm /Im0 Do Q';
+    obj(p, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /XObject << /Im0 ' + (p + 1) + ' 0 R >> >> /Contents ' + (p + 2) + ' 0 R >>');
+    offs[p + 1] = pos;
+    push((p + 1) + ' 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + im.w + ' /Height ' + im.h +
+      ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + im.bytes.length + ' >>\nstream\n');
+    push(im.bytes);
+    push('\nendstream\nendobj\n');
+    obj(p + 2, '<< /Length ' + draw.length + ' >>\nstream\n' + draw + '\nendstream');
+  });
+  var xref = pos, table = 'xref\n0 ' + total + '\n0000000000 65535 f \n';
+  for (var n = 1; n < total; n++) table += ('0000000000' + offs[n]).slice(-10) + ' 00000 n \n';
+  push(table + 'trailer\n<< /Size ' + total + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF\n');
+  return new Blob(parts, { type: 'application/pdf' });
+}
+function buildPdf() {
+  return pdfFromJpegs(docPages.map(function (p) { return { w: p.width, h: p.height, bytes: dataUrlBytes(p.toDataURL('image/jpeg', 0.9)) }; }));
+}
+function pdfName() { return 'quote-' + quoteNo() + '.pdf'; }
+function pdfFile() { try { return new File([buildPdf()], pdfName(), { type: 'application/pdf' }); } catch (e) { return null; } }
+function canShareFile() {
+  try { var f = pdfFile(); return !!(f && navigator.canShare && navigator.share && navigator.canShare({ files: [f] })); } catch (e) { return false; }
+}
+function openDoc() {
+  fontsReady().then(function () {
+    docPages = drawQuotePages();
+    var sh = $('#sheet');
+    sh.innerHTML = '<div class="sheet doc" role="dialog" aria-modal="true" aria-label="' + t('doc_title') + '">' +
+      '<div class="row"><h2 class="h grow">' + t('doc_title') + ' <span class="code">' + quoteNo() + '</span></h2><button class="x" id="sheet-close" data-action="close" aria-label="' + t('close') + '">' + icon('x') + '</button></div>' +
+      '<div class="row"><button class="btn primary grow" data-action="pdfsave">' + icon('file', 18) + t('pdf_save') + '</button>' +
+      (canShareFile() ? '<button class="btn grow" data-action="pdfshare">' + icon('send', 18) + t('share_pdf') + '</button>' : '') +
+      '<button class="btn grow" data-action="print">' + icon('print', 18) + t('print') + '</button></div>' +
+      '<div class="doc-prev">' + docPages.map(function (p) { return '<img alt="" src="' + p.toDataURL('image/jpeg', 0.85) + '">'; }).join('') + '</div></div>';
+    sh.hidden = false;
+    state.sheetId = null;
+    document.body.classList.add('lock');
+  });
+}
+function savePdf() {
+  try {
+    var url = URL.createObjectURL(buildPdf()), a = document.createElement('a');
+    a.href = url; a.download = pdfName();
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+    toast(t('pdf_saved'));
+  } catch (e) { toast(t('pdf_fail')); }
+}
+function sharePdf() {
+  var f = pdfFile();
+  if (!f) { toast(t('pdf_fail')); return; }
+  navigator.share({ files: [f], title: pdfName() }).catch(function () { /* closed without sharing */ });
+}
+function printDoc() {
+  var area = $('#print-area');
+  area.innerHTML = docPages.map(function (p) { return '<img alt="" src="' + p.toDataURL('image/jpeg', 0.92) + '">'; }).join('');
+  setTimeout(function () { window.print(); }, 150);
+}
+
+/* ---------- Supplier offers (manager only) ---------- */
+function supplierNames() { return uniq(state.offers.map(function (o) { return o.supplier; })); }
+function seg(action, attr, options, current, small) {
+  return '<div class="seg' + (small ? ' small' : '') + '" role="group">' + options.map(function (o) {
+    return '<button data-action="' + action + '" data-' + attr + '="' + o.v + '" aria-pressed="' + (String(current) === String(o.v)) + '">' + o.label + '</button>';
+  }).join('') + '</div>';
+}
+function viewOffers() {
+  var body;
+  if (state.offerMode === 'paste') {
+    body = '<div class="field"><label for="paste">' + t('paste_label') + '</label><textarea class="input" id="paste" data-input="paste" dir="auto" placeholder="' +
+      esc(t('paste_ph')) + '">' + esc(state.pasteText) + '</textarea></div>';
+  } else if (state.offerMode === 'file') {
+    body = '<div class="field"><label for="file">' + t('file_label') + '</label><input class="input" id="file" type="file" accept=".xlsx,.xls,.csv"></div>' +
+      '<p class="sub">' + t('file_hint') + '</p>';
+  } else {
+    body = '<form class="manual" data-form="manual"><div class="field"><label for="m-name">' + t('item_name') + '</label><input class="input" id="m-name" dir="auto" required></div>' +
+      '<div class="field"><label for="m-price">' + t('price') + '</label><input class="input" id="m-price" type="number" inputmode="decimal" min="0" step="any" required></div>' +
+      '<button class="btn" type="submit">' + t('add_row') + '</button></form>';
+  }
+  return '<section class="panel"><div><h2 class="h">' + t('offers_title') + '</h2><p class="sub">' + t('offers_sub') + '</p></div>' +
+    seg('omode', 'mode', ['paste', 'file', 'manual'].map(function (m) { return { v: m, label: t('m_' + m) }; }), state.offerMode) +
+    '<div class="field"><label for="supplier">' + t('supplier') + '</label><input class="input" id="supplier" data-input="supplier" dir="auto" list="suppliers" autocomplete="off" placeholder="' +
+    esc(t('supplier_ph')) + '" value="' + esc(state.supplier) + '"><datalist id="suppliers">' + supplierNames().map(function (s) {
+      return '<option value="' + esc(s) + '"></option>';
+    }).join('') + '</datalist></div>' + body +
+    '<div class="row"><span class="sub grow">' + t('default_cur') + '</span>' +
+    seg('dcur', 'cur', ['USD', 'SYP'].map(function (c) { return { v: c, label: t(c.toLowerCase()) }; }), state.draftCur, true) + '</div>' +
+    '<div id="draft" class="stack"></div></section><div id="offer-list" class="stack"></div>';
+}
+function paintDraft() {
+  var el = $('#draft');
+  if (!el) return;
+  var note = state.skipped ? '<p class="sub">' + t('skipped', { n: state.skipped }) + '</p>' : '';
+  if (!state.draft.length) { el.innerHTML = note; return; }
+  el.innerHTML = '<h3 class="h small">' + t('preview', { n: state.draft.length }) + '</h3>' + note +
+    '<p class="sub" id="draft-hint" hidden>' + t('missing_hint') + '</p><div>' + state.draft.map(function (d, i) {
+      return '<div class="prow"><span class="nm grow" dir="auto">' + esc(d.name) + '</span><span class="pin">' +
+        '<input class="input mini" id="dp-' + i + '" data-input="dprice" data-i="' + i + '" type="number" inputmode="decimal" min="0" step="any" required aria-label="' +
+        t('price') + '" value="' + (d.price == null ? '' : d.price) + '"><span class="cur">' + t(d.cur.toLowerCase()) + '</span></span>' +
+        '<button class="x" data-action="drm" data-i="' + i + '" aria-label="' + t('remove') + '">' + icon('x', 18) + '</button></div>';
+    }).join('') + '</div><button class="btn primary" id="draft-save" data-action="dsave"></button>';
+  paintDraftFoot();
+}
+function paintDraftFoot() {
+  var b = $('#draft-save');
+  if (!b) return;
+  var n = state.draft.filter(function (d) { return d.price > 0; }).length;
+  b.textContent = t('save_n', { n: n });
+  b.disabled = !n;
+  $('#draft-hint').hidden = n === state.draft.length;
+}
+function saveDraft() {
+  var sup = state.supplier.trim();
+  if (!sup) {
+    toast(t('need_supplier'));
+    var f = $('#supplier');
+    if (f) f.focus();
+    return;
+  }
+  var rows = state.draft.filter(function (d) { return d.price > 0; })
+    .map(function (d) { return { supplier: sup, name: d.name, price: d.price, cur: d.cur }; });
+  var b = $('#draft-save');
+  if (b) b.disabled = true;
+  addOffers(rows).then(function (n) {
+    if (!n) { paintDraftFoot(); return; }   // not saved: the list stays so nothing typed is lost
+    state.draft = [];
+    state.skipped = 0;
+    state.pasteText = '';
+    toast(t('saved_n', { n: n }));
+    paintTab();
+  });
+}
+function paintOffers() {
+  var el = $('#offer-list');
+  if (!el) return;
+  if (!state.offers.length) { el.innerHTML = '<p class="empty">' + t('no_offers') + '</p>'; return; }
+  var groups = {};
+  state.offers.forEach(function (o) { (groups[o.supplier] = groups[o.supplier] || []).push(o); });
+  el.innerHTML = Object.keys(groups).map(function (sup) {
+    return '<section class="panel"><h3 class="h small" dir="auto">' + esc(sup) + '</h3><div>' + groups[sup].map(function (o) {
+      var it = matchItem(o.name), u = offerUsd(o);
+      return '<div class="orow"><div class="grow"><div class="nm" dir="auto">' + esc(o.name) + '</div><div class="meta">' +
+        (it ? cmpPill(u, it.cost) : '<span class="pill new">' + t('new_item') + '</span>') + '</div></div>' +
+        '<div class="price"><span class="tag sm">' + usd(u) + '</span><span class="syp">' + sypOf(u) + '</span></div>' +
+        '<button class="x" data-action="orm" data-id="' + esc(o.id) + '" aria-label="' + t('remove') + '">' + icon('x', 18) + '</button></div>';
+    }).join('') + '</div></section>';
+  }).join('');
+}
+
+/* ---------- Overview (manager only) ---------- */
+function kpi(big, label, small, action) {
+  var inner = '<span>' + label + '</span><b class="code">' + big + '</b>' + (small ? '<small>' + small + '</small>' : '');
+  return action ? '<button class="kpi" data-action="' + action + '">' + inner + '</button>' : '<div class="kpi">' + inner + '</div>';
+}
+function eventRow(e) {
+  var it = byId('m' + e.item_id), d = Number(e.qty_after) - Number(e.qty_before);
+  if (!it || !d) return '';
+  return '<li><i class="dot' + (d > 0 ? ' buy' : '') + '"></i><span class="grow" dir="auto">' +
+    t(d > 0 ? 'ev_in' : 'ev_out', { n: num(Math.abs(d), 0), name: esc(it.name) }) + '</span><time class="code">' + esc(when(e.at)) + '</time></li>';
+}
+function viewOverview() {
+  var cost = 0, sell = 0, alerts = 0;
+  state.items.forEach(function (it) {
+    var n = totalQty(it);
+    cost += (it.cost || 0) * n;
+    sell += (it.sell || 0) * n;
+    if (stockState(it) === 'low') alerts++;
+  });
+  var feed = state.events.map(eventRow).join('');
+  return '<div class="kpis">' + kpi(usd(cost), t('kpi_cost'), sypOf(cost)) + kpi(usd(sell), t('kpi_sell'), sypOf(sell)) +
+    kpi(usd(sell - cost), t('kpi_profit'), num(sell > 0 ? (sell - cost) / sell * 100 : 0, 1) + '%') + kpi(String(alerts), t('kpi_alert'), '', 'golow') + '</div>' +
+    '<section class="panel"><div><h2 class="h">' + t('activity') + '</h2><p class="sub">' + t('activity_sub2') + '</p></div>' +
+    (feed ? '<ul class="feed">' + feed + '</ul>' : '<p class="empty">' + t('no_activity') + '</p>') + '</section>';
+}
+
+/* ---------- Settings ---------- */
+function inputField(id, key, labelKey, value, extra) {
+  return '<div class="field"><label for="' + id + '">' + t(labelKey) + '</label><input class="input" id="' + id + '" data-input="' + key + '" value="' + esc(value) + '"' + (extra || '') + '></div>';
+}
+function codeExample() { return t('code_ex', { a: usd(285.5), b: encodePrice(285.5) }); }
+function securityPanel() {
+  var sup = state.bio.supported, on = !!bioId();
+  var line = sup === null ? t('bio_checking') : (sup ? t(on ? 'bio_on' : 'bio_hint2') : t('bio_no2'));
+  return '<section class="panel"><h2 class="h">' + t('set_security') + '</h2><div class="field"><span class="lbl">' + t('bio_title') + '</span><p class="sub">' + line + '</p></div>' +
+    (sup ? '<button class="btn" data-action="' + (on ? 'biooff' : 'bioon') + '">' + icon('finger', 18) + t(on ? 'bio_disable' : 'bio_enable') + '</button>' : '') +
+    (sup && on ? '<div class="field"><span class="lbl">' + t('lock_label') + '</span>' + seg('lockmin', 'min', [1, 5, 15].map(function (n) {
+      return { v: n, label: t('minutes', { n: n }) };
+    }).concat([{ v: 0, label: t('lock_off') }]), state.lockMin) + '</div>' : '') + '</section>';
+}
+function syncPanel() {
+  var s = state.sync;
+  return '<section class="panel"><h2 class="h">' + t('set_sync') + '</h2>' +
+    '<p class="sub">' + t('sync_info', { n: state.items.length, name: '<span dir="auto">' + esc(s.company) + '</span>' }) + '</p>' +
+    '<div class="row"><span class="pill ' + (pcOnline() ? 'ok' : 'out') + '">' + t(pcOnline() ? 'pc_on' : 'pc_off') + '</span>' +
+    '<span class="sub">' + t('sync_last', { time: '<span class="code">' + esc(when(s.syncedAt)) + '</span>' }) + '</span></div>' +
+    '<button class="btn" data-action="refresh">' + icon('refresh', 18) + t('refresh') + '</button></section>';
+}
+function pricingPanel() {
+  var p = state.pricing;
+  return '<section class="panel"><h2 class="h">' + t('set_pricing') + '</h2>' +
+    inputField('def-margin', 'defmargin', 'def_margin', p.defMargin, ' type="number" inputmode="decimal" min="0" step="any"') +
+    inputField('low-at', 'lowat', 'low_at', p.lowAt, ' type="number" inputmode="numeric" min="0" step="1"') +
+    '<div class="field"><span class="lbl">' + t('group_margin') + '</span><div>' + state.cats.map(function (c, i) {
+      var m = p.margins[c.id], name = esc(catName(c));
+      return '<div class="prow"><span class="nm grow" dir="auto">' + name + '</span>' +
+        '<input class="input mini" id="gm-' + i + '" data-input="gmargin" data-cat="' + esc(c.id) + '" type="number" inputmode="decimal" min="0" step="any" placeholder="' + p.defMargin +
+        '" value="' + (m >= 0 ? m : '') + '" aria-label="' + name + '">' +
+        '<label class="pin" for="gs-' + i + '"><input type="checkbox" id="gs-' + i + '" data-input="gshow" data-cat="' + esc(c.id) + '"' + (p.hidden[c.id] ? '' : ' checked') + '>' + t('show_group') + '</label></div>';
+    }).join('') + '</div></div></section>';
+}
+function peoplePanel() {
+  var me = state.session ? state.session.uid : '';
+  return '<section class="panel"><h2 class="h">' + t('set_staff') + '</h2>' + state.people.map(function (p) {
+    var self = p.id === me, dis = self ? ' disabled' : '';
+    return '<div class="prow"><span class="person grow"><b dir="auto">' + esc(p.name || p.email) + (self ? ' · ' + t('emp_you') : '') + '</b><small class="code">' + esc(p.email) + '</small></span>' +
+      '<button class="pill asbtn new" data-action="prole" data-id="' + esc(p.id) + '"' + dis + '>' + t(p.role === 'admin' ? 'role_admin' : 'role_staff') + '</button>' +
+      '<button class="pill asbtn ' + (p.active ? 'ok' : 'low') + '" data-action="pact" data-id="' + esc(p.id) + '"' + dis + '>' + t(p.active ? 'active' : 'emp_wait') + '</button></div>';
+  }).join('') + '<p class="sub">' + t('emp_hint') + '</p></section>';
+}
+function viewSettings() {
+  var h = '', num1 = ' type="number" inputmode="decimal" min="0" step="any"';
+  if (isAdmin()) {
+    h += syncPanel() + pricingPanel() + '<section class="panel"><h2 class="h">' + t('set_shop') + '</h2>' +
+      inputField('shop-name', 'shopname', 'shop_name', state.shop.name, ' dir="auto"') +
+      inputField('shop-phone', 'shopphone', 'shop_phone', state.shop.phone, ' type="tel" inputmode="tel" dir="ltr" placeholder="963"') +
+      inputField('shop-note', 'shopnote', 'shop_note', state.shop.note, ' dir="auto"') +
+      inputField('shop-days', 'validdays', 'valid_days', state.shop.validDays, ' type="number" inputmode="numeric" min="1" step="1"') + '</section>' +
+      '<section class="panel"><h2 class="h">' + t('set_money') + '</h2>' +
+      '<p class="sub">' + t('rate_books', { rate: '<span class="code">$1 = ' + esc(sypOf(1)) + '</span>' }) + '</p>' +
+      '<div class="field"><span class="lbl">' + t('syp_mode') + '</span>' + seg('sypmode', 'mode', ['new', 'old'].map(function (m) { return { v: m, label: t('syp_' + m) }; }), state.sypMode) + '</div>' +
+      inputField('disc', 'disc', 'discount_label', state.maxDiscount, num1 + ' max="100"') +
+      '<div class="field"><span class="lbl">' + t('floor_mode') + '</span>' + seg('floormode', 'mode', ['peek', 'code'].map(function (m) { return { v: m, label: t('floor_' + m) }; }), state.floorMode) + '</div>' +
+      (state.floorMode === 'code'
+        ? inputField('code-word', 'codeword', 'code_word', state.codeWord, ' dir="ltr" maxlength="10" autocomplete="off" autocapitalize="characters" spellcheck="false"') +
+          '<p class="sub" id="code-ex">' + esc(codeExample()) + '</p>'
+        : '') + '</section>' +
+      '<section class="panel"><h2 class="h">' + t('set_guest') + '</h2><label class="check" for="guest-on"><input id="guest-on" type="checkbox" data-input="gueston"' +
+      (state.guestOn ? ' checked' : '') + '><span>' + t('guest_allow') + '</span></label></section>';
+  }
+  h += securityPanel();
+  if (isAdmin()) h += peoplePanel();
+  h += '<section class="panel"><h2 class="h">' + t('set_app') + '</h2>' +
+    (state.me ? '<p class="sub"><span dir="auto">' + esc(state.me.name || '') + '</span> · <span class="code">' + esc(state.me.email || '') + '</span></p>' : '') +
+    '<div class="row"><span class="grow">' + t('language') + '</span>' +
+    seg('setlang', 'lang', ['ar', 'en'].map(function (l) { return { v: l, label: LOCALES[l].lang_name }; }), state.lang, true) + '</div>' +
+    '<button class="btn ghost danger" data-action="logout">' + t('sign_out') + '</button></section>';
+  return h;
+}
+
+/* ---------- Excel / CSV import (reader loads only when a file is picked) ---------- */
+var RE_PRICE_HEAD = new RegExp(LEXICON.priceHead, 'i'), RE_SKIP_HEAD = new RegExp(LEXICON.skipHead, 'i');
+function loadXlsx() {
+  return new Promise(function (resolve, reject) {
+    if (window.XLSX) { resolve(window.XLSX); return; }
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = function () { resolve(window.XLSX); };
+    s.onerror = function () { reject(new Error('xlsx reader failed to load')); };
+    document.head.appendChild(s);
+  });
+}
+function readFile(file) {
+  return new Promise(function (resolve, reject) {
+    var r = new FileReader();
+    r.onload = function () { resolve(r.result); };
+    r.onerror = function () { reject(r.error); };
+    r.readAsArrayBuffer(file);
+  });
+}
+/* rows: array of rows, each an array of trimmed cell strings. */
+function rowsToOffers(rows, defCur) {
+  var out = [], head = -1, priceCol = -1, skip = {}, i;
+  for (i = 0; i < Math.min(rows.length, 8) && priceCol < 0; i++) {   // a header row that names the price column wins over guessing
+    rows[i].forEach(function (c, j) { if (priceCol < 0 && RE_PRICE_HEAD.test(normalize(c))) { priceCol = j; head = i; } });
+  }
+  if (priceCol < 0) {
+    rows.forEach(function (r) { var d = parseOfferLine(r.filter(Boolean).join(' | '), defCur); if (d) out.push(d); });
+    return out;
+  }
+  var title = rows[head][priceCol], cur = new RegExp(LEXICON.syp, 'i').test(title) ? 'SYP' : (new RegExp(LEXICON.usd, 'i').test(title) ? 'USD' : defCur);
+  rows[head].forEach(function (c, j) { if (RE_SKIP_HEAD.test(normalize(c))) skip[j] = true; });
+  rows.slice(head + 1).forEach(function (r) {
+    var price = toNumber(toLatinDigits(r[priceCol] || '').replace(/[^\d.,]/g, ''), cur);
+    var name = r.filter(function (c, j) { return c && j !== priceCol && !skip[j]; }).join(' ').replace(/\s+/g, ' ').trim();
+    if (name) out.push({ name: name, price: price > 0 ? price : null, cur: cur, explicit: true });
+  });
+  return out;
+}
+function importFile(file) {
+  Promise.all([loadXlsx(), readFile(file)]).then(function (res) {
+    var XLSX = res[0];
+    var wb = XLSX.read(res[1], { type: 'array', codepage: 65001 });
+    var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' })
+      .map(function (r) { return r.map(function (c) { return String(c).trim(); }); });
+    setDraft(rowsToOffers(rows, state.draftCur));
+    paintDraft();
+    if (!state.draft.length) toast(t('file_fail'));
+  }).catch(function () { toast(t('file_fail')); });
+}
+
+/* ---------- Toast ---------- */
+var toastTimer;
+function toast(msg) {
+  var el = $('#toast');
+  el.innerHTML = '<span>' + esc(msg) + '</span>';
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { el.hidden = true; }, 2800);
+}
+
+/* ---------- Events ---------- */
+function goTab(tab) { flushLater(); state.tab = tab; render(); window.scrollTo(0, 0); }
+function setLang(l) { state.lang = l; save(); closeSheet(); state.items.forEach(describe); render(); }
+function resetStore() { state.cat = 'all'; state.query = ''; state.brand = ''; state.cpu = ''; state.ram = ''; state.lowOnly = false; state.limit = 60; }
+function toggle(key, v) { state[key] = state[key] === v ? '' : v; state.limit = 60; paintItems(); }
+function person(id) { for (var i = 0; i < state.people.length; i++) if (state.people[i].id === id) return state.people[i]; return null; }
+
+document.addEventListener('click', function (e) {
+  if (e.target === $('#sheet')) { closeSheet(); return; }
+  var el = e.target.closest ? e.target.closest('[data-action]') : null;
+  if (!el || el.disabled) return;
+  var a = el.getAttribute('data-action'), id = el.getAttribute('data-id'), n, p;
+  if (a === 'guest') { if (isGuest() && state.items.length) { state.screen = 'app'; render(); } else enterGuest(); }   // back to the store from the sign-in form
+  else if (a === 'account') { closeSheet(); state.screen = 'login'; state.authMsg = ''; render(); window.scrollTo(0, 0); }
+  else if (a === 'home') { resetStore(); closeSheet(); goTab('items'); }
+  else if (a === 'cart') goTab('quote');
+  else if (a === 'logout') signOut();
+  else if (a === 'retry') { state.screen = 'boot'; render(); if (state.session) startSession(); else enterGuest(); }
+  else if (a === 'recheck') { state.screen = 'boot'; render(); startSession(); }
+  else if (a === 'unlock') bioUnlock();
+  else if (a === 'bioon') bioEnroll();
+  else if (a === 'biooff') { delete state.bio.ids[state.session.uid]; save(); toast(t('bio_off')); paintTab(); }
+  else if (a === 'lang') setLang(state.lang === 'ar' ? 'en' : 'ar');
+  else if (a === 'setlang') setLang(el.getAttribute('data-lang'));
+  else if (a === 'tab') goTab(el.getAttribute('data-tab'));
+  else if (a === 'rate') { if (isAdmin()) goTab('settings'); }
+  else if (a === 'refresh') { el.disabled = true; reload().then(function () { toast(t(pcOnline() ? 'pc_on' : 'pc_off')); }, function () { toast(t('net_fail')); paintTab(); }); }
+  else if (a === 'cat') { state.cat = el.getAttribute('data-cat'); state.brand = ''; state.cpu = ''; state.ram = ''; state.limit = 60; paintItems(); window.scrollTo(0, 0); }
+  else if (a === 'low') { state.lowOnly = !state.lowOnly; state.limit = 60; paintItems(); }
+  else if (a === 'instock') { state.inStockOnly = !state.inStockOnly; state.limit = 60; paintItems(); }
+  else if (a === 'brand' || a === 'cpu' || a === 'ram') toggle(a, el.getAttribute('data-v'));
+  else if (a === 'copylink') {
+    p = byId(id);
+    if (p && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(itemLink(p)).then(function () { toast(t('link_copied')); }, function () { toast(t('copy_fail')); });
+    else toast(t('copy_fail'));
+  }
+  else if (a === 'more') { state.limit += 60; paintItems(); }
+  else if (a === 'golow') { resetStore(); state.lowOnly = true; state.inStockOnly = true; goTab('items'); }
+  else if (a === 'open') openItem(id);
+  else if (a === 'close') closeSheet();
+  else if (a === 'peek') peek(id);
+  else if (a === 'add') {
+    p = byId(id);
+    if (!p || !hasPrice(p)) { toast(t('cant_add')); return; }
+    cart()[id] = (cart()[id] || 0) + 1;
+    save(); paintBadge(); toast(t(isGuest() ? 'added_request' : 'added'));
+    if (el.getAttribute('data-close')) closeSheet();
+  }
+  else if (a === 'qinc' || a === 'qdec') {
+    n = (cart()[id] || 0) + (a === 'qinc' ? 1 : -1);
+    if (n > 0) cart()[id] = n; else delete cart()[id];
+    save(); paintTab(); paintBadge();
+  }
+  else if (a === 'qclear') {
+    if (isGuest()) state.gquote = {};
+    else { state.quote = {}; state.quoteDisc = 0; state.quoteCustomer = ''; }
+    save(); paintTab(); paintBadge();
+  }
+  else if (a === 'copy') copyQuote();
+  else if (a === 'doc') openDoc();
+  else if (a === 'pdfsave') savePdf();
+  else if (a === 'pdfshare') sharePdf();
+  else if (a === 'print') printDoc();
+  else if (a === 'omode') {
+    state.offerMode = el.getAttribute('data-mode');
+    setDraft(state.offerMode === 'paste' ? parseOfferText(state.pasteText, state.draftCur) : []);
+    paintTab();
+  }
+  else if (a === 'dcur') {
+    state.draftCur = el.getAttribute('data-cur');
+    if (state.offerMode === 'paste') setDraft(parseOfferText(state.pasteText, state.draftCur));
+    else state.draft.forEach(function (d) { if (!d.explicit) d.cur = state.draftCur; });
+    paintTab();
+  }
+  else if (a === 'drm') { state.draft.splice(Number(el.getAttribute('data-i')), 1); paintDraft(); }
+  else if (a === 'dsave') saveDraft();
+  else if (a === 'orm') { state.offers = state.offers.filter(function (o) { return o.id !== id; }); paintOffers(); removeOffer(id); }
+  else if (a === 'sypmode') { state.sypMode = el.getAttribute('data-mode'); state.sypAuto = false; saveSetting('money'); paintTab(); }
+  else if (a === 'floormode') { state.floorMode = el.getAttribute('data-mode'); saveSetting('floor'); paintTab(); }
+  else if (a === 'lockmin') { state.lockMin = Number(el.getAttribute('data-min')); save(); paintTab(); }
+  else if (a === 'pact') {   // approve a waiting account, or switch an active one off
+    p = person(id);
+    if (p) { p.active = !p.active; paintTab(); setPerson(id, { active: p.active }); }
+  }
+  else if (a === 'prole') {
+    p = person(id);
+    if (p && (p.role === 'admin' || window.confirm(t('make_admin_q', { name: p.name || p.email })))) {
+      p.role = p.role === 'admin' ? 'staff' : 'admin';
+      paintTab(); setPerson(id, { role: p.role });
+    }
+  }
+});
+
+document.addEventListener('input', function (e) {
+  var el = e.target, k = el.getAttribute && el.getAttribute('data-input'), v, d, ex;
+  if (!k) return;
+  if (k === 'q') {   // a new search looks through the whole store, not only the group that was open
+    if (!state.query.trim() && el.value.trim()) { state.cat = 'all'; state.brand = ''; state.cpu = ''; state.ram = ''; }
+    state.query = el.value; state.limit = 60; paintItems();
+  }
+  else if (k === 'defmargin') { v = parseFloat(el.value); if (v >= 0) { state.pricing.defMargin = v; reprice(); saveRules(); } }
+  else if (k === 'lowat') {
+    v = parseInt(el.value, 10);
+    if (v >= 0) { state.pricing.lowAt = v; state.items.forEach(function (it) { it.min = v; }); saveSetting('floor'); }
+  }
+  else if (k === 'gmargin') {
+    v = parseFloat(el.value); d = el.getAttribute('data-cat');
+    if (v >= 0) state.pricing.margins[d] = v; else delete state.pricing.margins[d];
+    reprice(); saveGroup(d);
+  }
+  else if (k === 'gshow') {
+    d = el.getAttribute('data-cat');
+    if (el.checked) delete state.pricing.hidden[d]; else state.pricing.hidden[d] = true;
+    saveGroup(d);
+  }
+  else if (k === 'gueston') { state.guestOn = el.checked; saveSetting('guest'); }
+  else if (k === 'paste') { state.pasteText = el.value; setDraft(parseOfferText(el.value, state.draftCur)); paintDraft(); }
+  else if (k === 'supplier') state.supplier = el.value;
+  else if (k === 'dprice') {
+    d = state.draft[Number(el.getAttribute('data-i'))];
+    v = parseFloat(el.value);
+    if (d) { d.price = v > 0 ? v : null; paintDraftFoot(); }
+  }
+  else if (k === 'qcust') { state.quoteCustomer = el.value; save(); paintQuoteSum(); }
+  else if (k === 'qdisc') {
+    v = parseFloat(el.value) || 0;
+    if (v > discountCap()) { v = discountCap(); el.value = v; toast(t('disc_capped')); }
+    state.quoteDisc = Math.max(0, v);
+    save(); paintQuoteSum();
+  }
+  else if (k === 'disc') { v = parseFloat(el.value); if (v >= 0 && v <= 100) { state.maxDiscount = v; saveSetting('floor'); } }
+  else if (k === 'shopname') { state.shop.name = el.value; saveSetting('shop'); }
+  else if (k === 'shopphone') { state.shop.phone = el.value; saveSetting('shop'); }
+  else if (k === 'shopnote') { state.shop.note = el.value; saveSetting('shop'); }
+  else if (k === 'validdays') { v = parseInt(el.value, 10); if (v > 0) { state.shop.validDays = v; saveSetting('shop'); } }
+  else if (k === 'codeword') {
+    v = el.value.toUpperCase().replace(/\s/g, '');
+    ex = $('#code-ex');
+    if (validWord(v)) { state.codeWord = v; saveSetting('floor'); if (ex) ex.textContent = codeExample(); }
+    else if (ex) ex.textContent = t('code_bad');
+  }
+});
+
+document.addEventListener('change', function (e) {
+  var el = e.target, k = el.getAttribute && el.getAttribute('data-change'), id, v, it;
+  if (el.id === 'file' && el.files && el.files[0]) importFile(el.files[0]);
+  else if (k === 'sort') { state.sort = el.value; state.limit = 60; paintItems(); }
+  else if (k === 'extra' || k === 'manual') {   // manager's per-item adjustments, applied when the field is left
+    id = el.getAttribute('data-id'); v = parseFloat(el.value); it = byId(id);
+    if (!it) return;
+    if (v > 0) state.pricing[k][id] = v; else delete state.pricing[k][id];
+    resolveItem(it);
+    savePricing(id);
+    if (state.tab === 'items') paintItems();
+    openItem(id);
+  }
+});
+
+document.addEventListener('submit', function (e) {
+  e.preventDefault();
+  var f = e.target.getAttribute('data-form');
+  if (f === 'signin') {
+    var email = $('#si-email').value.trim(), pass = $('#si-pass').value;
+    if (!email || !pass) { state.authMsg = t('bad_login'); paintSignIn(); return; }
+    signIn(email, pass);
+  } else if (f === 'manual') {
+    var name = $('#m-name').value.trim(), price = parseFloat($('#m-price').value);
+    if (name && price > 0) {
+      state.draft.push({ name: name, price: price, cur: state.draftCur, explicit: true });
+      paintTab();
+      var again = $('#m-name');
+      if (again) again.focus();
+    }
+  }
+});
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet();
+});
+window.addEventListener('afterprint', function () { $('#print-area').innerHTML = ''; });
+window.addEventListener('hashchange', routeHash);
+
+/* ---------- Lock after no activity (only when fingerprint or face unlock is on) ---------- */
+var lastAct = Date.now();
+['pointerdown', 'keydown'].forEach(function (ev) {
+  document.addEventListener(ev, function () { lastAct = Date.now(); }, true);
+});
+setInterval(function () {
+  if (state.screen === 'app' && !isGuest() && bioId() && state.lockMin > 0 && Date.now() - lastAct > state.lockMin * 60000) lockApp();
+}, 5000);
+
+/* ---------- Keeping in step with the cloud ---------- */
+setInterval(poll, CLOUD.pollMs);
+document.addEventListener('visibilitychange', function () {
+  if (document.hidden) flushLater(); else poll();
+});
+window.addEventListener('online', poll);
+
+/* ---------- Start ---------- */
+load();
+render();
+bioCheck();
+if (!state.session) enterGuest();                      // the store opens at once, no sign-in asked
+else if (bioId()) { state.screen = 'locked'; render(); }
+else startSession();
+})();
+</script>
+</body>
+</html>
