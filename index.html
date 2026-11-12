@@ -384,6 +384,30 @@ body.no-nav .toast { bottom:calc(24px + env(safe-area-inset-bottom,0px)) }
 .zpane.in { display:block; cursor:zoom-out }
 .zpane.in img { width:260%; max-width:none; max-height:none }
 
+/* Filter chips fold onto more lines, so none is cut off; the group row does too where there is a mouse */
+.chips:not(.cats) { flex-wrap:wrap; overflow:visible }
+@media (hover:hover) and (pointer:fine) { .chips.cats { flex-wrap:wrap; overflow:visible } }
+.cmpb { width:40px; height:40px; flex:none; display:grid; place-items:center; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink); cursor:pointer }
+.cmpb[aria-pressed="true"], .btn[data-action="cmp"][aria-pressed="true"] { border-color:var(--brand); background:var(--brand); color:var(--brand-ink) }
+.pcard .item-foot .pill { margin-inline-end:auto }
+.pcard .item-foot .add { margin-inline-start:0 }
+#cmpbar { position:fixed; inset-inline:0; bottom:calc(var(--nav-h) + 70px + env(safe-area-inset-bottom,0px)); z-index:15; display:flex; justify-content:center; align-items:center; gap:6px; pointer-events:none }
+#cmpbar > * { pointer-events:auto; box-shadow:0 6px 18px var(--shadow) }
+#cmpbar .x { background:var(--surface); border:1px solid var(--line); border-radius:99px }
+body.no-nav #cmpbar { bottom:calc(84px + env(safe-area-inset-bottom,0px)) }
+.sheet.compare { max-width:760px }
+.cmpgrid { display:grid; grid-template-columns:1fr 1fr; gap:12px }
+.cmpcol { display:flex; flex-direction:column; gap:8px; min-width:0; align-items:flex-start }
+.cmpcol .item-main { padding:0; width:100%; display:flex; flex-direction:column; align-items:stretch; gap:8px; text-align:start }
+.cmpcol .cover { width:100% }
+.cmptable { width:100%; border-collapse:collapse; table-layout:fixed }
+.cmptable th { text-align:start; font:500 12px var(--font-body); color:var(--muted); padding:10px 8px 2px; border-top:1px solid var(--line) }
+.cmptable td { padding:2px 8px 10px; font:600 14px var(--font-body); overflow-wrap:anywhere; vertical-align:top }
+.cmptable tr.diff td { color:var(--brand) }
+.inote { display:flex; gap:8px; align-items:flex-start; margin:0; padding:10px 12px; border-radius:10px; background:var(--tint-c, var(--surface-2)); color:var(--ink); font-size:14px; white-space:pre-line; overflow-wrap:anywhere }
+.inote svg { flex:none; margin-top:2px }
+.cnote { font-size:12px; color:var(--brand); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100% }
+
 /* Barcode scanner: the camera picture with a guide line */
 .scanbox { position:relative; aspect-ratio:4 / 3; border-radius:12px; overflow:hidden; background:var(--surface-2) }
 .scanbox video { display:block; width:100%; height:100%; object-fit:cover }
@@ -693,6 +717,15 @@ var LOCALES = {
     added_request: 'Added to your request',
     show_out: 'Show sold-out items too',
     m_photo: 'Picture',
+    cmp_add: 'Compare',
+    cmp_pick: 'Pick one more to compare',
+    cmp_show: 'Compare the two',
+    cmp_clear: 'Cancel the comparison',
+    cmp_title: 'Side by side',
+    cmp_hint: 'Coloured lines are where the two differ.',
+    cmp_note: 'Note',
+    note_label: 'Note shown to customers (warranty, an extra, ...)',
+    note_ph: 'For example: one year warranty, bag and mouse included',
     photo_main: 'Make it the main one',
     photo_first: 'Main photo',
     photo_hint: 'Up to {n} photos per item. The main one shows on the shelves.',
@@ -1026,6 +1059,15 @@ var LOCALES = {
     added_request: 'أُضيفت إلى طلبك',
     show_out: 'عرض المواد غير المتوفرة أيضاً',
     m_photo: 'صورة',
+    cmp_add: 'قارن',
+    cmp_pick: 'اختر جهازاً آخر للمقارنة',
+    cmp_show: 'قارن بين الجهازين',
+    cmp_clear: 'إلغاء المقارنة',
+    cmp_title: 'مقارنة',
+    cmp_hint: 'الأسطر الملوّنة هي ما يختلف بين الجهازين.',
+    cmp_note: 'ملاحظة',
+    note_label: 'ملاحظة تظهر للزبائن (كفالة، ميزة إضافية...)',
+    note_ph: 'مثلاً: كفالة سنة، مع حقيبة وماوس هدية',
     photo_main: 'اجعلها الرئيسية',
     photo_first: 'الصورة الرئيسية',
     photo_hint: 'حتى {n} صور للمادة. الرئيسية هي التي تظهر على الرفوف.',
@@ -1160,10 +1202,10 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: 'https://uogjnknguwhevbjjdysm.supabase.co', key: 'sb_publishable_LWI-49Y5BCYEV6kHIuA5Og_ymPaIhN1', pollMs: 10000 };
-var APP_BUILD = '2.1';
+var APP_BUILD = '2.2';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
-  guestSyp: true, shot: 0, zoom: null,
+  guestSyp: true, shot: 0, zoom: null, cmp: [], notes: {}, notesOk: false,
   screen: 'boot',       // boot | login | waiting | locked | offline | app
   role: null, me: null, session: null, busy: false, authMsg: '',
   tab: 'items', query: '', cat: 'all', lowOnly: false, peekId: null, sheetId: null,
@@ -1392,11 +1434,15 @@ function applyCloud(d) {
   (d.costs || []).forEach(function (c) { costs[c.item_id] = c; });
   /* Photos live in the cloud's file store; a cloud that has not had its second update yet simply has none. */
   state.mediaOk = Array.isArray(d.media);
+  state.notesOk = Array.isArray(d.notes);
+  state.notes = {};
+  (d.notes || []).forEach(function (m) { if (m.note) state.notes['m' + m.item_id] = String(m.note); });
   state.media = {};
   (d.media || []).forEach(function (m) { if (m.photo) state.media['m' + m.item_id] = String(m.photo); });
   state.items = (d.items || []).map(function (r) {
     var it = { id: 'm' + r.id, code: r.code || '', barcode: r.barcode || '', cat: String(r.group_id), name: String(r.name),
       sell: r.sell === null || r.sell === undefined ? null : Number(r.sell), auto: !r.manual, min: p.lowAt, qty: 0, other: [] };
+    it.note = state.notes[it.id] || '';
     it.photos = (state.media[it.id] || '').split(',').filter(Boolean);
     it.photo = it.photos[0] || '';
     if (r.stock) {   // guest catalog: a word instead of a quantity
@@ -1976,8 +2022,8 @@ function fetchData() {
   if (isGuest()) {
     return Promise.all([pages('/rest/v1/rpc/catalog?order=id'), pages('/rest/v1/rpc/catalog_groups?order=id'),
       http('POST', '/rest/v1/rpc/shop_info', { body: {} }).then(need), pages('/rest/v1/app_settings?select=key,value&order=key'),
-      pagesSoft('/rest/v1/rpc/catalog_media?order=item_id')])
-      .then(function (a) { var info = a[2] || {}; return { items: a[0], groups: a[1], currencies: info.currencies, settings: a[3], status: info, media: a[4] }; });
+      pagesSoft('/rest/v1/rpc/catalog_media?order=item_id'), pagesSoft('/rest/v1/rpc/catalog_notes?order=item_id')])
+      .then(function (a) { var info = a[2] || {}; return { items: a[0], groups: a[1], currencies: info.currencies, settings: a[3], status: info, media: a[4], notes: a[5] }; });
   }
   var jobs = [pages('/rest/v1/items?select=id,group_id,code,barcode,name,qty,qty_by,sell,manual&gone=is.false&order=id'),
     pages('/rest/v1/item_groups?select=*&order=id'), pages('/rest/v1/currencies?select=*&order=id'), pages('/rest/v1/warehouses?select=*&order=id'),
@@ -1989,8 +2035,9 @@ function fetchData() {
       pages('/rest/v1/offers?select=*&order=created_at.desc,id'), pages('/rest/v1/profiles?select=*&order=created_at,id'),
       api('GET', '/rest/v1/stock_events?select=*&order=id.desc&limit=40').then(need));
   }
+  jobs.push(pagesSoft('/rest/v1/item_notes?select=item_id,note&order=item_id'));
   return Promise.all(jobs).then(function (a) {
-    return { items: a[0], groups: a[1], currencies: a[2], warehouses: a[3], settings: a[4], status: (a[5] || [])[0] || null, media: a[6],
+    return { notes: a[a.length - 1], items: a[0], groups: a[1], currencies: a[2], warehouses: a[3], settings: a[4], status: (a[5] || [])[0] || null, media: a[6],
       costs: a[7], itemPricing: a[8], groupPricing: a[9], rules: a[10], offers: a[11], people: a[12], events: a[13] };
   });
 }
@@ -2225,6 +2272,7 @@ var ICONS = {
   scan: 'M4 6v12 M7.5 6v12 M11 6v12 M13.5 6v12 M17 6v12 M20 6v12',
   wrench: 'M14.5 5.5a4.5 4.5 0 0 0-5.3 5.8L4 16.5 7.5 20l5.2-5.2a4.5 4.5 0 0 0 5.8-5.3l-3 3-2.5-2.5 3-3a4.5 4.5 0 0 0-1.5-1.5z',
   gamepad: 'M7 8h10a4 4 0 0 1 4 4v2.5a2.5 2.5 0 0 1-4.6 1.4L15.5 14h-7l-.9 1.9A2.5 2.5 0 0 1 3 14.5V12a4 4 0 0 1 4-4z M8 10v3 M6.5 11.5h3 M16 11h.01',
+  compare: 'M4 5h6v14H4z M14 5h6v14h-6z',
   camera: 'M4 8h3.5l1.5-2.5h6L16.5 8H20v11H4z M12 10.5a3 3 0 1 0 0 6a3 3 0 0 0 0-6z'
 };
 function icon(name, size) {
@@ -2395,6 +2443,7 @@ function render() {
   document.title = state.shop.name || 'Kouki Technology';
   var root = $('#root'), before = { boot: bootHtml, login: loginHtml, waiting: waitHtml, locked: lockHtml, offline: offlineHtml };
   document.body.classList.toggle('no-nav', state.screen !== 'app' || isGuest());
+  paintCompareBar();
   if (state.screen !== 'app') { root.innerHTML = before[state.screen](); return; }
   root.innerHTML = shellHtml();
   paintTab();
@@ -2423,7 +2472,7 @@ function softRepaint() {
     if (!it) closeSheet(); else if (!typing && sheetSig(it) !== state.sheetSig) openItem(state.sheetId);
   }
 }
-function sheetSig(it) { return [it.name, it.sell, it.qty, it.cost, it.pending, it.stock, it.photos.join(','), state.photoBusy, state.rate, state.sypMode, state.lang].join('|'); }
+function sheetSig(it) { return [it.name, it.sell, it.qty, it.cost, it.pending, it.stock, it.photos.join(','), it.note, state.photoBusy, state.rate, state.sypMode, state.lang].join('|'); }
 
 /* ---------- Store: home shelves, or a list with order and filters ---------- */
 function isHome() { return isGuest() && state.cat === 'all' && !state.query.trim() && !state.brand && !state.cpu && !state.ram; }
@@ -2565,9 +2614,10 @@ function itemCard(it) {
     : '';
   return '<article class="item pcard" data-card="' + it.id + '">' +
     '<button class="item-main" data-action="open" data-id="' + it.id + '">' + coverHtml(it) +
-    '<span class="item-name" dir="auto">' + esc(it.name) + '</span>' + chipsHtml(it) +
+    '<span class="item-name" dir="auto">' + esc(it.name) + '</span>' + chipsHtml(it) + (it.note ? '<span class="cnote" dir="auto">' + esc(it.note.split('\n')[0]) + '</span>' : '') +
     '<span class="price">' + priceHtml(it) + '</span></button>' + extra +
     '<div class="item-foot"><span class="pill ' + stockState(it) + '">' + stockLabel(it) + '</span>' + (isAdmin() || isGuest() ? '' : floorHtml(it)) +
+    '<button class="cmpb" data-action="cmp" data-id="' + it.id + '" aria-pressed="' + inCompare(it.id) + '" aria-label="' + t('cmp_add') + '" title="' + t('cmp_add') + '">' + icon('compare', 18) + '</button>' +
     '<button class="add" data-action="add" data-id="' + it.id + '" aria-label="' + addLabel() + '" title="' + addLabel() + '"' + (hasPrice(it) ? '' : ' disabled') + '>' + icon('plus', 18) + '</button></div></article>';
 }
 
@@ -2623,7 +2673,7 @@ function openItem(id) {
     '<div class="row"><h2 class="h grow" dir="auto">' + esc(it.name) + '</h2><button class="x" id="sheet-close" data-action="close" aria-label="' + t('close') + '">' + icon('x') + '</button></div>' +
     coverHtml(it, true) +
     '<div class="row">' + priceHtml(it, true) + '<span class="pill ' + stockState(it) + '">' + stockLabel(it) + '</span></div>' +
-    '<dl class="facts">' + facts + '</dl>';
+    '<dl class="facts">' + facts + '</dl>' + noteHtml(it);
   if (isAdmin()) {
     var best = bestOfferFor(it), f = floorPrice(it);
     html += '<div class="private-box"><div class="row priv-title">' + icon('lock', 15) + t('admin_only') + '</div><dl class="facts">' +
@@ -2631,13 +2681,14 @@ function openItem(id) {
       (priced ? fact(t('profit_unit'), usd(it.sell - it.cost)) + fact(t('margin'), num(marginPct(it), 1) + '%') + fact(t('floor'), usd(f) + ' · ' + sypOf(f)) : '') + '</dl>' +
       '<dl class="facts one">' + fact(t('stock_value'), usd(it.cost * totalQty(it))) +
       fact(t('best_offer'), best ? '<span dir="auto">' + esc(best.supplier) + '</span> · ' + usd(best.usd) + ' ' + cmpPill(best.usd, it.cost) : t('none_yet')) +
-      realFacts(it) + '</dl>' + priceInputs(it) + photoControls(it) + '</div>';
+      realFacts(it) + '</dl>' + priceInputs(it) + noteInput(it) + photoControls(it) + '</div>';
   }
   var line = it.name + (priced ? '\n' + usd(it.sell) + ' (' + sypOf(it.sell) + ')' : '');   // staff only
   html += '<div class="row"><button class="btn primary grow" data-action="add" data-id="' + it.id + '" data-close="1"' + (priced ? '' : ' disabled') + '>' + icon('plus', 18) + addLabel() + '</button>' +
     (isGuest()
       ? (state.shop.phone ? '<a class="btn grow" target="_blank" rel="noopener" href="' + esc(shopWa(t('ask_item', { name: it.name, code: it.code }) + '\n' + itemLink(it))) + '">' + icon('chat', 18) + t('ask_whatsapp') + '</a>' : '')
       : '<a class="btn grow" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(line + '\n' + state.shop.name + '\n' + itemLink(it)) + '">' + icon('send', 18) + t('share_price') + '</a>') +
+    '<button class="btn" data-action="cmp" data-id="' + it.id + '" aria-pressed="' + inCompare(it.id) + '">' + icon('compare', 18) + t('cmp_add') + '</button>' +
     (navigator.share ? '<button class="btn" data-action="share" data-id="' + it.id + '">' + icon('send', 18) + t('share') + '</button>'
       : '<button class="btn" data-action="copylink" data-id="' + it.id + '">' + icon('copy', 18) + t('copy_link') + '</button>') + '</div>';
   if (like.length) html += '<section class="shelf"><h3 class="h small">' + t('similar') + '</h3><div class="shelf-row">' + like.map(function (o) { return itemCard(o); }).join('') + '</div></section>';
@@ -3596,6 +3647,74 @@ function readOfferPictures(files) {
   });
 }
 
+/* ---------- Comparing two items side by side ---------- */
+function inCompare(id) { return state.cmp.indexOf(id) !== -1; }
+function toggleCompare(id) {
+  if (inCompare(id)) state.cmp = state.cmp.filter(function (x) { return x !== id; });
+  else { state.cmp.push(id); if (state.cmp.length > 2) state.cmp.shift(); }   // a third choice takes the place of the oldest
+  paintCompareBar();
+  Array.prototype.forEach.call(document.querySelectorAll('[data-action="cmp"]'), function (b) { b.setAttribute('aria-pressed', String(inCompare(b.getAttribute('data-id')))); });
+  if (state.cmp.length === 2 && inCompare(id)) openCompare();
+}
+function paintCompareBar() {
+  var bar = $('#cmpbar');
+  state.cmp = state.cmp.filter(byId);
+  if (!bar) { bar = document.createElement('div'); bar.id = 'cmpbar'; document.body.appendChild(bar); }
+  bar.hidden = !state.cmp.length || state.screen !== 'app';
+  if (bar.hidden) return;
+  bar.innerHTML = '<button class="btn primary" data-action="cmpopen"' + (state.cmp.length < 2 ? ' disabled' : '') + '>' + icon('compare', 18) +
+    t(state.cmp.length < 2 ? 'cmp_pick' : 'cmp_show') + '</button><button class="x" data-action="cmpclear" aria-label="' + t('cmp_clear') + '">' + icon('x', 18) + '</button>';
+}
+function specRows(it) {
+  var sp = it.sp || {};
+  return { spec_brand: it.brandName || '', spec_cpu: sp.cpuLabel ? sp.cpuLabel + (sp.gen ? DOT + t('spec_gen', { n: sp.gen }) : '') : '', spec_ram: sp.ram ? sp.ram + 'GB' : '',
+    spec_storage: sp.disk ? sp.disk + (sp.diskKind ? ' ' + sp.diskKind : '') : '', spec_gpu: sp.gpu || '', spec_screen: sp.screen ? sp.screen + (sp.touch ? DOT + t('spec_touch') : '') : '',
+    category: catName(catOf(it)), cmp_note: it.note || '' };
+}
+function openCompare() {
+  var pair = state.cmp.map(byId).filter(Boolean), sh = $('#sheet'), rows, keys;
+  if (pair.length < 2) return;
+  closeSheet();
+  rows = pair.map(specRows);
+  keys = Object.keys(rows[0]).filter(function (k) { return rows[0][k] || rows[1][k]; });
+  sh.innerHTML = '<div class="sheet compare" role="dialog" aria-modal="true" aria-label="' + t('cmp_title') + '">' +
+    '<div class="row"><h2 class="h grow">' + t('cmp_title') + '</h2><button class="x" id="sheet-close" data-action="close" aria-label="' + t('close') + '">' + icon('x') + '</button></div>' +
+    '<div class="cmpgrid">' + pair.map(function (it) {
+      return '<div class="cmpcol"><button class="item-main" data-action="open" data-id="' + it.id + '">' + coverHtml(it) + '<span class="item-name" dir="auto">' + esc(it.name) + '</span></button>' +
+        '<span class="price">' + priceHtml(it) + '</span><span class="pill ' + stockState(it) + '">' + stockLabel(it) + '</span></div>';
+    }).join('') + '</div><table class="cmptable">' + keys.map(function (k) {
+      var same = rows[0][k] === rows[1][k];
+      return '<tr class="' + (same ? '' : 'diff') + '"><th colspan="2">' + t(k) + '</th></tr><tr class="' + (same ? '' : 'diff') + '">' +
+        rows.map(function (r) { return '<td dir="auto">' + (r[k] ? esc(r[k]) : '<span class="sub">-</span>') + '</td>'; }).join('') + '</tr>';
+    }).join('') + '</table><p class="sub">' + t('cmp_hint') + '</p><div class="cmpgrid">' + pair.map(function (it) {
+      return '<button class="btn primary" data-action="add" data-id="' + it.id + '"' + (hasPrice(it) ? '' : ' disabled') + '>' + icon('plus', 18) + addLabel() + '</button>';
+    }).join('') + '</div></div>';
+  sh.hidden = false;
+  document.body.classList.add('lock');
+}
+
+/* ---------- A note on an item, written by the manager and shown to everyone (warranty, an extra, ...) ---------- */
+function saveNote(id, text) {
+  var it = byId(id), n;
+  if (!it) return;
+  it.note = text.trim().slice(0, 600);
+  n = $('#item-note');
+  if (n) { n.hidden = !it.note; n.lastChild.textContent = it.note; }
+  later('note-' + id, function () {
+    sent(it.note
+      ? api('POST', '/rest/v1/item_notes?on_conflict=item_id', [{ item_id: idNum(it), note: it.note }], 'resolution=merge-duplicates,return=minimal')
+      : api('DELETE', '/rest/v1/item_notes?item_id=eq.' + idNum(it), undefined, 'return=minimal'));
+  });
+}
+function noteHtml(it) {
+  return '<p class="inote" id="item-note"' + (it.note ? '' : ' hidden') + '>' + icon('shield', 18) + '<span dir="auto">' + esc(it.note || '') + '</span></p>';
+}
+function noteInput(it) {
+  if (!state.notesOk) return '';
+  return '<div class="field"><label for="i-note">' + t('note_label') + '</label><textarea class="input" id="i-note" data-input="inote" data-id="' + it.id + '" dir="auto" maxlength="600" rows="2" placeholder="' +
+    esc(t('note_ph')) + '">' + esc(it.note || '') + '</textarea></div>';
+}
+
 /* ---------- Excel / CSV import (reader loads only when a file is picked) ---------- */
 var RE_PRICE_HEAD = new RegExp(LEXICON.priceHead, 'i'), RE_SKIP_HEAD = new RegExp(LEXICON.skipHead, 'i');
 function loadXlsx() {
@@ -3707,6 +3826,9 @@ document.addEventListener('click', function (e) {
   else if (a === 'instock') { state.inStockOnly = !state.inStockOnly; state.limit = 60; paintItems(); }
   else if (a === 'brand' || a === 'cpu' || a === 'ram' || a === 'need') toggle(a, el.getAttribute('data-v'));
   else if (a === 'scan') openScan();
+  else if (a === 'cmp') toggleCompare(id);
+  else if (a === 'cmpopen') openCompare();
+  else if (a === 'cmpclear') { state.cmp = []; paintCompareBar(); if (state.tab === 'items') paintItems(); }
   else if (a === 'phdel') removePhoto(id, el.getAttribute('data-b'));
   else if (a === 'phmain') mainPhoto(id, el.getAttribute('data-b'));
   else if (a === 'pic') showShot(Number(el.getAttribute('data-i')));
@@ -3820,6 +3942,7 @@ document.addEventListener('input', function (e) {
     state.offerMargin = v >= 0 ? v : null;
     saveSetting('offers'); paintDraft(); paintOfferRows();
   }
+  else if (k === 'inote') saveNote(el.getAttribute('data-id'), el.value);
   else if (k === 'ofilter') { state.offerQuery = el.value; paintOfferRows(); }
   else if (k === 'dprice') {
     d = state.draft[Number(el.getAttribute('data-i'))];
