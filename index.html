@@ -365,6 +365,25 @@ body.no-nav .toast { bottom:calc(24px + env(safe-area-inset-bottom,0px)) }
 .cover.big.has-photo { height:auto; aspect-ratio:4 / 3; max-height:52vh; background:var(--surface-2) }
 .cover.big img { object-fit:contain; background:var(--surface-2) }
 
+.cover.big.has-photo { cursor:zoom-in }
+.cover.big img { transition:transform .12s ease-out }
+.thumbs { display:flex; gap:8px; overflow-x:auto; padding:2px }
+.thumbs button { flex:none; width:58px; height:58px; padding:0; border:2px solid var(--line); border-radius:8px; overflow:hidden; background:var(--surface-2); cursor:pointer }
+.thumbs button[aria-pressed="true"] { border-color:var(--brand) }
+.thumbs img, .phm img { width:100%; height:100%; object-fit:cover; display:block }
+.phlist { display:flex; flex-direction:column; gap:8px }
+.phm { display:flex; align-items:center; gap:10px }
+.phm img { width:52px; height:52px; border-radius:8px; flex:none }
+.phm .x { margin-inline-start:auto }
+.langbtn { font:700 13px var(--font-body); color:var(--ink) }
+#zoom { position:fixed; inset:0; z-index:40; display:flex; flex-direction:column; background:var(--surface); padding-top:env(safe-area-inset-top,0px) }
+.zbar { display:flex; align-items:center; gap:8px; padding:8px max(12px, env(safe-area-inset-right,0px)) 8px max(12px, env(safe-area-inset-left,0px)) }
+.zbar .flip svg { transform:scaleX(-1) }
+.zpane { flex:1; min-height:0; overflow:auto; display:grid; place-items:center; cursor:zoom-in; background:var(--surface-2) }
+.zpane img { max-width:100%; max-height:100%; object-fit:contain; display:block }
+.zpane.in { display:block; cursor:zoom-out }
+.zpane.in img { width:260%; max-width:none; max-height:none }
+
 /* Barcode scanner: the camera picture with a guide line */
 .scanbox { position:relative; aspect-ratio:4 / 3; border-radius:12px; overflow:hidden; background:var(--surface-2) }
 .scanbox video { display:block; width:100%; height:100%; object-fit:cover }
@@ -674,6 +693,15 @@ var LOCALES = {
     added_request: 'Added to your request',
     show_out: 'Show sold-out items too',
     m_photo: 'Picture',
+    photo_main: 'Make it the main one',
+    photo_first: 'Main photo',
+    photo_hint: 'Up to {n} photos per item. The main one shows on the shelves.',
+    photo_full: 'This item already has {n} photos.',
+    guest_syp: 'Show customers prices in Syrian pounds only (no dollars)',
+    zoom: 'Enlarge',
+    prev: 'Previous',
+    next: 'Next',
+    lang_short: 'EN',
     offer_margin: 'Profit % added to offer prices',
     offer_sell: 'Sell {p}',
     offer_profit: 'profit {p}',
@@ -998,6 +1026,15 @@ var LOCALES = {
     added_request: 'أُضيفت إلى طلبك',
     show_out: 'عرض المواد غير المتوفرة أيضاً',
     m_photo: 'صورة',
+    photo_main: 'اجعلها الرئيسية',
+    photo_first: 'الصورة الرئيسية',
+    photo_hint: 'حتى {n} صور للمادة. الرئيسية هي التي تظهر على الرفوف.',
+    photo_full: 'لهذه المادة {n} صور، وهذا هو الحد.',
+    guest_syp: 'عرض الأسعار للزبائن بالليرة السورية فقط (بدون الدولار)',
+    zoom: 'تكبير',
+    prev: 'السابقة',
+    next: 'التالية',
+    lang_short: 'ع',
     offer_margin: 'نسبة الربح على أسعار العروض (%)',
     offer_sell: 'بيع {p}',
     offer_profit: 'ربح {p}',
@@ -1123,9 +1160,10 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: 'https://uogjnknguwhevbjjdysm.supabase.co', key: 'sb_publishable_LWI-49Y5BCYEV6kHIuA5Og_ymPaIhN1', pollMs: 10000 };
-var APP_BUILD = '2.0';
+var APP_BUILD = '2.1';
 var state = {
-  lang: /^en/i.test(navigator.language || '') ? 'en' : 'ar',
+  lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
+  guestSyp: true, shot: 0, zoom: null,
   screen: 'boot',       // boot | login | waiting | locked | offline | app
   role: null, me: null, session: null, busy: false, authMsg: '',
   tab: 'items', query: '', cat: 'all', lowOnly: false, peekId: null, sheetId: null,
@@ -1157,7 +1195,7 @@ var state = {
 function stored() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || 'null') || {}; } catch (e) { return {}; } }
 function load() {
   var s = stored();
-  if (s.lang === 'ar' || s.lang === 'en') state.lang = s.lang;
+  if (s.langSet && (s.lang === 'ar' || s.lang === 'en')) { state.lang = s.lang; state.langSet = true; }
   if (s.quote && typeof s.quote === 'object') state.quote = s.quote;
   if (s.quoteDisc >= 0 && s.quoteDisc <= 100) state.quoteDisc = s.quoteDisc;
   if (typeof s.quoteCustomer === 'string') state.quoteCustomer = s.quoteCustomer;
@@ -1168,7 +1206,7 @@ function load() {
 function save() {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      lang: state.lang, quote: state.quote, quoteDisc: state.quoteDisc, quoteCustomer: state.quoteCustomer,
+      lang: state.lang, langSet: state.langSet, quote: state.quote, quoteDisc: state.quoteDisc, quoteCustomer: state.quoteCustomer,
       lockMin: state.lockMin, bioIds: state.bio.ids, session: state.session
     }));
   } catch (e) { /* storage unavailable: nothing is remembered on this device */ }
@@ -1201,6 +1239,10 @@ function when(ts) {
 }
 function isAdmin() { return state.role === 'admin'; }
 function isGuest() { return state.role === 'guest'; }
+/* Customers may be shown Syrian pounds only (the manager's choice); staff always see both. */
+function guestSyp() { return isGuest() && state.guestSyp && state.rate > 0; }
+function px(v) { return guestSyp() ? sypOf(v) : usd(v); }    // the price as this viewer sees it
+function px2(v) { return guestSyp() ? '' : sypOf(v); }       // and the line under it
 function byId(id) { for (var i = 0; i < state.items.length; i++) if (state.items[i].id === id) return state.items[i]; return null; }
 function catOf(it) {
   for (var i = 0; i < state.cats.length; i++) if (state.cats[i].id === it.cat) return state.cats[i];
@@ -1295,13 +1337,13 @@ function reprice() { if (isAdmin()) state.items.forEach(resolveItem); }
 /* ---------- From cloud rows to what the screens show ---------- */
 function applySettings(rows) {
   var shop = { name: 'Kouki Technology', phone: '', note: '', validDays: 3 }, auto = true;
-  state.guestOn = true; state.maxDiscount = 5; state.floorMode = 'peek'; state.codeWord = 'BLACKHORSE'; state.pricing.lowAt = 1; state.offerMargin = null;
+  state.guestOn = true; state.guestSyp = true; state.maxDiscount = 5; state.floorMode = 'peek'; state.codeWord = 'BLACKHORSE'; state.pricing.lowAt = 1; state.offerMargin = null;
   (rows || []).forEach(function (r) {
     var v = r.value || {};
     if (r.key === 'shop') {
       ['name', 'phone', 'note'].forEach(function (k) { if (typeof v[k] === 'string') shop[k] = v[k]; });
       if (v.validDays > 0) shop.validDays = v.validDays;
-    } else if (r.key === 'guest') state.guestOn = v.enabled !== false;
+    } else if (r.key === 'guest') { state.guestOn = v.enabled !== false; state.guestSyp = v.sypOnly !== false; }
     else if (r.key === 'money') { if (v.sypMode === 'old' || v.sypMode === 'new') { state.sypMode = v.sypMode; auto = false; } }
     else if (r.key === 'offers') { if (v.margin >= 0 && v.margin !== null) state.offerMargin = Number(v.margin); }
     else if (r.key === 'floor') {
@@ -1355,7 +1397,8 @@ function applyCloud(d) {
   state.items = (d.items || []).map(function (r) {
     var it = { id: 'm' + r.id, code: r.code || '', barcode: r.barcode || '', cat: String(r.group_id), name: String(r.name),
       sell: r.sell === null || r.sell === undefined ? null : Number(r.sell), auto: !r.manual, min: p.lowAt, qty: 0, other: [] };
-    it.photo = state.media[it.id] || '';
+    it.photos = (state.media[it.id] || '').split(',').filter(Boolean);
+    it.photo = it.photos[0] || '';
     if (r.stock) {   // guest catalog: a word instead of a quantity
       it.stock = r.stock;
       it.qty = r.stock === 'out' ? 0 : 1;
@@ -2117,7 +2160,7 @@ function saveSetting(key) {
   var scope = key === 'floor' ? 'staff' : (key === 'offers' ? 'admin' : 'public');
   later('set-' + key, function () {
     var value = key === 'shop' ? { name: state.shop.name, phone: state.shop.phone, note: state.shop.note, validDays: state.shop.validDays }
-      : key === 'guest' ? { enabled: state.guestOn }
+      : key === 'guest' ? { enabled: state.guestOn, sypOnly: state.guestSyp }
       : key === 'money' ? { sypMode: state.sypMode }
       : key === 'offers' ? { margin: state.offerMargin }
       : { maxDiscount: state.maxDiscount, lowAt: state.pricing.lowAt, mode: state.floorMode, codeWord: state.codeWord };
@@ -2305,6 +2348,7 @@ function shellHtml() {
     '<span class="brandmark" dir="auto">' + esc(state.shop.name) + '</span></button>';
   if (guest) {
     head += '<span class="grow"></span>' +
+      '<button class="iconbtn langbtn" data-action="setlang" data-lang="' + (state.lang === 'ar' ? 'en' : 'ar') + '" aria-label="' + LOCALES[state.lang === 'ar' ? 'en' : 'ar'].lang_name + '">' + (state.lang === 'ar' ? 'EN' : LOCALES.ar.lang_short) + '</button>' +
       '<button class="iconbtn" data-action="cart" aria-label="' + t('request_title') + '">' + icon('cart', 22) + '<i class="badge" id="qbadge" hidden></i></button>' +
       '<button class="iconbtn" data-action="account" aria-label="' + t('staff_signin') + '" title="' + t('staff_signin') + '">' + icon('user', 22) + '</button>';
   } else {
@@ -2379,7 +2423,7 @@ function softRepaint() {
     if (!it) closeSheet(); else if (!typing && sheetSig(it) !== state.sheetSig) openItem(state.sheetId);
   }
 }
-function sheetSig(it) { return [it.name, it.sell, it.qty, it.cost, it.pending, it.stock, it.photo, state.rate, state.sypMode, state.lang].join('|'); }
+function sheetSig(it) { return [it.name, it.sell, it.qty, it.cost, it.pending, it.stock, it.photos.join(','), state.photoBusy, state.rate, state.sypMode, state.lang].join('|'); }
 
 /* ---------- Store: home shelves, or a list with order and filters ---------- */
 function isHome() { return isGuest() && state.cat === 'all' && !state.query.trim() && !state.brand && !state.cpu && !state.ram; }
@@ -2424,8 +2468,6 @@ function shelf(title, list, cat) {
 function homeHtml() {
   var stock = state.items.filter(function (it) { return it.qty > 0 && hasPrice(it); }), fresh = sortedBy('new', stock);
   var h = '<section class="hero"><div><h1>' + esc(state.shop.name) + '</h1><p>' + t('store_tagline') + '</p></div>' +
-    '<div class="hero-meta"><span class="note">' + t('in_stock_now', { n: stock.length }) + '</span>' +
-    (state.rate > 0 ? '<span class="note code">$1 = ' + sypOf(1) + '</span>' : '') + '</div>' +
     (state.shop.phone ? '<a class="btn" target="_blank" rel="noopener" href="' + esc(shopWa(state.shop.name)) + '">' + icon('chat', 18) + t('whatsapp') + '</a>' : '') + '</section>';
   if (!stock.length) return h + '<p class="empty">' + t('no_items') + '</p>';
   h += shelf(t('new_arrivals'), fresh.slice(0, 12), null);
@@ -2501,13 +2543,16 @@ function peek(id) {
 function priceHtml(it, big) {
   var b = big ? ' big' : '';
   if (!hasPrice(it)) return '<span class="tag none' + b + '">' + t(isGuest() ? 'ask_price' : 'no_price') + '</span>';
-  return '<span class="tag' + b + '">' + usd(it.sell) + '</span><span class="syp' + b + '">' + sypOf(it.sell) + '</span>';
+  return '<span class="tag' + b + '">' + px(it.sell) + '</span><span class="syp' + b + '">' + px2(it.sell) + '</span>';
 }
 /* The drawing stays underneath a real photo: it shows while the photo loads, and if the photo cannot be fetched. */
 function coverHtml(it, big) {
-  return '<span class="cover k-' + it.tint + (big ? ' big' : '') + (it.photo ? ' has-photo' : '') + '">' + icon(it.kind, big ? 72 : 44) +
+  return '<span class="cover k-' + it.tint + (big ? ' big' : '') + (it.photo ? ' has-photo' : '') + '"' + (big && it.photo ? ' data-action="zoom" data-id="' + it.id + '" title="' + t('zoom') + '"' : '') + '>' + icon(it.kind, big ? 72 : 44) +
     (it.brandName && !it.photo ? '<b class="cbrand">' + esc(it.brandName) + '</b>' : '') +
-    (it.photo ? '<img src="' + esc(photoUrl(it.photo, !big)) + '" alt="" loading="lazy" decoding="async" onerror="this.hidden=true">' : '') + '</span>';
+    (it.photo ? '<img' + (big ? ' id="big-pic"' : '') + ' src="' + esc(photoUrl(big ? it.photos[state.shot] || it.photo : it.photo, !big)) + '" alt="" loading="lazy" decoding="async" onerror="this.hidden=true">' : '') + '</span>' +
+    (big && it.photos.length > 1 ? '<div class="thumbs">' + it.photos.map(function (b, i) {
+      return '<button data-action="pic" data-i="' + i + '" aria-pressed="' + (i === state.shot) + '"><img src="' + esc(photoUrl(b, true)) + '" alt="" loading="lazy"></button>';
+    }).join('') + '</div>' : '');
 }
 function chipsHtml(it, all) {
   var list = all ? it.chips : it.chips.slice(0, 3);
@@ -2568,6 +2613,7 @@ function openItem(id) {
   var it = byId(id);
   if (!it) return;
   stopScan();
+  if (state.sheetId !== id) state.shot = 0;
   var priced = hasPrice(it), like = similarTo(it);
   var facts = specFacts(it) + fact(t('code'), '<span class="code">' + esc(it.code) + '</span>') +
     (isGuest() || !it.barcode ? '' : fact(t('barcode'), '<span class="code">' + esc(it.barcode) + '</span>')) +
@@ -2587,7 +2633,7 @@ function openItem(id) {
       fact(t('best_offer'), best ? '<span dir="auto">' + esc(best.supplier) + '</span> · ' + usd(best.usd) + ' ' + cmpPill(best.usd, it.cost) : t('none_yet')) +
       realFacts(it) + '</dl>' + priceInputs(it) + photoControls(it) + '</div>';
   }
-  var line = it.name + (priced ? '\n' + usd(it.sell) + ' (' + sypOf(it.sell) + ')' : '');
+  var line = it.name + (priced ? '\n' + usd(it.sell) + ' (' + sypOf(it.sell) + ')' : '');   // staff only
   html += '<div class="row"><button class="btn primary grow" data-action="add" data-id="' + it.id + '" data-close="1"' + (priced ? '' : ' disabled') + '>' + icon('plus', 18) + addLabel() + '</button>' +
     (isGuest()
       ? (state.shop.phone ? '<a class="btn grow" target="_blank" rel="noopener" href="' + esc(shopWa(t('ask_item', { name: it.name, code: it.code }) + '\n' + itemLink(it))) + '">' + icon('chat', 18) + t('ask_whatsapp') + '</a>' : '')
@@ -2611,6 +2657,7 @@ function openItem(id) {
   }
 }
 function closeSheet(fromRoute) {
+  closeZoom();
   var sh = $('#sheet'), wasItem = !!state.sheetId;
   stopScan();
   sh.hidden = true;
@@ -2625,12 +2672,12 @@ function quoteText() {
   var q = quoteCalc(), guest = isGuest(), who = state.quoteCustomer.trim();
   var out = [state.shop.name, t(guest ? 'request_title' : 'quote_title') + ' ' + quoteNo() + ' · ' + new Date().toLocaleDateString('en-GB')];
   if (!guest && who) out.push(t('customer') + ': ' + who);
-  q.lines.forEach(function (l) { out.push('- ' + l.it.name + ' × ' + l.n + ' = ' + usd(l.it.sell * l.n)); });
+  q.lines.forEach(function (l) { out.push('- ' + l.it.name + ' × ' + l.n + ' = ' + px(l.it.sell * l.n)); });
   if (q.disc > 0) {
-    out.push(t('subtotal') + ': ' + usd(q.sub));
-    out.push(t('discount') + ' ' + num(q.pct, 1) + '%: -' + usd(q.disc));
+    out.push(t('subtotal') + ': ' + px(q.sub));
+    out.push(t('discount') + ' ' + num(q.pct, 1) + '%: -' + px(q.disc));
   }
-  out.push(t('total') + ': ' + usd(q.total) + ' (' + sypOf(q.total) + ')');
+  out.push(t('total') + ': ' + px(q.total) + (px2(q.total) ? ' (' + px2(q.total) + ')' : ''));
   if (!guest) out.push(t('doc_valid', { n: state.shop.validDays }));
   return out.join('\n');
 }
@@ -2639,10 +2686,10 @@ function waLink(text, toShop) {
 }
 function sumHtml(q) {
   return (q.disc > 0
-    ? '<div class="sumline"><span>' + t('subtotal') + '</span><span class="code">' + usd(q.sub) + '</span></div>' +
-      '<div class="sumline"><span>' + t('discount') + ' ' + num(q.pct, 1) + '%</span><span class="code">-' + usd(q.disc) + '</span></div>'
+    ? '<div class="sumline"><span>' + t('subtotal') + '</span><span class="code">' + px(q.sub) + '</span></div>' +
+      '<div class="sumline"><span>' + t('discount') + ' ' + num(q.pct, 1) + '%</span><span class="code">-' + px(q.disc) + '</span></div>'
     : '') +
-    '<div class="total"><span>' + t('total') + '</span><span class="price"><span class="tag big">' + usd(q.total) + '</span><span class="syp big">' + sypOf(q.total) + '</span></span></div>';
+    '<div class="total"><span>' + t('total') + '</span><span class="price"><span class="tag big">' + px(q.total) + '</span><span class="syp big">' + px2(q.total) + '</span></span></div>';
 }
 function viewQuote() {
   var q = quoteCalc(), guest = isGuest(), title = t(guest ? 'request_title' : 'quote_title');
@@ -2650,8 +2697,8 @@ function viewQuote() {
   if (!q.lines.length) return '<section class="panel"><h2 class="h">' + title + '</h2><p class="empty">' + t(guest ? 'request_empty' : 'quote_empty') + '</p>' + backBtn + '</section>';
   var rows = q.lines.map(function (l) {
     var tot = l.it.sell * l.n;
-    return '<div class="qline"><div class="grow"><div class="nm" dir="auto">' + esc(l.it.name) + '</div><div class="meta"><span class="code">' + usd(l.it.sell) + ' × ' + l.n + '</span></div></div>' +
-      '<div class="price"><b class="qsum code">' + usd(tot) + '</b><span class="syp">' + sypOf(tot) + '</span></div>' +
+    return '<div class="qline"><div class="grow"><div class="nm" dir="auto">' + esc(l.it.name) + '</div><div class="meta"><span class="code">' + px(l.it.sell) + ' × ' + l.n + '</span></div></div>' +
+      '<div class="price"><b class="qsum code">' + px(tot) + '</b><span class="syp">' + px2(tot) + '</span></div>' +
       '<div class="stepper"><button data-action="qdec" data-id="' + l.it.id + '" aria-label="-1">−</button><output>' + l.n + '</output>' +
       '<button data-action="qinc" data-id="' + l.it.id + '" aria-label="+1">+</button></div></div>';
   }).join('');
@@ -2765,21 +2812,21 @@ function drawQuotePages() {
     if (y + rowH > H - M - 80) { newPage(); tableHead(); }
     lines.forEach(function (ln, k) { text(ln, sx(16), y + k * 32, body, INK, 'start'); });
     text(l.n, ex(430), y, body, INK, 'center');
-    text(usd(l.it.sell), ex(215), y, body, INK, 'end');
-    text(usd(l.it.sell * l.n), ex(16), y, '600 23px ' + FB, INK, 'end');
+    text(px(l.it.sell), ex(215), y, body, INK, 'end');
+    text(px(l.it.sell * l.n), ex(16), y, '600 23px ' + FB, INK, 'end');
     rule(y + (lines.length - 1) * 32 + 18, LINE, 1);
     y += rowH;
   });
   if (y + 260 > H - M - 80) newPage();
   y += 24;
   if (q.disc > 0) {
-    sumRow(t('subtotal'), usd(q.sub));
-    sumRow(t('discount') + ' ' + num(q.pct, 1) + '%', '-' + usd(q.disc));
+    sumRow(t('subtotal'), px(q.sub));
+    sumRow(t('discount') + ' ' + num(q.pct, 1) + '%', '-' + px(q.disc));
   }
-  sumRow(t('total'), usd(q.total), true);
-  text(sypOf(q.total), ex(16), y, '600 24px ' + FB, INK, 'end');
+  sumRow(t('total'), px(q.total), true);
+  text(px2(q.total), ex(16), y, '600 24px ' + FB, INK, 'end');
   y += 38;
-  text(t('doc_rate') + ': $1 = ' + sypOf(1), ex(16), y, '400 20px ' + FB, MUTE, 'end');
+  if (!guestSyp()) text(t('doc_rate') + ': $1 = ' + sypOf(1), ex(16), y, '400 20px ' + FB, MUTE, 'end');
   pages.forEach(function (p, i) {
     ctx = p.getContext('2d');
     rule(H - M - 44, LINE, 1);
@@ -3099,7 +3146,8 @@ function viewSettings() {
           '<p class="sub" id="code-ex">' + esc(codeExample()) + '</p>'
         : '') + '</section>' +
       '<section class="panel"><h2 class="h">' + t('set_guest') + '</h2><label class="check" for="guest-on"><input id="guest-on" type="checkbox" data-input="gueston"' +
-      (state.guestOn ? ' checked' : '') + '><span>' + t('guest_allow') + '</span></label></section>';
+      (state.guestOn ? ' checked' : '') + '><span>' + t('guest_allow') + '</span></label>' +
+      '<label class="check" for="guest-syp"><input id="guest-syp" type="checkbox" data-input="guestsyp"' + (state.guestSyp ? ' checked' : '') + '><span>' + t('guest_syp') + '</span></label></section>';
   }
   h += securityPanel();
   if (isAdmin()) h += peoplePanel();
@@ -3198,29 +3246,48 @@ function photoDone(id) {
   if (state.tab === 'items') paintItems();
   if (state.sheetId === id) openItem(id);
 }
-function setPhoto(id, file) {
-  var it = byId(id);
+var MAX_PHOTOS = 8;
+/* The item's photo names are kept as one comma-joined value; the first is the one on the shelves. */
+function sendPhotos(it, list) {
+  return list.length
+    ? api('POST', '/rest/v1/item_media?on_conflict=item_id', [{ item_id: idNum(it), photo: list.join(',') }], 'resolution=merge-duplicates,return=minimal')
+    : api('DELETE', '/rest/v1/item_media?item_id=eq.' + idNum(it), undefined, 'return=minimal');
+}
+function keepPhotos(it, list) {
+  if (list.length) state.media[it.id] = list.join(','); else delete state.media[it.id];
+  it.photos = list;
+  it.photo = list[0] || '';
+  if (state.shot >= list.length) state.shot = 0;
+}
+function addPhotos(id, files) {
+  var it = byId(id), added = [];
   if (!it || state.photoBusy) return;
   if (!state.mediaOk) { toast(t('photo_setup')); return; }
-  var n = idNum(it), base = 'p' + n + '-' + Date.now().toString(36), old = it.photo;
+  var n = idNum(it), list = Array.prototype.slice.call(files, 0, MAX_PHOTOS - it.photos.length);
+  if (!list.length) { toast(t('photo_full', { n: MAX_PHOTOS })); return; }
   state.photoBusy = true;
   toast(t('photo_up'));
   if (state.sheetId === id) openItem(id);
-  loadPicture(file).then(function (img) {
-    return Promise.all([jpegOf(img, 1280, 0.82), jpegOf(img, 420, 0.8)]);
-  }).then(function (blobs) {
-    return storageCall('POST', 'items/' + base + '.jpg', blobs[0], 'image/jpeg').then(function (r) {
-      if (!r.ok) throw r;
-      return storageCall('POST', 'items/' + base + '-s.jpg', blobs[1], 'image/jpeg');
+  list.reduce(function (chain, file, k) {
+    return chain.then(function () {
+      var base = 'p' + n + '-' + Date.now().toString(36) + k;
+      return loadPicture(file).then(function (img) {
+        return Promise.all([jpegOf(img, 1600, 0.84), jpegOf(img, 420, 0.8)]);
+      }).then(function (blobs) {
+        return storageCall('POST', 'items/' + base + '.jpg', blobs[0], 'image/jpeg').then(function (r) {
+          if (!r.ok) throw r;
+          return storageCall('POST', 'items/' + base + '-s.jpg', blobs[1], 'image/jpeg');
+        });
+      }).then(function (r) {
+        if (!r.ok) throw r;
+        added.push(base);
+      });
     });
+  }, Promise.resolve()).then(function () {
+    return sendPhotos(it, it.photos.concat(added));
   }).then(function (r) {
     if (!r.ok) throw r;
-    return api('POST', '/rest/v1/item_media?on_conflict=item_id', [{ item_id: n, photo: base }], 'resolution=merge-duplicates,return=minimal');
-  }).then(function (r) {
-    if (!r.ok) throw r;
-    state.media[id] = base;
-    it.photo = base;
-    if (old) dropPhotoFiles(old);
+    keepPhotos(it, it.photos.concat(added));
     toast(t('photo_ok'));
     setTimeout(poll, 1200);
     photoDone(id);
@@ -3230,26 +3297,87 @@ function setPhoto(id, file) {
     photoDone(id);
   });
 }
-function removePhoto(id) {
-  var it = byId(id), old = it && it.photo;
-  if (!old || state.photoBusy) return;
+function changePhotos(id, list, gone, said) {
+  var it = byId(id);
+  if (!it || state.photoBusy) return;
   state.photoBusy = true;
-  sent(api('DELETE', '/rest/v1/item_media?item_id=eq.' + idNum(it), undefined, 'return=minimal')).then(function (r) {
+  sent(sendPhotos(it, list)).then(function (r) {
     if (r) {
-      delete state.media[id];
-      it.photo = '';
-      dropPhotoFiles(old);
-      toast(t('photo_gone'));
+      keepPhotos(it, list);
+      if (gone) dropPhotoFiles(gone);
+      toast(t(said));
     }
     photoDone(id);
   });
 }
+function removePhoto(id, base) {
+  var it = byId(id);
+  if (it && it.photos.indexOf(base) !== -1) changePhotos(id, it.photos.filter(function (b) { return b !== base; }), base, 'photo_gone');
+}
+function mainPhoto(id, base) {
+  var it = byId(id);
+  if (it && it.photos.indexOf(base) > 0) changePhotos(id, [base].concat(it.photos.filter(function (b) { return b !== base; })), '', 'photo_ok');
+}
 function photoControls(it) {
   if (!state.mediaOk) return '<p class="sub">' + t('photo_setup') + '</p>';
-  return '<div class="row"><label class="btn' + (state.photoBusy ? ' off' : '') + '" for="ph-file">' + icon('camera', 18) + t(state.photoBusy ? 'photo_up' : (it.photo ? 'photo_change' : 'photo_add')) + '</label>' +
-    '<input type="file" id="ph-file" accept="image/*" data-id="' + it.id + '"' + (state.photoBusy ? ' disabled' : '') + ' hidden>' +
-    (it.photo && !state.photoBusy ? '<button class="btn ghost danger" data-action="phdel" data-id="' + it.id + '">' + t('photo_del') + '</button>' : '') + '</div>';
+  var off = state.photoBusy ? ' disabled' : '';
+  return (it.photos.length ? '<div class="phlist">' + it.photos.map(function (b, i) {
+    return '<span class="phm"><img src="' + esc(photoUrl(b, true)) + '" alt="" loading="lazy">' +
+      (i ? '<button class="btn sm" data-action="phmain" data-id="' + it.id + '" data-b="' + b + '"' + off + '>' + t('photo_main') + '</button>' : '<span class="sub strong">' + t('photo_first') + '</span>') +
+      '<button class="x" data-action="phdel" data-id="' + it.id + '" data-b="' + b + '" aria-label="' + t('photo_del') + '"' + off + '>' + icon('x', 16) + '</button></span>';
+  }).join('') + '</div>' : '') +
+    '<div class="row"><label class="btn' + (state.photoBusy ? ' off' : '') + '" for="ph-file">' + icon('camera', 18) + t(state.photoBusy ? 'photo_up' : 'photo_add') + '</label>' +
+    '<input type="file" id="ph-file" accept="image/*" multiple data-id="' + it.id + '"' + off + ' hidden></div>' +
+    '<p class="sub">' + t('photo_hint', { n: MAX_PHOTOS }) + '</p>';
 }
+
+/* ---------- Looking at photos: pick one, enlarge under the pointer, open it full screen ---------- */
+function showShot(i) {
+  var it = byId(state.sheetId), big = $('#big-pic');
+  if (!it || !it.photos[i] || !big) return;
+  state.shot = i;
+  big.hidden = false;
+  big.src = photoUrl(it.photos[i], false);
+  Array.prototype.forEach.call(document.querySelectorAll('#sheet .thumbs button'), function (b, k) { b.setAttribute('aria-pressed', String(k === i)); });
+}
+function paintZoom() {
+  var z = $('#zoom'), it = state.zoom && byId(state.zoom.id), n;
+  if (!z) { z = document.createElement('div'); z.id = 'zoom'; z.setAttribute('role', 'dialog'); z.setAttribute('aria-modal', 'true'); document.body.appendChild(z); }
+  if (!it || !it.photos.length) { z.hidden = true; state.zoom = null; return; }
+  n = it.photos.length;
+  state.zoom.i = (state.zoom.i + n) % n;
+  z.innerHTML = '<div class="zbar"><span class="sub code">' + (n > 1 ? (state.zoom.i + 1) + ' / ' + n : '') + '</span><span class="grow"></span>' +
+    (n > 1 ? '<button class="iconbtn" data-action="zstep" data-d="-1" aria-label="' + t('prev') + '">' + icon('back', 22) + '</button>' +
+      '<button class="iconbtn flip" data-action="zstep" data-d="1" aria-label="' + t('next') + '">' + icon('back', 22) + '</button>' : '') +
+    '<button class="iconbtn" data-action="zclose" aria-label="' + t('close') + '">' + icon('x', 22) + '</button></div>' +
+    '<div class="zpane' + (state.zoom.big ? ' in' : '') + '" data-action="zin"><img src="' + esc(photoUrl(it.photos[state.zoom.i], false)) + '" alt="' + esc(it.name) + '"></div>';
+  z.hidden = false;
+}
+function openZoom(id) { state.zoom = { id: id, i: state.shot || 0, big: false }; paintZoom(); }
+function closeZoom() { var z = $('#zoom'); state.zoom = null; if (z) { z.hidden = true; z.innerHTML = ''; } }
+/* A tap enlarges around the tapped point; another tap brings the whole photo back. */
+function toggleZoom(e) {
+  var pane = $('#zoom .zpane'), box, fx, fy;
+  if (!pane || !state.zoom) return;
+  box = pane.getBoundingClientRect();
+  fx = (e.clientX - box.left) / box.width; fy = (e.clientY - box.top) / box.height;
+  state.zoom.big = !state.zoom.big;
+  pane.classList.toggle('in', state.zoom.big);
+  if (state.zoom.big) { pane.scrollLeft = (pane.scrollWidth - pane.clientWidth) * fx; pane.scrollTop = (pane.scrollHeight - pane.clientHeight) * fy; }
+}
+/* With a mouse, the photo of the opened item enlarges under the pointer, as shopping sites do. */
+var canHover = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
+document.addEventListener('mousemove', function (e) {
+  var c = canHover && e.target.closest && e.target.closest('#sheet .cover.big.has-photo'), img, box;
+  if (!c) return;
+  img = c.querySelector('img'); box = c.getBoundingClientRect();
+  img.style.transformOrigin = ((e.clientX - box.left) / box.width * 100) + '% ' + ((e.clientY - box.top) / box.height * 100) + '%';
+  img.style.transform = 'scale(2.4)';
+});
+document.addEventListener('mouseout', function (e) {
+  var c = canHover && e.target.closest && e.target.closest('#sheet .cover.big.has-photo');
+  if (c && !c.contains(e.relatedTarget)) c.querySelector('img').style.transform = '';
+});
 
 /* ---------- Barcode scanning with the camera (staff) ----------
    The phone's own barcode reader is used where the browser has one; elsewhere a reader library is fetched
@@ -3548,7 +3676,7 @@ function toast(msg) {
 
 /* ---------- Events ---------- */
 function goTab(tab) { flushLater(); state.tab = tab; render(); window.scrollTo(0, 0); }
-function setLang(l) { state.lang = l; save(); closeSheet(); state.items.forEach(describe); render(); }
+function setLang(l) { state.lang = l; state.langSet = true; save(); closeSheet(); state.items.forEach(describe); render(); }
 window.addEventListener('pagehide', stopScan);
 function resetStore() { state.cat = 'all'; state.query = ''; state.brand = ''; state.cpu = ''; state.ram = ''; state.need = ''; state.lowOnly = false; state.limit = 60; }
 function toggle(key, v) { state[key] = state[key] === v ? '' : v; state.limit = 60; paintItems(); }
@@ -3579,10 +3707,16 @@ document.addEventListener('click', function (e) {
   else if (a === 'instock') { state.inStockOnly = !state.inStockOnly; state.limit = 60; paintItems(); }
   else if (a === 'brand' || a === 'cpu' || a === 'ram' || a === 'need') toggle(a, el.getAttribute('data-v'));
   else if (a === 'scan') openScan();
-  else if (a === 'phdel') removePhoto(id);
+  else if (a === 'phdel') removePhoto(id, el.getAttribute('data-b'));
+  else if (a === 'phmain') mainPhoto(id, el.getAttribute('data-b'));
+  else if (a === 'pic') showShot(Number(el.getAttribute('data-i')));
+  else if (a === 'zoom') openZoom(id);
+  else if (a === 'zclose') closeZoom();
+  else if (a === 'zin') toggleZoom(e);
+  else if (a === 'zstep') { if (state.zoom) { state.zoom.i += Number(el.getAttribute('data-d')); state.zoom.big = false; paintZoom(); } }
   else if (a === 'share') {
     p = byId(id);
-    if (p && navigator.share) navigator.share({ title: p.name, text: p.name + (hasPrice(p) ? ' - ' + usd(p.sell) : ''), url: itemLink(p) }).catch(function () { /* closed without sharing */ });
+    if (p && navigator.share) navigator.share({ title: p.name, text: p.name + (hasPrice(p) ? ' - ' + px(p.sell) : ''), url: itemLink(p) }).catch(function () { /* closed without sharing */ });
   }
   else if (a === 'copylink') {
     p = byId(id);
@@ -3677,6 +3811,7 @@ document.addEventListener('input', function (e) {
     saveGroup(d);
   }
   else if (k === 'gueston') { state.guestOn = el.checked; saveSetting('guest'); }
+  else if (k === 'guestsyp') { state.guestSyp = el.checked; saveSetting('guest'); }
   else if (k === 'paste') { state.pasteText = el.value; setDraft(parseOfferText(el.value, state.draftCur)); paintDraft(); }
   else if (k === 'supplier') { state.supplier = el.value; paintDraftFoot(); }
   else if (k === 'replold') { state.replaceOld = el.checked; state.replaceTouched = true; }
@@ -3720,7 +3855,7 @@ document.addEventListener('change', function (e) {
   var el = e.target, k = el.getAttribute && el.getAttribute('data-change'), id, v, it;
   if (el.id === 'file' && el.files && el.files[0]) importFile(el.files[0]);
   else if (el.id === 'shot' && el.files && el.files.length) readOfferPictures(el.files);
-  else if (el.id === 'ph-file' && el.files && el.files[0]) setPhoto(el.getAttribute('data-id'), el.files[0]);
+  else if (el.id === 'ph-file' && el.files && el.files[0]) addPhotos(el.getAttribute('data-id'), el.files);
   else if (k === 'sort') { state.sort = el.value; state.limit = 60; paintItems(); }
   else if (k === 'extra' || k === 'manual') {   // manager's per-item adjustments, applied when the field is left
     id = el.getAttribute('data-id'); v = parseFloat(el.value); it = byId(id);
@@ -3755,7 +3890,8 @@ document.addEventListener('submit', function (e) {
 
 document.addEventListener('keydown', function (e) {
   var hits;
-  if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet();
+  if (e.key === 'Escape' && state.zoom) closeZoom();
+  else if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet();
   else if (e.key === 'Enter' && e.target && e.target.id === 'q' && !isGuest()) {   // a hand scanner types the code and presses Enter
     hits = itemsByCode(e.target.value);
     if (hits.length === 1) { e.preventDefault(); openItem(hits[0].id); }
