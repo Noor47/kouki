@@ -367,7 +367,8 @@ body.no-nav .toast { bottom:calc(24px + env(safe-area-inset-bottom,0px)) }
 
 .cover.big.has-photo { cursor:zoom-in }
 .cover.big img { transition:transform .12s ease-out }
-.thumbs { display:flex; gap:8px; overflow-x:auto; padding:2px }
+.thumbs { display:flex; gap:8px; overflow-x:auto; padding:2px; flex:none; min-height:64px }
+.arrow { display:inline-flex }
 .thumbs button { flex:none; width:58px; height:58px; padding:0; border:2px solid var(--line); border-radius:8px; overflow:hidden; background:var(--surface-2); cursor:pointer }
 .thumbs button[aria-pressed="true"] { border-color:var(--brand) }
 .thumbs img, .phm img { width:100%; height:100%; object-fit:cover; display:block }
@@ -378,7 +379,6 @@ body.no-nav .toast { bottom:calc(24px + env(safe-area-inset-bottom,0px)) }
 .langbtn { font:700 13px var(--font-body); color:var(--ink) }
 #zoom { position:fixed; inset:0; z-index:40; display:flex; flex-direction:column; background:var(--surface); padding-top:env(safe-area-inset-top,0px) }
 .zbar { display:flex; align-items:center; gap:8px; padding:8px max(12px, env(safe-area-inset-right,0px)) 8px max(12px, env(safe-area-inset-left,0px)) }
-.zbar .flip svg { transform:scaleX(-1) }
 .zpane { flex:1; min-height:0; overflow:auto; display:grid; place-items:center; cursor:zoom-in; background:var(--surface-2) }
 .zpane img { max-width:100%; max-height:100%; object-fit:contain; display:block }
 .zpane.in { display:block; cursor:zoom-out }
@@ -1210,7 +1210,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: 'https://uogjnknguwhevbjjdysm.supabase.co', key: 'sb_publishable_LWI-49Y5BCYEV6kHIuA5Og_ymPaIhN1', pollMs: 10000 };
-var APP_BUILD = '2.3';
+var APP_BUILD = '2.4';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -3421,8 +3421,10 @@ function paintZoom() {
   n = it.photos.length;
   state.zoom.i = (state.zoom.i + n) % n;
   z.innerHTML = '<div class="zbar"><span class="sub code">' + (n > 1 ? (state.zoom.i + 1) + ' / ' + n : '') + '</span><span class="grow"></span>' +
-    (n > 1 ? '<button class="iconbtn" data-action="zstep" data-d="-1" aria-label="' + t('prev') + '">' + icon('back', 22) + '</button>' +
-      '<button class="iconbtn flip" data-action="zstep" data-d="1" aria-label="' + t('next') + '">' + icon('back', 22) + '</button>' : '') +
+    (n > 1 ? [-1, 1].map(function (d) {   // the two arrows point away from each other, whichever way the page reads
+      return '<button class="iconbtn" data-action="zstep" data-d="' + d + '" aria-label="' + t(d < 0 ? 'prev' : 'next') + '"><span class="arrow" style="transform:rotate(' +
+        ((d < 0) === (state.lang === 'ar') ? 0 : 180) + 'deg)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></button>';
+    }).join('') : '') +
     '<button class="iconbtn" data-action="zclose" aria-label="' + t('close') + '">' + icon('x', 22) + '</button></div>' +
     '<div class="zpane' + (state.zoom.big ? ' in' : '') + '" data-action="zin"><img src="' + esc(photoUrl(it.photos[state.zoom.i], false)) + '" alt="' + esc(it.name) + '"></div>';
   z.hidden = false;
