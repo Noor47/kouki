@@ -666,7 +666,10 @@ var LOCALES = {
     sync_info: '{n} items from {name}.',
     sync_last: 'Last change received: {time}',
     refresh: 'Refresh now',
-    rate_books: 'The exchange rate comes from the accounting program: {rate}',
+    rate_books: 'Rate in the accounting program now: {rate}',
+    rate_src: 'Exchange rate',
+    ratesrc_manual: 'I type it here',
+    rate_type: 'Pounds for one dollar',
     set_guest: 'Guests',
     guest_allow: 'Let guests browse items and prices',
     emp_hint: 'To add an employee: create the account in the cloud dashboard, then approve it here.',
@@ -717,6 +720,7 @@ var LOCALES = {
     added_request: 'Added to your request',
     show_out: 'Show sold-out items too',
     m_photo: 'Picture',
+    ratesrc_books: 'From the accounting program',
     cmp_add: 'Compare',
     cmp_pick: 'Pick one more to compare',
     cmp_show: 'Compare the two',
@@ -1008,7 +1012,10 @@ var LOCALES = {
     sync_info: '{n} مادة من {name}.',
     sync_last: 'آخر تغيير وصل: {time}',
     refresh: 'تحديث الآن',
-    rate_books: 'سعر الصرف يأتي من برنامج المحاسبة: {rate}',
+    rate_books: 'السعر في برنامج المحاسبة الآن: {rate}',
+    rate_src: 'سعر الصرف',
+    ratesrc_manual: 'أكتبه هنا',
+    rate_type: 'كم ليرة للدولار الواحد',
     set_guest: 'الزوّار',
     guest_allow: 'السماح للزوّار بتصفّح المواد والأسعار',
     emp_hint: 'لإضافة موظف: أنشئ حسابه من لوحة السحابة، ثم وافق عليه هنا.',
@@ -1059,6 +1066,7 @@ var LOCALES = {
     added_request: 'أُضيفت إلى طلبك',
     show_out: 'عرض المواد غير المتوفرة أيضاً',
     m_photo: 'صورة',
+    ratesrc_books: 'من برنامج المحاسبة',
     cmp_add: 'قارن',
     cmp_pick: 'اختر جهازاً آخر للمقارنة',
     cmp_show: 'قارن بين الجهازين',
@@ -1202,9 +1210,10 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: 'https://uogjnknguwhevbjjdysm.supabase.co', key: 'sb_publishable_LWI-49Y5BCYEV6kHIuA5Og_ymPaIhN1', pollMs: 10000 };
-var APP_BUILD = '2.2';
+var APP_BUILD = '2.3';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
+  bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
   guestSyp: true, shot: 0, zoom: null, cmp: [], notes: {}, notesOk: false,
   screen: 'boot',       // boot | login | waiting | locked | offline | app
   role: null, me: null, session: null, busy: false, authMsg: '',
@@ -1268,6 +1277,7 @@ function esc(v) {
 }
 function num(n, d) { return Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
 function usd(n) { return '$' + num(n, 2); }
+function useRate() { state.rate = state.rateSrc === 'manual' && state.rateManual > 0 ? state.rateManual : state.bookRate; }
 function sypFactor() { return state.sypMode === 'old' ? 100 : 1; }
 function sypOf(usdValue) { return num(Math.round(usdValue * state.rate * sypFactor()), 0) + ' ' + t('syp_unit'); }
 function two(n) { return ('0' + n).slice(-2); }
@@ -1379,6 +1389,7 @@ function reprice() { if (isAdmin()) state.items.forEach(resolveItem); }
 /* ---------- From cloud rows to what the screens show ---------- */
 function applySettings(rows) {
   var shop = { name: 'Kouki Technology', phone: '', note: '', validDays: 3 }, auto = true;
+  state.rateSrc = 'books'; state.rateManual = 0;
   state.guestOn = true; state.guestSyp = true; state.maxDiscount = 5; state.floorMode = 'peek'; state.codeWord = 'BLACKHORSE'; state.pricing.lowAt = 1; state.offerMargin = null;
   (rows || []).forEach(function (r) {
     var v = r.value || {};
@@ -1386,7 +1397,10 @@ function applySettings(rows) {
       ['name', 'phone', 'note'].forEach(function (k) { if (typeof v[k] === 'string') shop[k] = v[k]; });
       if (v.validDays > 0) shop.validDays = v.validDays;
     } else if (r.key === 'guest') { state.guestOn = v.enabled !== false; state.guestSyp = v.sypOnly !== false; }
-    else if (r.key === 'money') { if (v.sypMode === 'old' || v.sypMode === 'new') { state.sypMode = v.sypMode; auto = false; } }
+    else if (r.key === 'money') {
+      if (v.sypMode === 'old' || v.sypMode === 'new') { state.sypMode = v.sypMode; auto = false; }
+      if (v.rateSrc === 'manual' && v.rateManual > 0) { state.rateSrc = 'manual'; state.rateManual = Number(v.rateManual); }
+    }
     else if (r.key === 'offers') { if (v.margin >= 0 && v.margin !== null) state.offerMargin = Number(v.margin); }
     else if (r.key === 'floor') {
       if (v.maxDiscount >= 0 && v.maxDiscount <= 100) state.maxDiscount = Number(v.maxDiscount);
@@ -1397,6 +1411,7 @@ function applySettings(rows) {
   });
   state.shop = shop;
   state.sypAuto = auto;
+  useRate();
 }
 function applyCurrencies(list) {
   var syp = null, reSyp = new RegExp(LEXICON.sypName, 'i');
@@ -1408,9 +1423,10 @@ function applyCurrencies(list) {
   });
   if (syp && syp.rate > 0) {   // the accounting rate is per old or new lira; the app keeps new lira per dollar
     var perUsd = 1 / syp.rate;
-    state.rate = perUsd > 2000 ? perUsd / 100 : perUsd;
+    state.bookRate = perUsd > 2000 ? perUsd / 100 : perUsd;
     if (state.sypAuto) state.sypMode = perUsd > 2000 ? 'old' : 'new';
   }
+  useRate();
 }
 /* d: the rows as they came from the cloud. A guest gets catalog rows; an account gets item rows, and the
    manager also cost and rule rows. */
@@ -2044,7 +2060,12 @@ function fetchData() {
 var reloading = null;
 function reload() {
   if (!reloading) {
-    reloading = fetchData().then(function (d) { reloading = null; applyCloud(d); softRepaint(); },
+    reloading = fetchData().then(function (d) {
+      reloading = null;
+      /* Something typed here is still waiting to be sent: older cloud data must not overwrite it. The next check reloads. */
+      if (Object.keys(laterJobs).length) { state.sync.version = null; return; }
+      applyCloud(d); softRepaint();
+    },
       function (e) { reloading = null; throw e; });
   }
   return reloading;
@@ -2208,7 +2229,7 @@ function saveSetting(key) {
   later('set-' + key, function () {
     var value = key === 'shop' ? { name: state.shop.name, phone: state.shop.phone, note: state.shop.note, validDays: state.shop.validDays }
       : key === 'guest' ? { enabled: state.guestOn, sypOnly: state.guestSyp }
-      : key === 'money' ? { sypMode: state.sypMode }
+      : key === 'money' ? { sypMode: state.sypMode, rateSrc: state.rateSrc, rateManual: state.rateManual }
       : key === 'offers' ? { margin: state.offerMargin }
       : { maxDiscount: state.maxDiscount, lowAt: state.pricing.lowAt, mode: state.floorMode, codeWord: state.codeWord };
     sent(api('POST', '/rest/v1/app_settings?on_conflict=key', [{ key: key, scope: scope, value: value }], 'resolution=merge-duplicates,return=minimal'));
@@ -3188,7 +3209,9 @@ function viewSettings() {
       inputField('shop-note', 'shopnote', 'shop_note', state.shop.note, ' dir="auto"') +
       inputField('shop-days', 'validdays', 'valid_days', state.shop.validDays, ' type="number" inputmode="numeric" min="1" step="1"') + '</section>' +
       '<section class="panel"><h2 class="h">' + t('set_money') + '</h2>' +
-      '<p class="sub">' + t('rate_books', { rate: '<span class="code">$1 = ' + esc(sypOf(1)) + '</span>' }) + '</p>' +
+      '<div class="field"><span class="lbl">' + t('rate_src') + '</span>' + seg('ratesrc', 'src', ['books', 'manual'].map(function (m) { return { v: m, label: t('ratesrc_' + m) }; }), state.rateSrc) + '</div>' +
+      (state.rateSrc === 'manual' ? inputField('rate-manual', 'ratemanual', 'rate_type', Math.round(state.rateManual * sypFactor()) || '', num1) : '') +
+      '<p class="sub">' + t('rate_books', { rate: '<span class="code">$1 = ' + num(Math.round(state.bookRate * sypFactor()), 0) + '</span>' }) + '</p>' +
       '<div class="field"><span class="lbl">' + t('syp_mode') + '</span>' + seg('sypmode', 'mode', ['new', 'old'].map(function (m) { return { v: m, label: t('syp_' + m) }; }), state.sypMode) + '</div>' +
       inputField('disc', 'disc', 'discount_label', state.maxDiscount, num1 + ' max="100"') +
       '<div class="field"><span class="lbl">' + t('floor_mode') + '</span>' + seg('floormode', 'mode', ['peek', 'code'].map(function (m) { return { v: m, label: t('floor_' + m) }; }), state.floorMode) + '</div>' +
@@ -3894,6 +3917,11 @@ document.addEventListener('click', function (e) {
     n = state.offers.filter(function (o) { return o.supplier === p; }).map(function (o) { return o.id; });
     if (n.length && window.confirm(t('del_supplier_q', { name: p, n: n.length }))) { removeOffers(n); paintOffers(); paintDraftFoot(); }
   }
+  else if (a === 'ratesrc') {
+    state.rateSrc = el.getAttribute('data-src');
+    if (state.rateSrc === 'manual' && !(state.rateManual > 0)) state.rateManual = state.bookRate;
+    useRate(); saveSetting('money'); flushLater(); paintHeader(); paintTab();   // sent at once, so a refresh under way cannot bring the old choice back
+  }
   else if (a === 'sypmode') { state.sypMode = el.getAttribute('data-mode'); state.sypAuto = false; saveSetting('money'); paintTab(); }
   else if (a === 'floormode') { state.floorMode = el.getAttribute('data-mode'); saveSetting('floor'); paintTab(); }
   else if (a === 'lockmin') { state.lockMin = Number(el.getAttribute('data-min')); save(); paintTab(); }
@@ -3943,6 +3971,10 @@ document.addEventListener('input', function (e) {
     saveSetting('offers'); paintDraft(); paintOfferRows();
   }
   else if (k === 'inote') saveNote(el.getAttribute('data-id'), el.value);
+  else if (k === 'ratemanual') {   // typed in the lira shown on screen
+    v = parseFloat(el.value);
+    if (v > 0) { state.rateManual = v / sypFactor(); useRate(); saveSetting('money'); paintHeader(); }
+  }
   else if (k === 'ofilter') { state.offerQuery = el.value; paintOfferRows(); }
   else if (k === 'dprice') {
     d = state.draft[Number(el.getAttribute('data-i'))];
