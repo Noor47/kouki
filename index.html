@@ -408,6 +408,11 @@ body.no-nav #cmpbar { bottom:calc(84px + env(safe-area-inset-bottom,0px)) }
 .inote svg { flex:none; margin-top:2px }
 .cnote { font-size:12px; color:var(--brand); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100% }
 
+.src { padding:0 14px 8px; font-size:12px; color:var(--muted) }
+.pcard .src { padding:0 10px 6px }
+.src.ext { color:var(--private); font-weight:600 }
+.btn[data-action="oshow"][aria-pressed="true"] { border-color:var(--brand); color:var(--brand) }
+
 /* Barcode scanner: the camera picture with a guide line */
 .scanbox { position:relative; aspect-ratio:4 / 3; border-radius:12px; overflow:hidden; background:var(--surface-2) }
 .scanbox video { display:block; width:100%; height:100%; object-fit:cover }
@@ -720,6 +725,17 @@ var LOCALES = {
     added_request: 'Added to your request',
     show_out: 'Show sold-out items too',
     m_photo: 'Picture',
+    cond: 'Condition',
+    cond_new: 'New',
+    cond_used: 'Used',
+    cat_offer_new: 'New, on order',
+    cat_offer_used: 'Used, on order',
+    source: 'Source',
+    src_own: 'Our own stock',
+    src_supplier: 'From supplier: {name}',
+    shop_on: 'Shown in the store',
+    shop_off: 'Hidden from the store',
+    shop_setup: 'To show offers in the store, run the third cloud update file once.',
     ratesrc_books: 'From the accounting program',
     cmp_add: 'Compare',
     cmp_pick: 'Pick one more to compare',
@@ -1066,6 +1082,17 @@ var LOCALES = {
     added_request: 'أُضيفت إلى طلبك',
     show_out: 'عرض المواد غير المتوفرة أيضاً',
     m_photo: 'صورة',
+    cond: 'الحالة',
+    cond_new: 'جديد',
+    cond_used: 'مستعمل',
+    cat_offer_new: 'جديد - عند الطلب',
+    cat_offer_used: 'مستعمل - عند الطلب',
+    source: 'المصدر',
+    src_own: 'من بضاعتنا',
+    src_supplier: 'من شركة: {name}',
+    shop_on: 'معروضة في الموقع',
+    shop_off: 'مخفية عن الموقع',
+    shop_setup: 'لعرض العروض في الموقع شغّل ملف تحديث السحابة الثالث مرة واحدة.',
     ratesrc_books: 'من برنامج المحاسبة',
     cmp_add: 'قارن',
     cmp_pick: 'اختر جهازاً آخر للمقارنة',
@@ -1189,6 +1216,7 @@ var LEXICON = {
      price, and a word in front of a note. */
   blockHead: 'رقم|الرقم|no\\.?|num(?:ber)?|item|#',
   priceWord: 'السعر|سعر|price',
+  availWord: 'متوفر|متوفره|متوفرة|متاح|available|in stock',
   noteWord: 'ملاحظات|ملاحظة|ملاحظه|notes?',
   /* A number followed by one of these is a spec, not a price. */
   units: ['w', 'kw', 'v', 'a', 'ah', 'mah', 'wh', 'hz', 'mm', 'cm', 'inch', 'kg', 'g', 'gb', 'tb', 'mb',
@@ -1210,10 +1238,11 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: 'https://uogjnknguwhevbjjdysm.supabase.co', key: 'sb_publishable_LWI-49Y5BCYEV6kHIuA5Og_ymPaIhN1', pollMs: 10000 };
-var APP_BUILD = '2.4';
+var APP_BUILD = '2.7';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
+  shopOk: false, draftCond: 'new',   // offers shown in the store; new or used goods in the list being added
   guestSyp: true, shot: 0, zoom: null, cmp: [], notes: {}, notesOk: false,
   screen: 'boot',       // boot | login | waiting | locked | offline | app
   role: null, me: null, session: null, busy: false, authMsg: '',
@@ -1300,7 +1329,7 @@ function catOf(it) {
   for (var i = 0; i < state.cats.length; i++) if (state.cats[i].id === it.cat) return state.cats[i];
   return { id: '', name: '' };
 }
-function catName(c) { return c.name || ''; }
+function catName(c) { return c.id === 'offer-new' || c.id === 'offer-used' ? t(c.id === 'offer-new' ? 'cat_offer_new' : 'cat_offer_used') : (c.name || ''); }
 function totalQty(it) { var n = it.qty; (it.other || []).forEach(function (o) { n += o.n; }); return Math.max(0, n); }
 function uniq(a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }); }
 function hasPrice(it) { return it.sell > 0; }
@@ -1333,7 +1362,7 @@ function tokensOf(s) {
 function isNumTok(x) { return /^\d+$/.test(x); }
 function prep(it) {
   var c = catOf(it);
-  it._hay = normalize([it.name, it.code, it.barcode || '', c.name || ''].join(' '));
+  it._hay = normalize([it.name, it.code, it.barcode || '', catName(c), it.offer ? it.offer.note : ''].join(' '));
   it._tok = tokensOf(it.name);
   it._num = it._tok.filter(isNumTok);
   it._word = it._tok.filter(function (x) { return !isNumTok(x); });
@@ -1344,6 +1373,7 @@ function prep(it) {
 function stockState(it) { return it.stock || (it.qty <= 0 ? 'out' : (it.qty <= it.min ? 'low' : 'ok')); }
 function stockLabel(it) {
   var s = stockState(it);
+  if (it.offer) return t('limited');   // a supplier's goods: how many are left is not known
   if (s === 'out') return t('out_stock');
   if (isGuest()) return t(s === 'low' ? 'limited' : 'avail');   // guests never see exact quantities
   return t(s === 'low' ? 'low_stock' : 'in_stock', { n: num(it.qty, 0) });
@@ -1366,7 +1396,10 @@ function roundUp(v) {
   var step = v >= 20 ? 1 : (v >= 5 ? 0.5 : 0.05);
   return Math.round(Math.ceil(v / step - 1e-9) * step * 100) / 100;
 }
-function marginOf(cat) { var m = state.pricing.margins[cat]; return m >= 0 ? Number(m) : state.pricing.defMargin; }
+function marginOf(cat) {
+  if (cat === 'offer-new' || cat === 'offer-used') return offerMarginPct();   // supplier goods have their own profit %
+  var m = state.pricing.margins[cat]; return m >= 0 ? Number(m) : state.pricing.defMargin;
+}
 function autoPrice(it) { return it.cost > 0 ? roundUp(it.cost * (1 + marginOf(it.cat) / 100)) : null; }
 function resolveItem(it) {
   if (!it.raw) return;
@@ -1480,11 +1513,12 @@ function applyCloud(d) {
     used[it.cat] = true;
     return it;
   });
+  state.offers = (d.offers || []).map(offerRow);
+  shopItems(d.shop, used);
   state.cats = Object.keys(used).map(function (id) { return { id: id, name: names[id] || id }; })
     .sort(function (a, b) { return a.name < b.name ? -1 : 1; });
   if (state.cat !== 'all' && !used[state.cat]) state.cat = 'all';
   state.items.forEach(prep);
-  state.offers = (d.offers || []).map(offerRow);
   state.people = d.people || [];
   state.events = d.events || [];
   if (d.status) {
@@ -1569,6 +1603,7 @@ function parseOfferLine(raw, defCur) {
 function parseOfferText(text, defCur) {
   var lines = String(text).split(/\r?\n/), clean = lines.map(cleanListLine);
   if (clean.filter(function (l) { return RE_BLOCK_HEAD.test(l); }).length >= 2) return parseOfferBlocks(clean, defCur, true);
+  if (clean.filter(function (l) { return RE_INLINE_HEAD.test(l); }).length >= 2 && clean.some(function (l) { return !!labelOf(l); })) return parseOfferBlocks(clean, defCur, 'inline');
   var rows = lines.map(function (l) { return parseOfferLine(l, defCur); }).filter(Boolean);
   var marked = rows.filter(function (r) { return r.explicit; }).length, bare = clean.filter(function (l) { return !!priceOf(l); }).length;
   if (bare >= 2 && bare > marked) return parseOfferBlocks(clean, defCur, false);
@@ -1583,7 +1618,8 @@ function setDraft(rows) {
   if (!state.replaceTouched) state.replaceOld = state.draft.length >= 10 || state.draft.some(function (d) { return d.block; });
 }
 function offerRow(o) {
-  return { id: o.id, supplier: o.supplier, name: o.name, price: Number(o.price), cur: o.cur === 'SYP' ? 'SYP' : 'USD', note: o.note || '', at: o.created_at || '' };
+  return { id: o.id, supplier: o.supplier, name: o.name, price: Number(o.price), cur: o.cur === 'SYP' ? 'SYP' : 'USD', note: o.note || '', at: o.created_at || '',
+    cond: o.cond === 'used' ? 'used' : 'new', listed: o.listed !== false };
 }
 
 /* ---------- Matching an offer to an item already in stock ----------
@@ -1695,6 +1731,7 @@ function describe(it) {
   it.tint = TINTS[it.kind] || 'e';
   for (i = 0; i < BRANDS.length && !it.brand; i++) if (BRANDS[i].re.test(norm)) { it.brand = BRANDS[i].id; it.brandName = BRANDS[i].label; }
   it.chips = specChips(sp);
+  if (it.offer) describeOffer(it);
 }
 function specChips(sp) {
   var c = [];
@@ -1715,7 +1752,7 @@ function sorted(list) {
   if (s === 'low') a.sort(function (x, y) { return price(x) - price(y) || idNum(y) - idNum(x); });
   else if (s === 'high') a.sort(function (x, y) { return (hasPrice(y) ? y.sell : -1) - (hasPrice(x) ? x.sell : -1) || idNum(y) - idNum(x); });
   else if (s === 'name') a.sort(function (x, y) { return x.name.localeCompare(y.name, state.lang); });
-  else a.sort(function (x, y) { return idNum(y) - idNum(x); });   // highest number = entered last = newest
+  else a.sort(function (x, y) { return (x.offer ? 1 : 0) - (y.offer ? 1 : 0) || idNum(y) - idNum(x); });   // the shop's own goods first; highest number = entered last = newest
   return a;
 }
 /* Values of one property among the listed items, most common first; shown as filter chips. */
@@ -1760,6 +1797,7 @@ function clearItemHash() {
 /* "No 12", "12." or, as a picture reader returns a right-to-left line, "12 No". */
 var RE_BLOCK_HEAD = new RegExp('^(?:(?:' + LEXICON.blockHead + ')\\s*[:.#-]?\\s*(\\d{1,4})\\s*[:.)-]?|\\(?(\\d{1,3})\\s*[.):-]|(\\d{1,4})\\s*(?:' + LEXICON.blockHead + '))$', 'i');
 var RE_PRICE_LINE = new RegExp('^(?:(' + LEXICON.priceWord + ')\\s*[:=-]?\\s*)?(?:(USD|SYP)\\s*)?(\\d+(?:[.,]\\d+)*)\\s*(USD|SYP)?$', 'i');
+var RE_PRICE_REV = new RegExp('^(?:(USD|SYP)\\s*)?(\\d+(?:[.,]\\d+)*)\\s*(USD|SYP)?\\s*(' + LEXICON.priceWord + ')\\s*[:=-]?$', 'i');
 var RE_NOTE_LEAD = new RegExp('^(?:' + LEXICON.noteWord + ')(?![a-z' + LEXICON.letters + '])\\s*[:\\-]*\\s*', 'i');
 var RE_HAS_TEXT = new RegExp('[a-z0-9' + LEXICON.letters + ']', 'i');
 var SPEC_LABELS = [
@@ -1779,13 +1817,20 @@ var SPEC_GUESS = [
 var RE_EXTRA_LINE = /^(?:windows|win ?1[01]|ethernet|rj ?-?45|camera|camer|keyboard|audio|colou?r|adapter|wi-?fi|bluetooth|battery|office|npu)(?![a-z])/i;
 var DOT = ' \u00B7 ';   // joins the parts of a saved note
 
+/* Bullets, stars, emoji and other decoration around a line say nothing about the goods. */
+var RE_LEAD_DECOR = new RegExp('^(?:[^a-z0-9' + LEXICON.letters + '$#("\']|#(?!\\s*\\d))+', 'i'), RE_TAIL_DECOR = new RegExp('[^a-z0-9' + LEXICON.letters + '$%)"\'.+]+$', 'i');
+/* "3. ASUS TUF A16": the number and the model on one line. */
+var RE_INLINE_HEAD = new RegExp('^(\\d{1,3})\\s*[.)\\-]\\s+([a-z' + LEXICON.letters + '].*)$', 'i');
+var RE_AVAILABLE = new RegExp('^(?:' + LEXICON.availWord + ')$', 'i');
 function cleanListLine(raw) {
   return toLatinDigits(raw).replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, '').replace(/[\u00AE\u2122\u00A9]/g, '')
-    .replace(/\u00B7/g, '-').replace(/\s+/g, ' ').replace(/[\u0640_]+$/, '').trim();
+    .replace(/(^|\D)\*+/g, '$1').replace(/\*+(?=\D|$)/g, '')   // chat-app bold marks, but not the star in 1920*1200
+    .replace(/\u00B7/g, '-').replace(/\s+/g, ' ').replace(RE_LEAD_DECOR, '').replace(RE_TAIL_DECOR, '').replace(/[\u0640_]+$/, '').trim();
 }
 /* A line that holds a price and nothing else: "675$", "545 $", "660", "Price: 1,140 USD". */
 function priceOf(line) {
-  var m = RE_PRICE_LINE.exec(line.replace(RE_SYP, '$1 SYP ').replace(RE_USD, '$1 USD ').replace(/\s+/g, ' ').trim());
+  var flat = line.replace(RE_SYP, '$1 SYP ').replace(RE_USD, '$1 USD ').replace(/\s+/g, ' ').trim(), m = RE_PRICE_LINE.exec(flat), r;
+  if (!m && (r = RE_PRICE_REV.exec(flat))) m = [r[0], r[4], r[1], r[2], r[3]];   // a right-to-left line read backwards: "820$ Price"
   if (!m) return null;
   var cur = (m[4] || m[2] || '').toUpperCase(), s = m[3];
   var v = /^\d{1,3}(?:[.,]\d{3})+$/.test(s) ? parseFloat(s.replace(/[.,]/g, '')) : toNumber(s, cur || 'USD');
@@ -1798,7 +1843,11 @@ function labelOf(line) {
     var m = SPEC_LABELS[i][1].exec(line);
     if (m) {
       var out = { key: SPEC_LABELS[i][0], value: line.slice(m[0].length).replace(/[\u0640_.,;:\s-]+$/, '') };
-      if (out.key === 'disk') out.kind = /^(?:hdd|hard)/i.test(m[1]) ? 'HDD' : (/^(?:storage|emmc)/i.test(m[1]) ? 'STORAGE' : 'SSD');
+      if (out.key === 'disk') {   // "Hard: 512GB SSD" is an SSD whatever the label says
+        out.kind = /ssd|nvme/i.test(line) ? 'SSD' : (/hdd/i.test(line) ? 'HDD' : 'STORAGE');
+        out.value = out.value.replace(new RegExp('(^|\\s)' + out.kind + '(?=\\s|$)', 'i'), ' ').replace(/\s+/g, ' ').trim() || out.value;
+      }
+      if (out.key === 'screen') out.value = out.value.replace(/(\d),(\d)/, '$1.$2');   // "15,6"
       return out;
     }
   }
@@ -1852,20 +1901,21 @@ function offerChips(sp) {
   }
   return c;
 }
-function parseBlock(lines, no, defCur) {
+function parseBlock(lines, no, defCur, named) {
   var row = { block: true, no: no || 0, name: '', spec: {}, notes: [], price: null, cur: defCur, explicit: false }, i, p, title = -1;
   for (i = lines.length - 1; i >= 0; i--) {   // the price is the last line that holds only a number
     if ((p = priceOf(lines[i]))) {
       row.price = p.value;
       if (p.cur) { row.cur = p.cur; row.explicit = true; }
-      lines.splice(i, 1);
+      lines.length = i;   // whatever follows the price ("available", the next section's heading) is not about this device
       break;
     }
   }
-  for (i = 0; i < lines.length && title < 0; i++) if (/^[a-z]/i.test(lines[i]) && !labelOf(lines[i])) title = i;
-  if (title < 0 && lines.length) title = 0;
-  if (title < 0) return null;
-  row.name = lines[title].replace(/[\s\-:,.]+$/, '');
+  lines = lines.filter(function (l) { return !RE_AVAILABLE.test(l); });
+  for (i = 0; !named && i < lines.length && title < 0; i++) if (/^[a-z]/i.test(lines[i]) && !labelOf(lines[i])) title = i;
+  if (!named && title < 0 && lines.length) title = 0;
+  if (!named && title < 0) return null;
+  row.name = (named || lines[title]).replace(/[\s\-:,.]+$/, '');
   lines.forEach(function (line, k) {
     if (k === title) return;
     var hit = labelOf(line), rest = '', parts, at = -1;
@@ -1892,9 +1942,10 @@ function parseBlock(lines, no, defCur) {
 function parseOfferBlocks(lines, defCur, headed) {
   var blocks = [], cur = null, gap = true, rows = [], dropped = 0, usd = 0, syp = 0;
   lines.forEach(function (line) {
-    var m = RE_BLOCK_HEAD.exec(line), text = !!line && RE_HAS_TEXT.test(line);
+    var m = RE_BLOCK_HEAD.exec(line), text = !!line && RE_HAS_TEXT.test(line), im = headed === 'inline' && RE_INLINE_HEAD.exec(line);
     if (headed) {
-      if (m) { cur = { no: Number(m[1] || m[2] || m[3]), lines: [] }; blocks.push(cur); }
+      if (im) { cur = { no: Number(im[1]), lines: [], named: im[2] }; blocks.push(cur); }
+      else if (m) { cur = { no: Number(m[1] || m[2] || m[3]), lines: [] }; blocks.push(cur); }
       else if (cur && text) cur.lines.push(line);
       return;
     }
@@ -1906,7 +1957,7 @@ function parseOfferBlocks(lines, defCur, headed) {
     gap = false;
   });
   blocks.forEach(function (b) {
-    var r = parseBlock(b.lines, b.no, defCur);
+    var r = parseBlock(b.lines, b.no, defCur, b.named);
     if (r && (headed || r.price != null || r.spec.cpu || r.spec.ram || r.spec.disk)) rows.push(r); else if (b.lines.length) dropped++;
   });
   rows.forEach(function (r) { if (r.explicit) { if (r.cur === 'SYP') syp++; else usd++; } });
@@ -1914,6 +1965,56 @@ function parseOfferBlocks(lines, defCur, headed) {
   rows.skipped = dropped;
   return rows;
 }
+
+/* ---------- Supplier offers as goods in the store ----------
+   The cloud sends each shown offer with its selling price worked out (never the purchase price). Offers that
+   are the same device in every spec are shown once, at the lowest price. They sit beside the shop's own goods,
+   marked as limited in quantity because the supplier's stock is not known. */
+/* An offer's number in the store comes from what the device is (name, specs, new or used), not from the row it
+   was saved in: its photos, its note and links to it stay when the supplier's list is replaced by a newer one. */
+function offerNum(key) {
+  var h = 0, i;
+  for (i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) % 8796093022208;   // 2^43
+  return 1e12 + h;
+}
+function offerKey(o) { var sp = readNote(o.note); return normalize([o.cond === 'used' ? 'used' : 'new', o.name, sp.cpu, sp.ram, sp.disk, sp.screen, sp.gpu].join('|')); }
+/* The manager's own price for an offer (typed, or through an extra cost), or null when the usual rule applies. */
+function offerOwnSell(id, usdCost) {
+  var manual = Number(state.pricing.manual[id]) || 0, extra = Number(state.pricing.extra[id]) || 0;
+  return manual > 0 ? manual : (extra > 0 && usdCost > 0 ? roundUp((usdCost + extra) * (1 + offerMarginPct() / 100)) : null);
+}
+function shopItems(list, used) {
+  var best = {};
+  state.shopOk = Array.isArray(list);
+  (list || []).forEach(function (o) {
+    var sp = readNote(o.note), sell = Number(o.sell), key;
+    if (!(sell > 0)) return;
+    key = offerKey(o);
+    if (!best[key]) best[key] = { o: o, sp: sp, sell: sell, rows: [] };
+    else if (sell < best[key].sell) { best[key].o = o; best[key].sp = sp; best[key].sell = sell; }
+    best[key].rows.push(o.id);
+  });
+  Object.keys(best).forEach(function (k) {
+    var b = best[k], o = b.o, cat = o.cond === 'used' ? 'offer-used' : 'offer-new', own = null, i;
+    var id = 'm' + offerNum(k), mine = (state.media[id] || '').split(',').filter(Boolean);
+    var it = { id: id, code: '', barcode: '', cat: cat, name: String(o.name), sell: b.sell, auto: true, min: 0, qty: 1, other: [], stock: 'low',
+      note: state.notes[id] || b.sp.notes.join('\n'), photos: mine, photo: mine[0] || '', offer: { rows: b.rows, supplier: o.supplier || '', cond: o.cond === 'used' ? 'used' : 'new', sp: b.sp, note: o.note || '' } };
+    if (isAdmin()) {
+      for (i = 0; i < state.offers.length && !own; i++) if (state.offers[i].id === o.id) own = state.offers[i];
+      it.raw = { cost: own ? offerUsd(own) : 0 }; it.cost = it.raw.cost; it.pending = false; it.extra = 0; it.buy = null; it.sale = null;
+    }
+    used[cat] = true;
+    state.items.push(it);
+  });
+}
+function describeOffer(it) {
+  var sp = it.offer.sp, chips = offerChips(sp);
+  it.sp = specsOf([it.name, sp.cpu, sp.ram, sp.disk, sp.gpu].join(' ')) || it.sp;
+  if (chips.length) it.chips = chips;
+  if (it.kind === 'box' && sp.cpu) { it.kind = 'laptop'; it.tint = TINTS.laptop; }
+  it.chips.unshift(t(it.offer.cond === 'used' ? 'cond_used' : 'cond_new'));
+}
+function sourceOf(it) { return it.offer ? t('src_supplier', { name: it.offer.supplier }) : t('src_own'); }
 
 /* ---------- What the offers screen shows for one offer ---------- */
 function offerInfo(o) {
@@ -2038,8 +2139,8 @@ function fetchData() {
   if (isGuest()) {
     return Promise.all([pages('/rest/v1/rpc/catalog?order=id'), pages('/rest/v1/rpc/catalog_groups?order=id'),
       http('POST', '/rest/v1/rpc/shop_info', { body: {} }).then(need), pages('/rest/v1/app_settings?select=key,value&order=key'),
-      pagesSoft('/rest/v1/rpc/catalog_media?order=item_id'), pagesSoft('/rest/v1/rpc/catalog_notes?order=item_id')])
-      .then(function (a) { var info = a[2] || {}; return { items: a[0], groups: a[1], currencies: info.currencies, settings: a[3], status: info, media: a[4], notes: a[5] }; });
+      pagesSoft('/rest/v1/rpc/catalog_media?order=item_id'), pagesSoft('/rest/v1/rpc/catalog_notes?order=item_id'), pagesSoft('/rest/v1/rpc/catalog_offers?order=name,id')])
+      .then(function (a) { var info = a[2] || {}; return { items: a[0], groups: a[1], currencies: info.currencies, settings: a[3], status: info, media: a[4], notes: a[5], shop: a[6] }; });
   }
   var jobs = [pages('/rest/v1/items?select=id,group_id,code,barcode,name,qty,qty_by,sell,manual&gone=is.false&order=id'),
     pages('/rest/v1/item_groups?select=*&order=id'), pages('/rest/v1/currencies?select=*&order=id'), pages('/rest/v1/warehouses?select=*&order=id'),
@@ -2051,9 +2152,9 @@ function fetchData() {
       pages('/rest/v1/offers?select=*&order=created_at.desc,id'), pages('/rest/v1/profiles?select=*&order=created_at,id'),
       api('GET', '/rest/v1/stock_events?select=*&order=id.desc&limit=40').then(need));
   }
-  jobs.push(pagesSoft('/rest/v1/item_notes?select=item_id,note&order=item_id'));
+  jobs.push(pagesSoft('/rest/v1/rpc/catalog_offers?order=name,id'), pagesSoft('/rest/v1/item_notes?select=item_id,note&order=item_id'));
   return Promise.all(jobs).then(function (a) {
-    return { notes: a[a.length - 1], items: a[0], groups: a[1], currencies: a[2], warehouses: a[3], settings: a[4], status: (a[5] || [])[0] || null, media: a[6],
+    return { notes: a[a.length - 1], shop: a[a.length - 2], items: a[0], groups: a[1], currencies: a[2], warehouses: a[3], settings: a[4], status: (a[5] || [])[0] || null, media: a[6],
       costs: a[7], itemPricing: a[8], groupPricing: a[9], rules: a[10], offers: a[11], people: a[12], events: a[13] };
   });
 }
@@ -2503,7 +2604,7 @@ function baseItems() {
   var q = normalize(state.query).split(' ').filter(Boolean);
   return state.items.filter(function (it) {
     return (state.cat === 'all' || it.cat === state.cat) &&
-      (!state.inStockOnly || it.qty > 0) && (!state.lowOnly || isGuest() || stockState(it) === 'low') &&
+      (!state.inStockOnly || it.qty > 0) && (!state.lowOnly || isGuest() || (stockState(it) === 'low' && !it.offer)) &&
       q.every(function (tok) { return it._hay.indexOf(tok) !== -1; });
   });
 }
@@ -2637,6 +2738,7 @@ function itemCard(it) {
     '<button class="item-main" data-action="open" data-id="' + it.id + '">' + coverHtml(it) +
     '<span class="item-name" dir="auto">' + esc(it.name) + '</span>' + chipsHtml(it) + (it.note ? '<span class="cnote" dir="auto">' + esc(it.note.split('\n')[0]) + '</span>' : '') +
     '<span class="price">' + priceHtml(it) + '</span></button>' + extra +
+    (isGuest() ? '' : '<div class="src' + (it.offer ? ' ext' : '') + '" dir="auto">' + esc(sourceOf(it)) + '</div>') +
     '<div class="item-foot"><span class="pill ' + stockState(it) + '">' + stockLabel(it) + '</span>' + (isAdmin() || isGuest() ? '' : floorHtml(it)) +
     '<button class="cmpb" data-action="cmp" data-id="' + it.id + '" aria-pressed="' + inCompare(it.id) + '" aria-label="' + t('cmp_add') + '" title="' + t('cmp_add') + '">' + icon('compare', 18) + '</button>' +
     '<button class="add" data-action="add" data-id="' + it.id + '" aria-label="' + addLabel() + '" title="' + addLabel() + '"' + (hasPrice(it) ? '' : ' disabled') + '>' + icon('plus', 18) + '</button></div></article>';
@@ -2670,6 +2772,12 @@ function priceInputs(it) {
     '<p class="sub">' + t('auto_price', { p: auto === null ? t('no_price') : usd(auto) }) + '</p>';
 }
 function specFacts(it) {
+  if (it.offer) {   // a supplier's device: the specs as the supplier wrote them
+    var o = it.offer.sp, f = fact(t('cond'), t(it.offer.cond === 'used' ? 'cond_used' : 'cond_new'));
+    [['spec_cpu', o.cpu], ['spec_ram', o.ram], ['spec_storage', o.disk ? o.disk + (o.diskKind === 'STORAGE' ? '' : ' ' + o.diskKind) : ''], ['spec_gpu', o.gpu], ['spec_screen', o.screen]]
+      .forEach(function (r) { if (r[1]) f += fact(t(r[0]), '<span class="code">' + esc(r[1]) + '</span>'); });
+    return f + (isGuest() ? '' : fact(t('source'), '<span dir="auto">' + esc(sourceOf(it)) + '</span>'));
+  }
   var sp = it.sp, h = it.brandName ? fact(t('spec_brand'), esc(it.brandName)) : '';
   function ltr(v) { return '<span class="code">' + esc(v) + '</span>'; }
   if (!sp) return h;
@@ -2686,7 +2794,7 @@ function openItem(id) {
   stopScan();
   if (state.sheetId !== id) state.shot = 0;
   var priced = hasPrice(it), like = similarTo(it);
-  var facts = specFacts(it) + fact(t('code'), '<span class="code">' + esc(it.code) + '</span>') +
+  var facts = specFacts(it) + (it.offer ? '' : (isGuest() ? '' : fact(t('source'), t('src_own'))) + fact(t('code'), '<span class="code">' + esc(it.code) + '</span>')) +
     (isGuest() || !it.barcode ? '' : fact(t('barcode'), '<span class="code">' + esc(it.barcode) + '</span>')) +
     fact(t('category'), '<span dir="auto">' + esc(catName(catOf(it))) + '</span>') +
     (isAdmin() || isGuest() || !priced ? '' : fact(t('ref'), floorHtml(it)));
@@ -2695,7 +2803,10 @@ function openItem(id) {
     coverHtml(it, true) +
     '<div class="row">' + priceHtml(it, true) + '<span class="pill ' + stockState(it) + '">' + stockLabel(it) + '</span></div>' +
     '<dl class="facts">' + facts + '</dl>' + noteHtml(it);
-  if (isAdmin()) {
+  if (isAdmin() && it.offer) {
+    html += '<div class="private-box"><div class="row priv-title">' + icon('lock', 15) + t('admin_only') + '</div><dl class="facts">' +
+      fact(t('offer_buy'), usd(it.cost)) + fact(t('profit_unit'), usd(it.sell - it.cost)) + '</dl>' + priceInputs(it) + noteInput(it) + photoControls(it) + '</div>';
+  } else if (isAdmin()) {
     var best = bestOfferFor(it), f = floorPrice(it);
     html += '<div class="private-box"><div class="row priv-title">' + icon('lock', 15) + t('admin_only') + '</div><dl class="facts">' +
       fact(t('cost'), usd(it.cost) + ' · ' + sypOf(it.cost) + (it.pending ? ' <span class="pill low">' + t('pending') + '</span>' : '')) +
@@ -3006,6 +3117,8 @@ function viewOffers() {
     }).join('') + '</datalist></div>' + body +
     '<div class="row"><span class="sub grow">' + t('default_cur') + '</span>' +
     seg('dcur', 'cur', ['USD', 'SYP'].map(function (c) { return { v: c, label: t(c.toLowerCase()) }; }), state.draftCur, true) + '</div>' +
+    '<div class="row"><span class="sub grow">' + t('cond') + '</span>' + seg('dcond', 'cond', ['new', 'used'].map(function (c) { return { v: c, label: t('cond_' + c) }; }), state.draftCond, true) + '</div>' +
+    (state.shopOk ? '' : '<p class="sub">' + t('shop_setup') + '</p>') +
     '<div class="row"><label class="sub grow" for="o-margin">' + t('offer_margin') + '</label><input class="input mini" id="o-margin" data-input="omargin" type="number" inputmode="decimal" min="0" step="any" placeholder="' +
     state.pricing.defMargin + '" value="' + (state.offerMargin === null ? '' : state.offerMargin) + '"></div>' +
     '<div id="draft" class="stack"></div></section><div id="offer-list" class="stack"></div>';
@@ -3016,7 +3129,7 @@ function specsHtml(chips) {
 /* Name, list number, spec chips and notes of an offer or of a row waiting to be saved. */
 function offerHead(o) {
   var info = offerInfo(o);
-  return '<span class="nm" dir="auto">' + (info.no ? '<span class="num code">#' + info.no + '</span> ' : '') + esc(o.name) + '</span>' + specsHtml(info.chips) +
+  return '<span class="nm" dir="auto">' + (info.no ? '<span class="num code">#' + info.no + '</span> ' : '') + esc(o.name) + (o.cond === 'used' ? ' <span class="pill low">' + t('cond_used') + '</span>' : '') + '</span>' + specsHtml(info.chips) +
     (info.notes.length ? '<span class="onote" dir="auto">' + esc(info.notes.join(DOT)) + '</span>' : '');
 }
 function draftCalc(d) { return d.price > 0 ? offerLine(d) : ''; }
@@ -3055,7 +3168,7 @@ function saveDraft() {
     return;
   }
   var rows = state.draft.filter(function (d) { return d.price > 0; })
-    .map(function (d) { return { supplier: sup, name: d.name, price: d.price, cur: d.cur, note: d.note || '' }; });
+    .map(function (d) { var r = { supplier: sup, name: d.name, price: d.price, cur: d.cur, note: d.note || '' }; if (state.shopOk) { r.cond = state.draftCond; r.sell = offerOwnSell('m' + offerNum(offerKey(r)), offerUsd(d)); } return r; });   // a price the manager set for this device before stays
   var old = state.replaceOld ? sameSupplier().map(function (o) { return o.id; }) : [];
   var b = $('#draft-save');
   if (b) b.disabled = true;
@@ -3104,6 +3217,7 @@ function paintOfferRows() {
     });
     if (!list.length) return '';
     return '<section class="panel"><div class="row"><h3 class="h small grow" dir="auto">' + esc(sup) + ' <span class="sub">' + t('offers_n', { n: all.length }) + '</span></h3>' +
+      (state.shopOk ? '<button class="btn sm" data-action="oshow" data-sup="' + esc(sup) + '" aria-pressed="' + all.some(function (o) { return o.listed; }) + '">' + t(all.some(function (o) { return o.listed; }) ? 'shop_on' : 'shop_off') + '</button>' : '') +
       '<button class="btn sm" data-action="oclist" data-sup="' + esc(sup) + '">' + icon('list', 16) + t('copy_list') + '</button>' +
       '<button class="btn sm ghost danger" data-action="osupdel" data-sup="' + esc(sup) + '">' + t('del_all') + '</button></div><div>' +
       list.map(offerRowHtml).join('') + '</div></section>';
@@ -3625,6 +3739,16 @@ function mergeReadings(latin, mixed) {
   });
   return out.join('\n');
 }
+/* A bold "$" after a price is sometimes read as the digit 8. When every price line of a picture carries no
+   currency sign and ends in 8, that 8 is the sign: "8208" was "820$". */
+function fixReadPrices(text) {
+  var lines = text.split('\n'), word = '(?:' + LEXICON.priceWord + ')', hits = [];
+  var re = new RegExp('^(?:' + word + '\\s*:?\\s*)?(\\d[\\d,]*\\d)(?:\\s*' + word + '\\s*:?)?$', 'i');
+  lines.forEach(function (l, i) { var m = re.exec(cleanListLine(l)); if (m && new RegExp(word, 'i').test(l)) hits.push({ i: i, n: m[1] }); });
+  if (hits.length < 2 || !hits.every(function (h) { return /\d8$/.test(h.n); })) return text;
+  hits.forEach(function (h) { lines[h.i] = lines[h.i].replace(h.n, h.n.slice(0, -1) + '$'); });
+  return lines.join('\n');
+}
 function readOfferPictures(files) {
   var list = Array.prototype.slice.call(files), shots = [], latin = [], mixed = [], worker = null, step = 0, f = $('#shot');
   if (state.ocrBusy || !list.length) return;
@@ -3655,7 +3779,7 @@ function readOfferPictures(files) {
     return worker.reinitialize(['ara', 'eng'], 1).then(function () { return worker.setParameters(OCR_SET); })
       .then(function () { return pass(mixed); }).catch(function () { mixed = []; });
   }).then(function () {
-    var text = latin.map(function (lines, i) { return mergeReadings(lines, mixed[i] || []); }).join('\n\n').trim();
+    var text = fixReadPrices(latin.map(function (lines, i) { return mergeReadings(lines, mixed[i] || []); }).join('\n\n').trim());
     worker.terminate();
     ocrEnd();
     if (!text) { ocrSay(t('ocr_empty')); return; }
@@ -3912,6 +4036,14 @@ document.addEventListener('click', function (e) {
   else if (a === 'dsave') saveDraft();
   else if (a === 'orm') { state.offers = state.offers.filter(function (o) { return o.id !== id; }); paintOffers(); paintDraftFoot(); removeOffer(id); }
   else if (a === 'oclist') openList(el.getAttribute('data-sup'));
+  else if (a === 'dcond') { state.draftCond = el.getAttribute('data-cond'); paintTab(); }
+  else if (a === 'oshow') {   // show or hide all of one supplier's offers in the store
+    p = el.getAttribute('data-sup');
+    n = !state.offers.some(function (o) { return o.supplier === p && o.listed; });
+    state.offers.forEach(function (o) { if (o.supplier === p) o.listed = n; });
+    sent(api('PATCH', '/rest/v1/offers?supplier=eq.' + encodeURIComponent(p), { listed: n }, 'return=minimal'));
+    paintOfferRows();
+  }
   else if (a === 'listcopy') copyList();
   else if (a === 'listshare') { p = $('#list-text'); if (p && navigator.share) navigator.share({ text: p.value }).catch(function () { /* closed without sharing */ }); }
   else if (a === 'osupdel') {
@@ -4020,6 +4152,9 @@ document.addEventListener('change', function (e) {
     if (v > 0) state.pricing[k][id] = v; else delete state.pricing[k][id];
     resolveItem(it);
     savePricing(id);
+    if (it.offer) {   // the store reads an offer's price from its rows in the cloud
+      sent(api('PATCH', '/rest/v1/offers?id=in.(' + it.offer.rows.map(encodeURIComponent).join(',') + ')', { sell: offerOwnSell(id, it.raw.cost) }, 'return=minimal'));
+    }
     if (state.tab === 'items') paintItems();
     openItem(id);
   }
