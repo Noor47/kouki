@@ -772,15 +772,18 @@ var LOCALES = {
     pf_all: 'Choose all',
     pf_clear: 'Clear the choice',
     pf_max: 'Up to {n} photos per item.',
-    pf_skipped: 'Saved. {n} of the pictures could not be copied from their sites.',
+    pf_bgwait: 'Photos being saved in the background: {n}',
+    pf_bgleave: 'That was the last one. Keep this page open until the photos are saved.',
+    pf_bgdone: 'The chosen photos are saved.',
+    pf_bgskip: 'Pictures left out because their sites do not allow copying: {n}.',
+    pf_bgfail: 'The photos of "{label}" could not be saved. That model is back at the end of the list.',
+    pf_bgcopy: 'None of the chosen pictures of "{label}" can be copied from their sites. That model is back at the end of the list; choose others.',
     pf_before: 'The photo used before',
     pf_use: 'Use the chosen photos ({n})',
     pf_reject: 'None fits',
     pf_words: 'Other words to search',
     pf_again: 'Search again with these words',
     pf_queued: 'It will be searched again within a few minutes.',
-    pf_saving: 'Copying the photo into the shop...',
-    pf_nocopy: 'These pictures cannot be copied from their sites. Choose others.',
     pf_end: 'That was the last one for now.',
     pf_nothing: 'No photos are waiting for your choice yet.',
     ps_web: 'Find a photo online',
@@ -1220,15 +1223,18 @@ var LOCALES = {
     pf_all: 'اختيار الكل',
     pf_clear: 'إلغاء الاختيار',
     pf_max: 'الحد {n} صور لكل مادة.',
-    pf_skipped: 'تم الحفظ. {n} من الصور لم يمكن نسخها من مواقعها.',
+    pf_bgwait: 'صور يجري حفظها في الخلفية: {n}',
+    pf_bgleave: 'هذا كان الأخير. أبقِ الصفحة مفتوحة حتى ينتهي حفظ الصور.',
+    pf_bgdone: 'تم حفظ الصور المختارة.',
+    pf_bgskip: 'عدد الصور المتروكة لأن مواقعها تمنع النسخ: {n}.',
+    pf_bgfail: 'تعذّر حفظ صور "{label}". أُعيد هذا الموديل إلى آخر القائمة.',
+    pf_bgcopy: 'لا يمكن نسخ أي صورة مختارة لـ "{label}" من مواقعها. أُعيد هذا الموديل إلى آخر القائمة لتختار غيرها.',
     pf_before: 'الصورة المستعملة سابقاً',
     pf_use: 'استعمل الصور المختارة ({n})',
     pf_reject: 'لا شيء مناسب',
     pf_words: 'كلمات أخرى للبحث',
     pf_again: 'ابحث من جديد بهذه الكلمات',
     pf_queued: 'سيُبحث عنها من جديد خلال دقائق.',
-    pf_saving: 'جارٍ نسخ الصورة إلى المحل...',
-    pf_nocopy: 'لا يمكن نسخ هذه الصور من مواقعها. اختر صوراً أخرى.',
     pf_end: 'انتهت الصور المقترحة حالياً.',
     pf_nothing: 'لا توجد صور تنتظر اختيارك بعد.',
     ps_web: 'ابحث عن صورة بالإنترنت',
@@ -1441,7 +1447,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.12';
+var APP_BUILD = '2.13';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -4484,7 +4490,7 @@ function paintBackup() {
    The cloud searches by itself, once a minute, for items in stock without a photo, one search per model. Nothing
    it finds is shown to customers: the manager picks the right picture here, and only then is it copied into the
    shop's own photo store and put on the items. */
-var finds = { busy: false, msg: '', list: [], at: 0, picks: [], sent: {}, gone: {}, state: null };
+var finds = { list: [], at: 0, picks: [], sent: {}, gone: {}, state: null };
 
 /* Supplier goods exist only in the app: their search words are handed to the cloud when they first appear, and they
    are taken off again when they are gone (a list deleted or changed) or have a photo, so no search is spent on them. */
@@ -4558,7 +4564,6 @@ function putPhoto(blob, n) {
   }).then(function (r) { if (!r.ok) throw r; return base; });
 }
 
-/* ---------- The review screen ---------- */
 function candidates(r) {
   var own = String(r.f.photo || '').split(',').filter(Boolean).map(function (b) { return { own: b }; }),
     list = (r.f.results || []).filter(function (c) { return c && c.thumb; }).slice(0, 8);
@@ -4575,14 +4580,12 @@ function allPicked() {
 }
 function pickFind(i) {
   var at = finds.picks.indexOf(i);
-  if (finds.busy) return;
   if (at >= 0) finds.picks.splice(at, 1);
   else if (finds.picks.length >= MAX_PHOTOS) { toast(t('pf_max', { n: MAX_PHOTOS })); return; }
   else finds.picks.push(i);
   paintPicks();
 }
 function pickAllFinds() {
-  if (finds.busy) return;
   finds.picks = allPicked() ? [] : finds.picks.concat(shownPicks().filter(function (i) { return finds.picks.indexOf(i) < 0; })).slice(0, MAX_PHOTOS);
   paintPicks();
 }
@@ -4597,68 +4600,51 @@ function paintPicks() {
     n.hidden = at < 0;
   });
   use = box.querySelector('[data-action="pfuse"]');
-  if (use) { use.textContent = t('pf_use', { n: finds.picks.length }); use.disabled = !finds.picks.length || finds.busy; }
+  if (use) { use.textContent = t('pf_use', { n: finds.picks.length }); use.disabled = !finds.picks.length; }
   all = box.querySelector('[data-action="pfall"]');
   if (all) all.textContent = t(allPicked() ? 'pf_clear' : 'pf_all');
 }
-function findsSay(msg) { finds.msg = msg; var el = $('#pf-msg'); if (el) el.textContent = msg; }
-function openReview() {
-  refreshFinds().then(function () {
-    finds.list = reviewList(); finds.at = 0; finds.picks = []; finds.busy = false; finds.msg = '';
-    if (!finds.list.length) { toast(t('pf_nothing')); return; }
-    var sh = $('#sheet');
-    closeSheet();
-    sh.innerHTML = '<div class="sheet review" role="dialog" aria-modal="true" aria-label="' + t('pf_title') + '" id="review"></div>';
-    sh.hidden = false;
-    document.body.classList.add('lock');
-    paintReview();
-  }, function (e) { if (e && e.gone) sessionLost(); else toast(t('net_fail')); });
+
+/* ---------- Copying in the background ----------
+   Choosing is quick and copying is slow, so the copying runs behind the screen, two models at a time, while the
+   manager goes on to the next model. A model whose photos could not be saved comes back at the end of the list. */
+var photoJobs = { queue: [], running: 0, done: 0, skipped: 0, queries: {}, stop: false };
+function jobsLeft() { return photoJobs.queue.length + photoJobs.running; }
+function paintJobs() {
+  var el = $('#pf-bg'), n = jobsLeft();
+  if (el) el.textContent = n ? t('pf_bgwait', { n: n }) : '';
 }
-function paintReview() {
-  var box = $('#review'), r = finds.list[finds.at], off = finds.busy ? ' disabled' : '', cands;
-  if (!box) return;
-  var head = '<div class="row"><h2 class="h grow">' + t('pf_title') + '</h2>' + (r ? '<span class="sub code">' + (finds.at + 1) + ' / ' + finds.list.length + '</span>' : '') +
-    '<button class="x" id="sheet-close" data-action="close" aria-label="' + t('close') + '">' + icon('x') + '</button></div>';
-  if (!r) {
-    box.innerHTML = head + '<p class="strong">' + t('pf_end') + '</p><button class="btn primary" data-action="close">' + t('ps_close') + '</button>';
-    return;
-  }
-  cands = candidates(r);
-  box.innerHTML = head + '<p class="h small" dir="auto">' + esc(r.f.label) + '</p>' +
-    '<p class="sub">' + t(r.ids.length > 1 ? 'ps_many' : 'ps_one', { n: r.ids.length }) + ' ' + t('pf_hint') + '</p>' +
-    (r.ids.length > 1 ? '<div class="pslist">' + r.ids.map(function (id) {
-      var it = byId(id);
-      return it ? '<label class="check"><input type="checkbox" data-input="pfitem" data-id="' + id + '"' + (r.off[id] ? '' : ' checked') + off + '><span dir="auto">' + esc(it.name) + '</span></label>' : '';
-    }).join('') + '</div>' : '') +
-    '<div class="pfgrid">' + cands.map(function (c, i) {
-      return '<button class="pfc" data-action="pfpick" data-i="' + i + '" aria-pressed="false"' + off + '>' +
-        '<img src="' + esc(c.own ? photoUrl(c.own, true) : c.thumb) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.hidden=true">' +
-        '<b class="pfn" hidden></b><span dir="auto">' + esc(c.own ? t('pf_before') : (c.host || '')) + '</span></button>';
-    }).join('') + '</div>' +
-    '<button class="btn ghost" data-action="pfall"' + off + '></button>' +
-    '<button class="btn primary" data-action="pfuse" disabled></button>' +
-    '<div class="row"><button class="btn ghost grow" data-action="pfreject"' + off + '>' + t('pf_reject') + '</button>' +
-    '<button class="btn ghost grow" data-action="pfskip"' + off + '>' + t('ps_skip') + '</button></div>' +
-    '<form class="manual" data-form="pfagain"><div class="field"><label for="pf-words">' + t('pf_words') + '</label>' +
-    '<input class="input" id="pf-words" dir="auto" autocomplete="off" value="' + esc(r.f.label) + '"' + off + '></div>' +
-    '<button class="btn" type="submit"' + off + '>' + t('pf_again') + '</button></form>' +
-    '<p class="sub" id="pf-msg" role="status">' + esc(finds.msg) + '</p>';
-  paintPicks();
+function runJobs() {
+  while (photoJobs.running < 2 && photoJobs.queue.length) startJob(photoJobs.queue.shift());
+  paintJobs();
 }
-function nextReview() { finds.at++; finds.picks = []; finds.busy = false; paintReview(); }
-function useFind() {
-  var r = finds.list[finds.at], cands = r ? candidates(r) : [], picked = finds.picks.map(function (i) { return cands[i]; }).filter(Boolean),
-    bases = [], skipped = 0, ids, n;
-  if (!picked.length || finds.busy) return;
-  ids = r.ids.filter(function (id) { return !r.off[id]; });
-  if (!ids.length) { toast(t('ps_noneticked')); return; }
-  n = Number(ids[0].slice(1));
-  finds.busy = true;
-  paintReview();
-  findsSay(t('pf_saving'));
-  /* One picture after another, so a phone is never asked to shrink eight big pictures at once. A picture whose site
-     refuses copying is left out and the others still go in. */
-  picked.reduce(function (p, c) {
+function startJob(job) {
+  photoJobs.running++;
+  saveFind(job).then(function (skipped) {
+    photoJobs.done++;
+    photoJobs.skipped += skipped;
+  }, function (e) {
+    if (e && e.gone) { photoJobs.queue = []; photoJobs.stop = true; sessionLost(); return; }
+    toast(t(e && e.copy ? 'pf_bgcopy' : 'pf_bgfail', { label: job.r.f.label }));
+    backToList(job.r);
+  }).then(function () {
+    photoJobs.running--;
+    delete photoJobs.queries[job.r.f.query];
+    if (photoJobs.stop) return;
+    if (!jobsLeft() && photoJobs.done) {
+      toast(t('pf_bgdone') + (photoJobs.skipped ? ' ' + t('pf_bgskip', { n: photoJobs.skipped }) : ''));
+      photoJobs.done = 0;
+      photoJobs.skipped = 0;
+    }
+    if (!finds.list[finds.at]) paintReview(); else paintJobs();
+    runJobs();
+  });
+}
+/* One picture after another within a model, so a phone never shrinks many big pictures at once, and the photos keep
+   the order they were chosen in. A picture whose site refuses copying is left out; the others still go in. */
+function saveFind(job) {
+  var r = job.r, ids = job.ids, n = Number(ids[0].slice(1)), bases = [], skipped = 0;
+  return job.picked.reduce(function (p, c) {
     return p.then(function () {
       if (c.own) { bases.push(c.own); return null; }
       return fetchPicture(c).then(function (blob) { return putPhoto(blob, n); }).then(function (b) { bases.push(b); }, function (e) {
@@ -4671,32 +4657,109 @@ function useFind() {
     return api('POST', '/rest/v1/item_media?on_conflict=item_id', ids.map(function (id) {
       var it = byId(id);
       return { item_id: Number(id.slice(1)), photo: (it ? it.photos : []).concat(bases).slice(0, MAX_PHOTOS).join(',') };
-    }), 'resolution=merge-duplicates,return=minimal').then(function (res) { if (!res.ok) throw res; });
-  }).then(function () {
+    }), 'resolution=merge-duplicates,return=minimal');
+  }).then(function (res) {
+    if (!res.ok) throw res;
     ids.forEach(function (id) { var it = byId(id); if (it) keepPhotos(it, it.photos.concat(bases).slice(0, MAX_PHOTOS)); delete state.findItems[id]; });
     sent(api('POST', '/rest/v1/rpc/photo_decide', { p_query: r.f.query, p_action: 'use', p_photo: bases.join(','), p_items: ids.map(function (id) { return Number(id.slice(1)); }) }));
     r.f.photo = bases.join(',');
     if (ids.length === r.ids.length) r.f.status = 'approved';
-    findsSay('');
-    toast(skipped ? t('pf_skipped', { n: skipped }) : t('photo_ok'));
-    nextReview();
-  }).catch(function (e) {
-    finds.busy = false;
-    if (e && e.gone) { sessionLost(); return; }
-    paintReview();
-    findsSay(e && e.copy ? t('pf_nocopy') : t(photoProblem(e)));
+    return skipped;
   });
 }
+function backToList(r) {
+  var atEnd = !finds.list[finds.at];
+  finds.list.push(r);
+  if (atEnd) paintReview();
+}
+window.addEventListener('beforeunload', function (e) {
+  if (!jobsLeft()) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+
+/* ---------- The review screen ---------- */
+function openReview() {
+  refreshFinds().then(function () {
+    finds.list = reviewList().filter(function (r) { return !photoJobs.queries[r.f.query]; });
+    finds.at = 0;
+    finds.picks = [];
+    if (!finds.list.length && !jobsLeft()) { toast(t('pf_nothing')); return; }
+    var sh = $('#sheet');
+    closeSheet();
+    sh.innerHTML = '<div class="sheet review" role="dialog" aria-modal="true" aria-label="' + t('pf_title') + '" id="review"></div>';
+    sh.hidden = false;
+    document.body.classList.add('lock');
+    paintReview();
+  }, function (e) { if (e && e.gone) sessionLost(); else toast(t('net_fail')); });
+}
+function paintReview() {
+  var box = $('#review'), r = finds.list[finds.at], cands;
+  if (!box) return;
+  var head = '<div class="row"><h2 class="h grow">' + t('pf_title') + '</h2>' + (r ? '<span class="sub code">' + (finds.at + 1) + ' / ' + finds.list.length + '</span>' : '') +
+    '<button class="x" id="sheet-close" data-action="close" aria-label="' + t('close') + '">' + icon('x') + '</button></div>';
+  if (!r) {
+    box.innerHTML = head + '<p class="strong">' + t(jobsLeft() ? 'pf_bgleave' : 'pf_end') + '</p><p class="sub" id="pf-bg" role="status"></p>' +
+      '<button class="btn primary" data-action="close">' + t('ps_close') + '</button>';
+    paintJobs();
+    return;
+  }
+  cands = candidates(r);
+  box.innerHTML = head + '<p class="h small" dir="auto">' + esc(r.f.label) + '</p>' +
+    '<p class="sub">' + t(r.ids.length > 1 ? 'ps_many' : 'ps_one', { n: r.ids.length }) + ' ' + t('pf_hint') + '</p>' +
+    (r.ids.length > 1 ? '<div class="pslist">' + r.ids.map(function (id) {
+      var it = byId(id);
+      return it ? '<label class="check"><input type="checkbox" data-input="pfitem" data-id="' + id + '"' + (r.off[id] ? '' : ' checked') + '><span dir="auto">' + esc(it.name) + '</span></label>' : '';
+    }).join('') + '</div>' : '') +
+    '<div class="pfgrid">' + cands.map(function (c, i) {
+      return '<button class="pfc" data-action="pfpick" data-i="' + i + '" aria-pressed="false">' +
+        '<img src="' + esc(c.own ? photoUrl(c.own, true) : c.thumb) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.hidden=true">' +
+        '<b class="pfn" hidden></b><span dir="auto">' + esc(c.own ? t('pf_before') : (c.host || '')) + '</span></button>';
+    }).join('') + '</div>' +
+    '<button class="btn ghost" data-action="pfall"></button>' +
+    '<button class="btn primary" data-action="pfuse" disabled></button>' +
+    '<p class="sub" id="pf-bg" role="status"></p>' +
+    '<div class="row"><button class="btn ghost grow" data-action="pfreject">' + t('pf_reject') + '</button>' +
+    '<button class="btn ghost grow" data-action="pfskip">' + t('ps_skip') + '</button></div>' +
+    '<form class="manual" data-form="pfagain"><div class="field"><label for="pf-words">' + t('pf_words') + '</label>' +
+    '<input class="input" id="pf-words" dir="auto" autocomplete="off" value="' + esc(r.f.label) + '"></div>' +
+    '<button class="btn" type="submit">' + t('pf_again') + '</button></form>';
+  paintPicks();
+  paintJobs();
+}
+/* The next model starts at the top of the sheet, with nothing chosen. */
+function nextReview() {
+  var box = $('#review');
+  finds.at++;
+  finds.picks = [];
+  paintReview();
+  if (box) box.scrollTop = 0;
+}
+function useFind() {
+  var r = finds.list[finds.at], cands = r ? candidates(r) : [], ids,
+    picked = finds.picks.map(function (i) { return cands[i]; }).filter(Boolean);
+  if (!picked.length) return;
+  ids = r.ids.filter(function (id) { return !r.off[id]; });
+  if (!ids.length) { toast(t('ps_noneticked')); return; }
+  photoJobs.stop = false;
+  photoJobs.queries[r.f.query] = 1;
+  photoJobs.queue.push({ r: r, picked: picked, ids: ids });
+  nextReview();
+  runJobs();
+}
+/* "None fits" and "search with other words" move on at once too; if the cloud does not take the decision (the reason
+   is already shown), the model comes back at the end of the list as it was. */
 function decideFind(action, words) {
-  var r = finds.list[finds.at];
-  if (!r || finds.busy) return;
-  finds.busy = true;
+  var r = finds.list[finds.at], was;
+  if (!r) return;
+  was = { status: r.f.status, label: r.f.label, results: r.f.results };
+  if (action === 'reject') r.f.status = 'rejected';
+  else { r.f.status = 'queued'; r.f.label = words; r.f.results = []; toast(t('pf_queued')); }
+  nextReview();
   sent(api('POST', '/rest/v1/rpc/photo_decide', { p_query: r.f.query, p_action: action, p_label: words || '' })).then(function (res) {
-    if (!res) { finds.busy = false; paintReview(); return; }
-    if (action === 'reject') r.f.status = 'rejected';
-    else { r.f.status = 'queued'; r.f.label = words; r.f.results = []; toast(t('pf_queued')); }
-    findsSay('');
-    nextReview();
+    if (res) return;
+    r.f.status = was.status; r.f.label = was.label; r.f.results = was.results;
+    backToList(r);
   });
 }
 
