@@ -204,6 +204,13 @@ button.kpi { cursor:pointer }
 .facts dd { margin:0; font:600 14.5px var(--font-body); font-variant-numeric:tabular-nums; overflow-wrap:anywhere }
 .private-box { background:var(--private-soft); color:var(--private); border-radius:var(--r); padding:12px 14px; display:flex; flex-direction:column; gap:10px }
 .private-box dt { color:var(--private); opacity:.85 }
+/* Ordering a supplier's device on WhatsApp (staff), and correcting an offer or a supplier after saving */
+.order-box { border:1px solid var(--line); border-radius:var(--r); padding:12px 14px; display:flex; flex-direction:column; gap:8px }
+.order-box .orow { align-items:center; flex-wrap:wrap; gap:8px }
+.order-box .h { display:flex; align-items:center; gap:6px }
+.wa-add { display:flex; gap:6px; align-items:center }
+.walink { display:inline-flex; align-items:center; gap:6px; text-decoration:none; color:var(--muted) }
+.oedit { display:flex; flex-direction:column; gap:10px; padding:12px 0; border-bottom:1px solid var(--line) }
 .priv-title { font:600 12.5px var(--font-body); gap:6px }
 .toast { position:fixed; left:0; right:0; bottom:calc(var(--nav-h) + 14px + env(safe-area-inset-bottom,0px)); z-index:30; display:flex; justify-content:center; pointer-events:none; padding-inline:16px }
 .toast span { background:var(--ink); color:var(--bg); padding:9px 16px; border-radius:99px; font:500 13.5px var(--font-body); box-shadow:0 6px 20px var(--shadow) }
@@ -849,6 +856,32 @@ var LOCALES = {
     cond_used: 'Used',
     cat_offer_new: 'New, on order',
     cat_offer_used: 'Used, on order',
+    grp_laptop_new: 'New laptops',
+    grp_laptop_used: 'Used laptops',
+    sup_edit: 'Edit',
+    sup_name: 'Supplier name',
+    sup_wa: 'WhatsApp number',
+    edit_save: 'Save',
+    edit_cancel: 'Cancel',
+    wa_bad: 'That WhatsApp number does not look right. Write it with the country code, or starting with 09.',
+    oe_name: 'Device name',
+    oe_price: 'Supplier price',
+    oe_cur: 'Currency',
+    oe_cond: 'Condition',
+    oe_notes: 'Other notes',
+    oe_need: 'A name and a price above zero are needed.',
+    sreq_title: 'Order from the supplier',
+    sreq_ask: 'Still available?',
+    sreq_order: 'Order',
+    sreq_addnum: 'Add number',
+    sreq_last: 'Last request: {kind} by {who}, {when}',
+    sreq_kind_ask: 'asked if available',
+    sreq_kind_order: 'ordered',
+    sreq_someone: 'a colleague',
+    sreq_ask_msg: 'Hello, this is {shop}. Is this device still available?\n{item}',
+    sreq_order_msg: 'Hello, this is {shop}. We would like to order:\n{item}\nQuantity: 1',
+    sreq_no: 'Number {n} in your list',
+    sreq_price: 'Your price: {p}',
     source: 'Source',
     src_own: 'Our own stock',
     src_supplier: 'From supplier: {name}',
@@ -1305,6 +1338,32 @@ var LOCALES = {
     cond_used: 'مستعمل',
     cat_offer_new: 'جديد - عند الطلب',
     cat_offer_used: 'مستعمل - عند الطلب',
+    grp_laptop_new: 'لابتوب جديد',
+    grp_laptop_used: 'لابتوب مستعمل',
+    sup_edit: 'تعديل',
+    sup_name: 'اسم الشركة',
+    sup_wa: 'رقم واتساب',
+    edit_save: 'حفظ',
+    edit_cancel: 'إلغاء',
+    wa_bad: 'رقم الواتساب غير صحيح. اكتبه مع رمز الدولة، أو ابدأه بـ 09.',
+    oe_name: 'اسم الجهاز',
+    oe_price: 'سعر الشركة',
+    oe_cur: 'العملة',
+    oe_cond: 'الحالة',
+    oe_notes: 'ملاحظات أخرى',
+    oe_need: 'يلزم اسم وسعر أكبر من صفر.',
+    sreq_title: 'اطلب من الشركة',
+    sreq_ask: 'هل ما زال متوفراً؟',
+    sreq_order: 'اطلب',
+    sreq_addnum: 'أضف الرقم',
+    sreq_last: 'آخر طلب: {kind} من {who}، {when}',
+    sreq_kind_ask: 'سؤال عن التوفر',
+    sreq_kind_order: 'طلب',
+    sreq_someone: 'زميل',
+    sreq_ask_msg: 'مرحباً، معكم {shop}. هل هذا الجهاز ما زال متوفراً لديكم؟\n{item}',
+    sreq_order_msg: 'مرحباً، معكم {shop}. نريد أن نطلب:\n{item}\nالكمية: 1',
+    sreq_no: 'رقم {n} في قائمتكم',
+    sreq_price: 'سعركم: {p}',
     source: 'المصدر',
     src_own: 'من بضاعتنا',
     src_supplier: 'من شركة: {name}',
@@ -1409,6 +1468,8 @@ var LEXICON = {
   ],
   /* Drawing for a whole group in the group row, when its name is not itself a kind of item. */
   groupIcons: [['mouse', ['اكسسوار', 'اكسسوارات', 'accessories']], ['chip', ['قطع', 'parts']]],
+  /* Words that tell the accounting program's new and used groups apart (the laptop groups lead the store). */
+  conds: { fresh: ['جديد', 'جديدة', 'new'], used: ['مستعمل', 'مستعملة', 'used'] },
   /* Brand id, the label shown, and the spellings that mean it. */
   brands: [
     ['dell', 'DELL', ['dell', 'ديل']], ['hp', 'HP', ['hp', 'اتش بي']], ['lenovo', 'Lenovo', ['lenovo', 'لينوفو', 'thinkpad', 'ideapad']],
@@ -1457,7 +1518,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.15';
+var APP_BUILD = '2.16';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -1483,6 +1544,9 @@ var state = {
   lastBackup: '',       // when the manager last downloaded a backup
   finds: [], findItems: {}, findsOk: false,   // photos the cloud found online, waiting for the manager
   photoJobs: [], jobsOk: false,               // chosen photos kept in the cloud until a device has copied them
+  lapNew: '', lapUsed: '',                    // the accounting program's new and used laptop groups, found by name
+  suppliers: {}, requests: [],                // suppliers' WhatsApp numbers, and what staff asked them lately
+  supEdit: null, offerEdit: null,             // the supplier or the offer being edited on the offers screen
   photoAuto: true, photoCap: 900,
   offerQuery: '', replaceOld: false, replaceTouched: false, ocrMsg: '', ocrBusy: false,
   need: '',             // manager's list filter: '' | noprice | pending | nophoto
@@ -1552,7 +1616,25 @@ function catOf(it) {
   for (var i = 0; i < state.cats.length; i++) if (state.cats[i].id === it.cat) return state.cats[i];
   return { id: '', name: '' };
 }
-function catName(c) { return c.id === 'offer-new' || c.id === 'offer-used' ? t(c.id === 'offer-new' ? 'cat_offer_new' : 'cat_offer_used') : (c.name || ''); }
+function catName(c) {
+  if (c.id && c.id === state.lapNew) return t('grp_laptop_new');
+  if (c.id && c.id === state.lapUsed) return t('grp_laptop_used');
+  return c.id === 'offer-new' || c.id === 'offer-used' ? t(c.id === 'offer-new' ? 'cat_offer_new' : 'cat_offer_used') : (c.name || '');
+}
+/* New laptops first, then used ones, then the other groups by name. */
+function catRank(c) { return c.id === state.lapNew ? 0 : (c.id === state.lapUsed ? 1 : 2); }
+/* The accounting program's new and used laptop groups, found by their names. Supplier laptops join them. */
+function findLaptopGroups(groups) {
+  var lap = wordRe(LEXICON.kinds.filter(function (k) { return k[0] === 'laptop'; })[0][1]), fresh = wordRe(LEXICON.conds.fresh), old = wordRe(LEXICON.conds.used);
+  state.lapNew = '';
+  state.lapUsed = '';
+  groups.slice().sort(function (a, b) { return String(a.name).length - String(b.name).length; }).forEach(function (g) {
+    var n = normalize(g.name);
+    if (!lap.test(n)) return;
+    if (!state.lapNew && fresh.test(n)) state.lapNew = String(g.id);
+    else if (!state.lapUsed && old.test(n)) state.lapUsed = String(g.id);
+  });
+}
 function totalQty(it) { var n = it.qty; (it.other || []).forEach(function (o) { n += o.n; }); return Math.max(0, n); }
 function uniq(a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }); }
 function hasPrice(it) { return it.sell > 0; }
@@ -1623,7 +1705,7 @@ function marginOf(cat) {
   if (cat === 'offer-new' || cat === 'offer-used') return offerMarginPct();   // supplier goods have their own profit %
   var m = state.pricing.margins[cat]; return m >= 0 ? Number(m) : state.pricing.defMargin;
 }
-function autoPrice(it) { return it.cost > 0 ? roundUp(it.cost * (1 + marginOf(it.cat) / 100)) : null; }
+function autoPrice(it) { return it.cost > 0 ? roundUp(it.cost * (1 + (it.offer ? offerMarginPct() : marginOf(it.cat)) / 100)) : null; }
 function resolveItem(it) {
   if (!it.raw) return;
   var base = it.raw.cost, b = it.buy;
@@ -1695,6 +1777,7 @@ function applyCloud(d) {
   state.whs = {};
   (d.warehouses || []).forEach(function (w) { state.whs[w.id] = w.name; if (!main || w.id < main) main = w.id; });
   (d.groups || []).forEach(function (g) { names[g.id] = g.name; });
+  findLaptopGroups(d.groups || []);
   p.margins = {}; p.hidden = {}; p.manual = {}; p.extra = {}; p.defMargin = 12;
   if (d.rules && d.rules[0] && d.rules[0].default_margin >= 0) p.defMargin = Number(d.rules[0].default_margin);
   (d.groupPricing || []).forEach(function (g) {
@@ -1710,6 +1793,8 @@ function applyCloud(d) {
   state.mediaOk = Array.isArray(d.media);
   if (d.finds !== undefined) applyFinds(d.finds, d.findItems);
   if (d.jobs !== undefined) { state.jobsOk = Array.isArray(d.jobs); state.photoJobs = (d.jobs || []).map(function (j) { return j.id; }); }
+  if (d.suppliers !== undefined) { state.suppliers = {}; (d.suppliers || []).forEach(function (s) { state.suppliers[s.name] = s.whatsapp || ''; }); }
+  if (d.requests !== undefined) state.requests = d.requests || [];
   state.notesOk = Array.isArray(d.notes);
   state.notes = {};
   (d.notes || []).forEach(function (m) { if (m.note) state.notes['m' + m.item_id] = String(m.note); });
@@ -1743,7 +1828,7 @@ function applyCloud(d) {
   state.offers = (d.offers || []).map(offerRow);
   shopItems(d.shop, used);
   state.cats = Object.keys(used).map(function (id) { return { id: id, name: names[id] || id }; })
-    .sort(function (a, b) { return a.name < b.name ? -1 : 1; });
+    .sort(function (a, b) { return catRank(a) - catRank(b) || (catName(a) < catName(b) ? -1 : 1); });
   if (state.cat !== 'all' && !used[state.cat]) state.cat = 'all';
   state.items.forEach(prep);
   state.people = d.people || [];
@@ -1997,6 +2082,17 @@ function similarTo(it) {
     .sort(function (a, b) { return Math.abs(a.sell - p) - Math.abs(b.sell - p); }).slice(0, 8);
 }
 function shopWa(text) { return 'https://wa.me/' + state.shop.phone.replace(/\D/g, '') + '?text=' + encodeURIComponent(text); }
+/* A WhatsApp number as wa.me wants it: digits with the country code. A number written the local way (09...) is taken
+   as Syrian, and 00 is the international prefix. Empty when it cannot be a phone number. */
+function waDigits(v) {
+  var d = toLatinDigits(String(v || '')).replace(/[\s().-]/g, '');
+  if (/^\+/.test(d)) d = d.slice(1);
+  else if (/^00/.test(d)) d = d.slice(2);
+  else if (/^0/.test(d)) d = '963' + d.slice(1);
+  else if (/^9\d{8}$/.test(d)) d = '963' + d;
+  return /^\d{8,15}$/.test(d) ? d : '';
+}
+function waTo(digits, text) { return 'https://wa.me/' + digits + (text ? '?text=' + encodeURIComponent(text) : ''); }
 function itemLink(it) { return location.origin + location.pathname + '#p' + idNum(it); }
 
 /* ---------- Links to one item: "#p123" opens it, and the phone's back button closes it ---------- */
@@ -2219,15 +2315,18 @@ function shopItems(list, used) {
     var sp = readNote(o.note), sell = Number(o.sell), key;
     if (!(sell > 0)) return;
     key = offerKey(o);
-    if (!best[key]) best[key] = { o: o, sp: sp, sell: sell, rows: [] };
+    if (!best[key]) best[key] = { o: o, sp: sp, sell: sell, rows: [], from: [] };
     else if (sell < best[key].sell) { best[key].o = o; best[key].sp = sp; best[key].sell = sell; }
     best[key].rows.push(o.id);
+    best[key].from.push({ id: o.id, supplier: o.supplier || '', sell: sell, no: sp.no });
   });
+  var kinds = Object.keys(best).length ? groupsByKind() : {};
   Object.keys(best).forEach(function (k) {
-    var b = best[k], o = b.o, cat = o.cond === 'used' ? 'offer-used' : 'offer-new', own = null, i;
+    var b = best[k], o = b.o, cat = offerCat(o, b.sp, kinds), own = null, i;
     var id = 'm' + offerNum(k), mine = (state.media[id] || '').split(',').filter(Boolean);
     var it = { id: id, code: '', barcode: '', cat: cat, name: String(o.name), sell: b.sell, auto: true, min: 0, qty: 1, other: [], stock: 'low',
-      note: state.notes[id] || b.sp.notes.join('\n'), photos: mine, photo: mine[0] || '', offer: { rows: b.rows, supplier: o.supplier || '', cond: o.cond === 'used' ? 'used' : 'new', sp: b.sp, note: o.note || '' } };
+      note: state.notes[id] || b.sp.notes.join('\n'), photos: mine, photo: mine[0] || '',
+      offer: { rows: b.rows, from: b.from.sort(function (x, y) { return x.sell - y.sell; }), supplier: o.supplier || '', cond: o.cond === 'used' ? 'used' : 'new', sp: b.sp, note: o.note || '' } };
     if (isAdmin()) {
       for (i = 0; i < state.offers.length && !own; i++) if (state.offers[i].id === o.id) own = state.offers[i];
       it.raw = { cost: own ? offerUsd(own) : 0 }; it.cost = it.raw.cost; it.pending = false; it.extra = 0; it.buy = null; it.sale = null;
@@ -2242,6 +2341,46 @@ function describeOffer(it) {
   if (chips.length) it.chips = chips;
   if (it.kind === 'box' && sp.cpu) { it.kind = 'laptop'; it.tint = TINTS.laptop; }
   it.chips.unshift(t(it.offer.cond === 'used' ? 'cond_used' : 'cond_new'));
+}
+/* What kind of item a name speaks of, before the item is described: a kind word, else a processor means a computer. */
+function nameKind(name) {
+  var norm = normalize(name), i;
+  for (i = 0; i < KINDS.length; i++) if (KINDS[i].re.test(norm)) return KINDS[i].icon;
+  return specsOf(name) ? 'laptop' : '';
+}
+/* Where the shop keeps its own items of each kind: the group most of them are in. */
+function groupsByKind() {
+  var count = {}, out = {};
+  state.items.forEach(function (it) {
+    var k = it.offer ? '' : nameKind(it.name);
+    if (!k || k === 'laptop') return;
+    count[k] = count[k] || {};
+    count[k][it.cat] = (count[k][it.cat] || 0) + 1;
+  });
+  Object.keys(count).forEach(function (k) {
+    out[k] = Object.keys(count[k]).sort(function (a, b) { return count[k][b] - count[k][a]; })[0];
+  });
+  return out;
+}
+/* Supplier laptops join the shop's new or used laptop group, and other goods the group where the shop keeps its own
+   items of that kind. Only goods matching neither keep a group of supplier goods. */
+function offerCat(o, sp, kinds) {
+  var used = o.cond === 'used', kind = sp.cpu ? 'laptop' : nameKind(o.name), g = '';
+  if (kind === 'laptop') g = used ? state.lapUsed : state.lapNew;
+  else if (kind) g = kinds[kind] || '';
+  return g || (used ? 'offer-used' : 'offer-new');
+}
+function offerById(id) { for (var i = 0; i < state.offers.length; i++) if (state.offers[i].id === id) return state.offers[i]; return null; }
+/* An offer's note put back together from its parts, in the form readNote reads. */
+function writeNote(sp) {
+  var parts = [];
+  if (sp.no) parts.push('#' + sp.no);
+  if (sp.cpu) parts.push('CPU ' + sp.cpu);
+  if (sp.ram) parts.push('RAM ' + sp.ram);
+  if (sp.disk) parts.push((sp.diskKind || 'SSD') + ' ' + sp.disk);
+  if (sp.screen) parts.push('DISPLAY ' + sp.screen);
+  if (sp.gpu) parts.push('GPU ' + sp.gpu);
+  return parts.concat(sp.notes || []).join(DOT);
 }
 function sourceOf(it) { return it.offer ? t('src_supplier', { name: it.offer.supplier }) : t('src_own'); }
 
@@ -2384,9 +2523,13 @@ function fetchData() {
       pagesSoft('/rest/v1/photo_finds?select=query,label,kind,status,results,note,photo&status=in.(queued,asked,done,none,failed)&order=query'),
       pagesSoft('/rest/v1/photo_find_items?select=item_id,query&order=item_id'), pagesSoft('/rest/v1/photo_jobs?select=id&order=id'));
   }
+  /* suppliers' numbers, and what staff asked them in the last 30 days */
+  jobs.push(pagesSoft('/rest/v1/suppliers?select=name,whatsapp&order=name'),
+    pagesSoft('/rest/v1/supplier_requests?select=id,offer_id,supplier,item,kind,sent_by,sent_by_name,sent_at&order=sent_at.desc&sent_at=gte.' +
+      encodeURIComponent(new Date(Date.now() - 30 * 864e5).toISOString())));
   jobs.push(pagesSoft('/rest/v1/rpc/catalog_offers?order=name,id'), pagesSoft('/rest/v1/item_notes?select=item_id,note&order=item_id'));
   return Promise.all(jobs).then(function (a) {
-    return { notes: a[a.length - 1], shop: a[a.length - 2], items: a[0], groups: a[1], currencies: a[2], warehouses: a[3], settings: a[4], status: (a[5] || [])[0] || null, media: a[6],
+    return { notes: a[a.length - 1], shop: a[a.length - 2], requests: a[a.length - 3], suppliers: a[a.length - 4], items: a[0], groups: a[1], currencies: a[2], warehouses: a[3], settings: a[4], status: (a[5] || [])[0] || null, media: a[6],
       costs: a[7], itemPricing: a[8], groupPricing: a[9], rules: a[10], offers: a[11], people: a[12], events: a[13],
       finds: isAdmin() ? a[14] : undefined, findItems: isAdmin() ? a[15] : undefined, jobs: isAdmin() ? a[16] : undefined };
   });
@@ -2436,6 +2579,7 @@ function clearAccount() {
   backup.file = null; backup.msg = '';
   finds.state = null; finds.sent = {}; finds.editKey = false; state.finds = []; state.findItems = {}; state.findsOk = false;
   state.photoJobs = []; state.jobsOk = false; photoWork.done = 0; photoWork.skipped = 0; photoWork.based = false;
+  state.suppliers = {}; state.requests = []; state.supEdit = null; state.offerEdit = null;
   state.session = null; state.me = null; state.role = null; state.busy = false; state.peekId = null;
   state.items = []; state.offers = []; state.people = []; state.events = []; state.cats = [];
   state.draft = []; state.pasteText = ''; state.supplier = ''; state.skipped = 0; state.ocrMsg = ''; state.offerQuery = ''; state.need = '';
@@ -3032,6 +3176,57 @@ function specFacts(it) {
   if (sp.screen) h += fact(t('spec_screen'), ltr(sp.screen) + (sp.touch ? ' · ' + t('spec_touch') : ''));
   return h;
 }
+/* Staff ask the supplier on WhatsApp whether the device is still there, or order it. Every supplier with the same
+   device is listed, cheapest first, so another one can be asked when the first has none left. The last request on
+   the device shows, so two people do not order it twice. */
+function orderBox(it) {
+  var last = lastRequest(it);
+  return '<section class="order-box"><h3 class="h small">' + icon('chat', 16) + ' ' + t('sreq_title') + '</h3>' +
+    (last ? '<p class="sub" dir="auto">' + esc(t('sreq_last', { kind: t(last.kind === 'ask' ? 'sreq_kind_ask' : 'sreq_kind_order'), who: last.sent_by_name || t('sreq_someone'),
+      when: whenText(last.sent_at) })) + '</p>' : '') +
+    (it.offer.from || []).map(function (r, i) {
+      var wa = state.suppliers[r.supplier] || '', own = isAdmin() ? offerById(r.id) : null;
+      function link(kind) {
+        return '<a class="btn sm' + (kind === 'order' ? ' primary' : '') + '" target="_blank" rel="noopener" data-action="sreq" data-kind="' + kind + '" data-id="' + it.id +
+          '" data-sup="' + esc(r.supplier) + '" data-offer="' + esc(r.id) + '" href="' + esc(waTo(wa, orderText(kind, it, r))) + '">' + t(kind === 'ask' ? 'sreq_ask' : 'sreq_order') + '</a>';
+      }
+      return '<div class="orow"><div class="grow ocol"><span class="nm" dir="auto">' + esc(r.supplier) + '</span>' +
+        (own ? '<span class="meta"><span class="secret">' + icon('lock', 13) + t('offer_buy') + ' <b>' + listPrice(own) + '</b></span></span>' : '') + '</div>' +
+        (wa ? link('ask') + link('order')
+          : '<form class="wa-add" data-form="supwa" data-sup="' + esc(r.supplier) + '"><input class="input mini" id="wa-' + i + '" type="tel" inputmode="tel" dir="ltr" autocomplete="off" placeholder="0933 123 456" aria-label="' +
+            esc(t('sup_wa')) + '"><button class="btn sm" type="submit">' + t('sreq_addnum') + '</button></form>') + '</div>';
+    }).join('') + '</section>';
+}
+function listPrice(o) { return o.cur === 'SYP' ? num(o.price, 0) + ' ' + t('syp_unit') : usd(o.price); }
+/* The message, with what identifies the device in the supplier's own list; the manager's also carries the price. */
+function orderText(kind, it, r) {
+  var sp = it.offer.sp, own = isAdmin() ? offerById(r.id) : null, lines = [it.name],
+    specs = [sp.cpu, sp.ram, sp.disk, sp.gpu, sp.screen].filter(Boolean).join(' / ');
+  if (specs) lines.push(specs);
+  lines.push(t(it.offer.cond === 'used' ? 'cond_used' : 'cond_new'));
+  if (r.no) lines.push(t('sreq_no', { n: r.no }));
+  if (own) lines.push(t('sreq_price', { p: listPrice(own) }));
+  return t(kind === 'ask' ? 'sreq_ask_msg' : 'sreq_order_msg', { shop: state.shop.name, item: lines.join('\n') });
+}
+function lastRequest(it) {
+  var rows = it.offer.rows || [], i;
+  for (i = 0; i < state.requests.length; i++) if (rows.indexOf(state.requests[i].offer_id) !== -1) return state.requests[i];
+  return null;
+}
+function whenText(at) {
+  var d = new Date(at);
+  return isNaN(d) ? '' : d.toLocaleDateString('en-GB') + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+/* The WhatsApp link opens by itself; the request is noted so colleagues see it on the device. */
+function logRequest(el) {
+  var it = byId(el.getAttribute('data-id')), row = {
+    offer_id: el.getAttribute('data-offer') || null, supplier: el.getAttribute('data-sup') || '', item: it ? it.name.slice(0, 300) : '',
+    kind: el.getAttribute('data-kind') === 'ask' ? 'ask' : 'order', sent_by_name: ((state.me && state.me.name) || '').slice(0, 80) };
+  if (!row.supplier || !row.item) return;
+  state.requests.unshift(Object.assign({ sent_at: new Date().toISOString() }, row));
+  sent(api('POST', '/rest/v1/supplier_requests', row, 'return=minimal'));
+  setTimeout(function () { if (it && state.sheetId === it.id) openItem(it.id); }, 300);
+}
 function openItem(id) {
   var it = byId(id);
   if (!it) return;
@@ -3046,7 +3241,7 @@ function openItem(id) {
     '<div class="row"><h2 class="h grow" dir="auto">' + esc(it.name) + '</h2><button class="x" id="sheet-close" data-action="close" aria-label="' + t('close') + '">' + icon('x') + '</button></div>' +
     coverHtml(it, true) +
     '<div class="row">' + priceHtml(it, true) + '<span class="pill ' + stockState(it) + '">' + stockLabel(it) + '</span></div>' +
-    '<dl class="facts">' + facts + '</dl>' + noteHtml(it);
+    '<dl class="facts">' + facts + '</dl>' + noteHtml(it) + (it.offer && !isGuest() ? orderBox(it) : '');
   if (isAdmin() && it.offer) {
     html += '<div class="private-box"><div class="row priv-title">' + icon('lock', 15) + t('admin_only') + '</div><dl class="facts">' +
       fact(t('offer_buy'), usd(it.cost)) + fact(t('profit_unit'), usd(it.sell - it.cost)) + '</dl>' + priceInputs(it) + noteInput(it) + photoControls(it) + '</div>';
@@ -3440,12 +3635,93 @@ function supplierList(sup) {
     .sort(function (a, b) { return (a.at < b.at ? 1 : (a.at > b.at ? -1 : 0)) || no[a.id] - no[b.id] || (a.name < b.name ? -1 : (a.name > b.name ? 1 : 0)); });
 }
 function offerRowHtml(o) {
+  if (state.offerEdit === o.id) return offerEditHtml(o);
   var it = matchItem(offerText(o)), u = offerUsd(o), s = offerSell(o);
   return '<div class="orow tall"><div class="grow ocol">' + offerHead(o) +
     '<span class="meta"><span class="secret">' + icon('lock', 13) + t('offer_buy') + ' <b>' + usd(u) + '</b>' + DOT + t('offer_profit', { p: '<b>' + usd(s - u) + '</b>' }) + '</span>' +
     (it && it.cost > 0 ? cmpPill(u, it.cost) : '') + '</span></div>' +
     '<div class="price"><span class="tag sm">' + usd(s) + '</span><span class="syp">' + sypOf(s) + '</span></div>' +
+    '<button class="x" data-action="oedit" data-id="' + esc(o.id) + '" aria-label="' + t('sup_edit') + '">' + icon('sliders', 18) + '</button>' +
     '<button class="x" data-action="orm" data-id="' + esc(o.id) + '" aria-label="' + t('remove') + '">' + icon('x', 18) + '</button></div>';
+}
+/* Everything read from the supplier's list can be corrected after saving: the name, the price and its currency, the
+   condition and the specs. */
+function offerEditHtml(o) {
+  var sp = readNote(o.note);
+  function field(id, label, value, attrs) {
+    return '<div class="field"><label for="' + id + '">' + label + '</label><input class="input" id="' + id + '"' + (attrs || ' dir="auto"') + ' value="' + esc(value) + '"></div>';
+  }
+  function choice(id, label, options, current) {
+    return '<div class="field"><label for="' + id + '">' + label + '</label><select class="input" id="' + id + '">' + options.map(function (c) {
+      return '<option value="' + c.v + '"' + (current === c.v ? ' selected' : '') + '>' + c.label + '</option>';
+    }).join('') + '</select></div>';
+  }
+  return '<form class="oedit" data-form="oedit" data-id="' + esc(o.id) + '">' + field('oe-name', t('oe_name'), o.name, ' dir="auto" required') +
+    '<div class="qform even">' + field('oe-price', t('oe_price'), o.price, ' type="number" inputmode="decimal" min="0" step="any" required') +
+    choice('oe-cur', t('oe_cur'), [{ v: 'USD', label: t('usd') }, { v: 'SYP', label: t('syp') }], o.cur) +
+    choice('oe-cond', t('oe_cond'), [{ v: 'new', label: t('cond_new') }, { v: 'used', label: t('cond_used') }], o.cond) + '</div>' +
+    '<div class="qform even">' + field('oe-cpu', t('spec_cpu'), sp.cpu, ' dir="ltr"') + field('oe-ram', t('spec_ram'), sp.ram, ' dir="ltr"') +
+    field('oe-disk', t('spec_storage'), sp.disk, ' dir="ltr"') + field('oe-gpu', t('spec_gpu'), sp.gpu, ' dir="ltr"') + field('oe-screen', t('spec_screen'), sp.screen, ' dir="ltr"') + '</div>' +
+    field('oe-notes', t('oe_notes'), sp.notes.join(DOT)) +
+    '<div class="row"><button class="btn primary" type="submit">' + t('edit_save') + '</button><button class="btn ghost" type="button" data-action="oeditcancel">' + t('edit_cancel') + '</button></div></form>';
+}
+function saveOfferEdit(id) {
+  var o = offerById(id), sp, patch, oldId, newId;
+  function val(sel) { var el = $(sel); return el ? el.value.trim() : ''; }
+  if (!o) return;
+  patch = { name: val('#oe-name'), price: Number(val('#oe-price')), cur: val('#oe-cur') === 'SYP' ? 'SYP' : 'USD', cond: val('#oe-cond') === 'used' ? 'used' : 'new' };
+  if (!patch.name || !(patch.price > 0)) { toast(t('oe_need')); return; }
+  sp = readNote(o.note);
+  sp.cpu = val('#oe-cpu'); sp.ram = val('#oe-ram'); sp.disk = val('#oe-disk'); sp.gpu = val('#oe-gpu'); sp.screen = val('#oe-screen');
+  sp.notes = val('#oe-notes').split(/\s*\u00B7\s*|\n/).filter(Boolean);
+  patch.note = writeNote(sp);
+  oldId = 'm' + offerNum(offerKey(o));
+  Object.keys(patch).forEach(function (k) { o[k] = patch[k]; });
+  newId = 'm' + offerNum(offerKey(o));
+  if (oldId !== newId) carryOfferExtras(oldId, newId);
+  state.offerEdit = null;
+  paintOfferRows();
+  sent(api('PATCH', '/rest/v1/offers?id=eq.' + encodeURIComponent(id), patch, 'return=minimal'));
+}
+/* A new name or new specs give the device a new number in the store: the photos and note the manager gave it go along. */
+function carryOfferExtras(oldId, newId) {
+  var n = Number(newId.slice(1)), photo = state.media[oldId], note = state.notes[oldId];
+  if (photo && !state.media[newId]) {
+    state.media[newId] = photo;
+    sent(api('POST', '/rest/v1/item_media?on_conflict=item_id', { item_id: n, photo: photo }, 'resolution=merge-duplicates,return=minimal'));
+  }
+  if (note && !state.notes[newId]) {
+    state.notes[newId] = note;
+    sent(api('POST', '/rest/v1/item_notes?on_conflict=item_id', { item_id: n, note: note }, 'resolution=merge-duplicates,return=minimal'));
+  }
+}
+/* A supplier's name and WhatsApp number, changed after its offers were saved. */
+function supplierForm(sup, wa) {
+  return '<form class="manual" data-form="supedit" data-sup="' + esc(sup) + '"><div class="qform even">' +
+    '<div class="field"><label for="se-name">' + t('sup_name') + '</label><input class="input" id="se-name" dir="auto" required value="' + esc(sup) + '"></div>' +
+    '<div class="field"><label for="se-wa">' + t('sup_wa') + '</label><input class="input" id="se-wa" type="tel" inputmode="tel" dir="ltr" autocomplete="off" placeholder="0933 123 456" value="' +
+    (wa ? '+' + esc(wa) : '') + '"></div></div>' +
+    '<div class="row"><button class="btn primary" type="submit">' + t('edit_save') + '</button><button class="btn ghost" type="button" data-action="osupcancel">' + t('edit_cancel') + '</button></div></form>';
+}
+function saveSupplier(old) {
+  var name = (($('#se-name') || {}).value || '').trim(), raw = ($('#se-wa') || {}).value || '', wa = waDigits(raw), moved;
+  if (!name) { toast(t('need_supplier')); return; }
+  if (raw.trim() && !wa) { toast(t('wa_bad')); return; }
+  state.supEdit = null;
+  moved = name === old ? Promise.resolve(true) : sent(api('POST', '/rest/v1/rpc/supplier_rename', { p_old: old, p_new: name }));
+  if (name !== old) {
+    state.offers.forEach(function (o) { if (o.supplier === old) o.supplier = name; });
+    if (state.suppliers[old] && !state.suppliers[name]) state.suppliers[name] = state.suppliers[old];
+    delete state.suppliers[old];
+    if (state.supplier === old) state.supplier = name;
+  }
+  moved.then(function (ok) { if (ok && (state.suppliers[name] || '') !== wa) setSupplierWa(name, wa); });
+  paintOffers();
+  paintDraftFoot();
+}
+function setSupplierWa(name, wa) {
+  state.suppliers[name] = wa;
+  return sent(api('POST', '/rest/v1/suppliers?on_conflict=name', { name: name, whatsapp: wa }, 'resolution=merge-duplicates,return=minimal'));
 }
 function paintOffers() {
   var el = $('#offer-list');
@@ -3468,8 +3744,12 @@ function paintOfferRows() {
     return '<section class="panel"><div class="row"><h3 class="h small grow" dir="auto">' + esc(sup) + ' <span class="sub">' + t('offers_n', { n: all.length }) + '</span></h3>' +
       (state.shopOk ? '<button class="btn sm" data-action="oshow" data-sup="' + esc(sup) + '" aria-pressed="' + all.some(function (o) { return o.listed; }) + '">' + t(all.some(function (o) { return o.listed; }) ? 'shop_on' : 'shop_off') + '</button>' : '') +
       '<button class="btn sm" data-action="oclist" data-sup="' + esc(sup) + '">' + icon('list', 16) + t('copy_list') + '</button>' +
-      '<button class="btn sm ghost danger" data-action="osupdel" data-sup="' + esc(sup) + '">' + t('del_all') + '</button></div><div>' +
-      list.map(offerRowHtml).join('') + '</div></section>';
+      '<button class="btn sm ghost" data-action="osupedit" data-sup="' + esc(sup) + '">' + icon('sliders', 16) + t('sup_edit') + '</button>' +
+      '<button class="btn sm ghost danger" data-action="osupdel" data-sup="' + esc(sup) + '">' + t('del_all') + '</button></div>' +
+      (state.supEdit === sup ? supplierForm(sup, state.suppliers[sup] || '')
+        : (state.suppliers[sup] ? '<a class="sub walink" target="_blank" rel="noopener" href="' + esc(waTo(state.suppliers[sup])) + '">' + icon('chat', 15) +
+          '<span class="code" dir="ltr">+' + esc(state.suppliers[sup]) + '</span></a>' : '')) +
+      '<div>' + list.map(offerRowHtml).join('') + '</div></section>';
   }).join('') || '<p class="empty">' + t('no_items') + '</p>';
 }
 /* The customer price list of one supplier's offers, shown as text that can be edited, copied or shared. */
@@ -5076,6 +5356,11 @@ document.addEventListener('click', function (e) {
   else if (a === 'dsave') saveDraft();
   else if (a === 'orm') { state.offers = state.offers.filter(function (o) { return o.id !== id; }); paintOffers(); paintDraftFoot(); removeOffer(id); }
   else if (a === 'oclist') openList(el.getAttribute('data-sup'));
+  else if (a === 'osupedit') { state.supEdit = el.getAttribute('data-sup'); state.offerEdit = null; paintOfferRows(); p = $('#se-name'); if (p) p.focus(); }
+  else if (a === 'osupcancel') { state.supEdit = null; paintOfferRows(); }
+  else if (a === 'oedit') { state.offerEdit = id; state.supEdit = null; paintOfferRows(); p = $('#oe-name'); if (p) p.focus(); }
+  else if (a === 'oeditcancel') { state.offerEdit = null; paintOfferRows(); }
+  else if (a === 'sreq') logRequest(el);   // the link itself opens WhatsApp
   else if (a === 'dcond') { state.draftCond = el.getAttribute('data-cond'); paintTab(); }
   else if (a === 'oshow') {   // show or hide all of one supplier's offers in the store
     p = el.getAttribute('data-sup');
@@ -5213,6 +5498,15 @@ document.addEventListener('submit', function (e) {
     var email = $('#si-email').value.trim(), pass = $('#si-pass').value;
     if (!email || !pass) { state.authMsg = t('bad_login'); paintSignIn(); return; }
     signIn(email, pass);
+  } else if (f === 'supedit') {
+    saveSupplier(e.target.getAttribute('data-sup'));
+  } else if (f === 'oedit') {
+    saveOfferEdit(e.target.getAttribute('data-id'));
+  } else if (f === 'supwa') {   // a supplier's number added from a device's page
+    p = waDigits(e.target.querySelector('input').value);
+    if (!p) { toast(t('wa_bad')); return; }
+    setSupplierWa(e.target.getAttribute('data-sup'), p);
+    if (state.sheetId) openItem(state.sheetId);
   } else if (f === 'pfkey') {
     p = $('#pf-key').value.trim();
     if (p) savePhotoKey(p);
