@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script id="cloud-link">
+/* The cloud this page talks to. To move the shop to a new cloud project, change only these two values:
+   the Project URL, and the publishable key (it starts with sb_publishable_). Never put the secret key here. */
+var RAFF_CLOUD_URL = 'https://uogjnknguwhevbjjdysm.supabase.co';
+var RAFF_CLOUD_KEY = 'sb_publishable_LWI-49Y5BCYEV6kHIuA5Og_ymPaIhN1';
+</script>
 <title>Kouki Technology</title>
 <meta name="description" content="Kouki Technology - laptops, accessories, parts and software. Live prices and stock.">
 <meta property="og:title" content="Kouki Technology">
@@ -413,6 +419,19 @@ body.no-nav #cmpbar { bottom:calc(84px + env(safe-area-inset-bottom,0px)) }
 .src.ext { color:var(--private); font-weight:600 }
 .btn[data-action="oshow"][aria-pressed="true"] { border-color:var(--brand); color:var(--brand) }
 
+.strong { font-weight:700 }
+.pfgrid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px }
+@media (min-width:700px) { .pfgrid { grid-template-columns:repeat(4, minmax(0, 1fr)) } }
+.pfc { display:flex; flex-direction:column; gap:4px; padding:6px; border:2px solid var(--line); border-radius:12px; background:var(--surface); color:var(--muted); font-size:11.5px; cursor:pointer; min-width:0 }
+.pfc img { width:100%; aspect-ratio:4 / 3; object-fit:contain; background:var(--surface-2); border-radius:8px }
+.pfc span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.pfc[aria-pressed="true"] { border-color:var(--brand); box-shadow:0 0 0 2px var(--brand) }
+.shoot .pshead { align-items:center }
+.shoot .pshead .cover { width:84px; height:84px; flex:none }
+.pslist { display:flex; flex-direction:column; gap:4px; max-height:34vh; overflow:auto; padding:2px }
+.chip.shootchip { border-color:var(--brand); color:var(--brand); font-weight:600 }
+.warn { color:var(--warn) }
+
 /* Barcode scanner: the camera picture with a guide line */
 .scanbox { position:relative; aspect-ratio:4 / 3; border-radius:12px; overflow:hidden; background:var(--surface-2) }
 .scanbox video { display:block; width:100%; height:100%; object-fit:cover }
@@ -725,6 +744,93 @@ var LOCALES = {
     added_request: 'Added to your request',
     show_out: 'Show sold-out items too',
     m_photo: 'Picture',
+    pf_set: 'Photos from the internet',
+    pf_sub: 'The cloud looks for photos by itself, once a minute, for items in stock without a photo: new items from the accounting program and supplier goods. It works with the website and the shop laptop closed. Customers see a photo only after you choose it.',
+    pf_setup: 'Run the full cloud file (edition 2 or later) once to turn this on.',
+    pf_auto: 'Search for photos automatically',
+    pf_loading: 'Reading the state...',
+    pf_notready: 'The automatic search is not running in the cloud. Run the full cloud file again.',
+    pf_haskey: 'Search key saved, ending in {end}',
+    pf_keychange: 'Change',
+    pf_key: 'Image search key',
+    pf_keysave: 'Save the key',
+    pf_keydel: 'Remove the key',
+    pf_keyhint: 'The key is kept in the cloud only and cannot be read back, not even here.',
+    pf_keysaved: 'Key saved. The search starts within a minute.',
+    pf_keygone: 'Key removed. The search has stopped.',
+    pf_refused: 'The image search refused this key. Check it, or make a new one, and save it again.',
+    pf_used: 'Searches this month: {n} of {cap}',
+    pf_cap: 'Monthly limit of searches',
+    pf_queue: 'Models waiting to be searched: {n}',
+    pf_failed: 'failed: {n}',
+    pf_review: 'Choose photos ({n})',
+    pf_waiting: 'Photos found online, waiting for your choice: {n}',
+    pf_open: 'Choose',
+    pf_title: 'Photos found online',
+    pf_hint: 'Press the right picture, then the green button.',
+    pf_before: 'The photo used before',
+    pf_use: 'Use this photo',
+    pf_reject: 'None fits',
+    pf_words: 'Other words to search',
+    pf_again: 'Search again with these words',
+    pf_queued: 'It will be searched again within a few minutes.',
+    pf_saving: 'Copying the photo into the shop...',
+    pf_nocopy: 'This picture cannot be copied from its site. Choose another one.',
+    pf_end: 'That was the last one for now.',
+    pf_nothing: 'No photos are waiting for your choice yet.',
+    ps_web: 'Find a photo online',
+    ps_web_hint: 'Opens an image search for this model. Pick a clear photo of the same model, copy or save it, then come back and paste it or choose it from the gallery.',
+    ps_start: 'Photograph items quickly',
+    ps_title: 'Quick photos',
+    ps_none: 'Every item in this list already has a photo.',
+    ps_one: 'This photo goes on this item only.',
+    ps_many: 'This photo goes on {n} items of the same model. Untick any that should not get it.',
+    ps_take: 'Take a photo',
+    ps_pick: 'From the gallery',
+    ps_skip: 'Skip',
+    ps_back: 'Back',
+    ps_paste: 'On a computer you can also paste a copied picture or drop it here.',
+    ph_paste: 'On a computer you can also paste a copied picture or drop it on this page.',
+    ps_up: 'Uploading: {n}',
+    ps_sent: 'Uploaded: {n}',
+    ps_failed: 'Not uploaded: {n}',
+    ps_retry: 'Try again',
+    ps_end: 'That was the last one in this list.',
+    ps_close: 'Close',
+    ps_noneticked: 'Tick at least one item.',
+    ps_bg: 'Photos keep uploading. Keep the page open until they finish.',
+    ps_done: 'All photos uploaded: {n}',
+    set_backup: 'Backup',
+    bk_sub: 'The free cloud plan keeps no backups. This file holds what only the cloud has: photos, notes, supplier offers, your own prices and margins, and the settings. Stock and prices from the accounting program come back by themselves.',
+    bk_keep: 'Keep the file away from the shop laptop: on a USB stick, in your email, or in online storage. Do not unzip or change it.',
+    bk_never: 'No backup has been made yet.',
+    bk_last: 'Last backup: {d}',
+    bk_make: 'Download a backup',
+    bk_restore: 'Restore from a backup',
+    bk_reading: 'Reading the data...',
+    bk_photos: 'Copying photos: {n} of {all}...',
+    bk_packing: 'Packing the file...',
+    bk_done: 'Backup downloaded: {name}',
+    bk_missing: '{n} photo files could not be copied.',
+    bk_fail: 'The backup was not made. Check the connection and try again.',
+    bk_opening: 'Opening the file...',
+    bk_bad: 'This file is not a backup of this app.',
+    bk_of: 'Backup of {d}',
+    bk_holds: 'It holds: {photos} items with photos, {notes} notes, {offers} supplier offers, {prices} own prices, {groups} group settings, and the shop settings.',
+    bk_people: 'Accounts in the file: {n}. Accounts and passwords cannot be restored from a file. On a new cloud, create them again.',
+    bk_warn: 'Restoring puts back what is in the file and replaces the current values of the same things. Anything added after the backup stays. Supplier offers deleted after the backup come back.',
+    bk_go: 'Restore now',
+    bk_cancel: 'Cancel',
+    bk_restoring: 'Restoring...',
+    bk_putting: 'Putting photos back: {n} of {all}...',
+    bk_restored: 'Restore finished. Photo files put back: {n}.',
+    bk_part: 'Restore finished, but {n} photo files were not put back. Run the restore again.',
+    bk_ok_short: 'Restore finished',
+    bk_part_short: 'Restore finished with missing photos',
+    bk_again: 'The restore stopped part way. Run it again: what is already back is simply written again.',
+    bk_due: 'No backup for {n} days',
+    bk_due_never: 'No backup has been made yet',
+    bk_readme: 'Backup of the shop website. To restore it: Settings, Backup, Restore from a backup, then choose this file. Do not unzip or change it.',
     cond: 'Condition',
     cond_new: 'New',
     cond_used: 'Used',
@@ -1082,6 +1188,93 @@ var LOCALES = {
     added_request: 'أُضيفت إلى طلبك',
     show_out: 'عرض المواد غير المتوفرة أيضاً',
     m_photo: 'صورة',
+    pf_set: 'صور من الإنترنت',
+    pf_sub: 'السحابة تبحث وحدها عن صور، مرة كل دقيقة، للمواد المتوفرة التي ليس لها صورة: المواد الجديدة من برنامج المحاسبة وبضاعة عروض الشركات. تعمل والموقع ولابتوب المحل مغلقان. الزبون لا يرى الصورة إلا بعد أن تختارها أنت.',
+    pf_setup: 'شغّل ملف السحابة الكامل (الإصدار 2 أو أحدث) مرة واحدة لتفعيل هذه الميزة.',
+    pf_auto: 'البحث عن الصور تلقائياً',
+    pf_loading: 'جارٍ قراءة الحالة...',
+    pf_notready: 'البحث التلقائي لا يعمل في السحابة. شغّل ملف السحابة الكامل من جديد.',
+    pf_haskey: 'مفتاح البحث محفوظ، وينتهي بـ {end}',
+    pf_keychange: 'تغيير',
+    pf_key: 'مفتاح بحث الصور',
+    pf_keysave: 'حفظ المفتاح',
+    pf_keydel: 'حذف المفتاح',
+    pf_keyhint: 'المفتاح يُحفظ في السحابة فقط ولا يمكن قراءته مرة ثانية، ولا حتى من هنا.',
+    pf_keysaved: 'تم حفظ المفتاح. يبدأ البحث خلال دقيقة.',
+    pf_keygone: 'تم حذف المفتاح، وتوقف البحث.',
+    pf_refused: 'خدمة البحث رفضت هذا المفتاح. تأكد منه أو أنشئ مفتاحاً جديداً واحفظه من جديد.',
+    pf_used: 'عمليات البحث هذا الشهر: {n} من {cap}',
+    pf_cap: 'الحد الشهري لعمليات البحث',
+    pf_queue: 'موديلات تنتظر البحث: {n}',
+    pf_failed: 'تعذّر: {n}',
+    pf_review: 'اختيار الصور ({n})',
+    pf_waiting: 'صور من الإنترنت تنتظر اختيارك: {n}',
+    pf_open: 'اختر',
+    pf_title: 'صور من الإنترنت',
+    pf_hint: 'اضغط على الصورة الصحيحة، ثم على الزر الأخضر.',
+    pf_before: 'الصورة المستعملة سابقاً',
+    pf_use: 'استعمل هذه الصورة',
+    pf_reject: 'لا شيء مناسب',
+    pf_words: 'كلمات أخرى للبحث',
+    pf_again: 'ابحث من جديد بهذه الكلمات',
+    pf_queued: 'سيُبحث عنها من جديد خلال دقائق.',
+    pf_saving: 'جارٍ نسخ الصورة إلى المحل...',
+    pf_nocopy: 'لا يمكن نسخ هذه الصورة من موقعها. اختر صورة أخرى.',
+    pf_end: 'انتهت الصور المقترحة حالياً.',
+    pf_nothing: 'لا توجد صور تنتظر اختيارك بعد.',
+    ps_web: 'ابحث عن صورة بالإنترنت',
+    ps_web_hint: 'يفتح بحث صور عن هذا الموديل. اختر صورة واضحة للموديل نفسه، انسخها أو احفظها، ثم ارجع والصقها هنا أو اخترها من المعرض.',
+    ps_start: 'تصوير المواد بسرعة',
+    ps_title: 'تصوير سريع',
+    ps_none: 'كل المواد في هذه القائمة لها صور.',
+    ps_one: 'الصورة لهذه المادة فقط.',
+    ps_many: 'الصورة ستوضع على {n} مواد من الموديل نفسه. أزل العلامة عن أي مادة لا تناسبها.',
+    ps_take: 'صوّر الآن',
+    ps_pick: 'من المعرض',
+    ps_skip: 'تخطَّ',
+    ps_back: 'رجوع',
+    ps_paste: 'على الكمبيوتر يمكنك أيضاً لصق صورة منسوخة أو سحبها وإفلاتها هنا.',
+    ph_paste: 'على الكمبيوتر يمكنك أيضاً لصق صورة منسوخة أو سحبها إلى هذه الصفحة.',
+    ps_up: 'جارٍ الرفع: {n}',
+    ps_sent: 'تم الرفع: {n}',
+    ps_failed: 'لم يُرفع: {n}',
+    ps_retry: 'أعد المحاولة',
+    ps_end: 'انتهت مواد هذه القائمة.',
+    ps_close: 'إغلاق',
+    ps_noneticked: 'اختر مادة واحدة على الأقل.',
+    ps_bg: 'الصور ما زالت تُرفع. أبقِ الصفحة مفتوحة حتى تنتهي.',
+    ps_done: 'تم رفع كل الصور: {n}',
+    set_backup: 'النسخة الاحتياطية',
+    bk_sub: 'الخطة المجانية للسحابة لا تحتفظ بنسخ احتياطية. هذا الملف يحفظ ما لا يوجد إلا في السحابة: الصور، الملاحظات، عروض الشركات، أسعارك ونسب ربحك، والإعدادات. أما المواد وأسعار برنامج المحاسبة فترجع وحدها مع المزامنة.',
+    bk_keep: 'احفظ الملف بعيداً عن لابتوب المحل: على فلاشة، أو في إيميلك، أو في تخزين على الإنترنت. لا تفك ضغطه ولا تعدّل عليه.',
+    bk_never: 'لم تُعمل أي نسخة احتياطية بعد.',
+    bk_last: 'آخر نسخة احتياطية: {d}',
+    bk_make: 'تنزيل نسخة احتياطية',
+    bk_restore: 'استرجاع من نسخة احتياطية',
+    bk_reading: 'جارٍ قراءة البيانات...',
+    bk_photos: 'جارٍ نسخ الصور: {n} من {all}...',
+    bk_packing: 'جارٍ تجهيز الملف...',
+    bk_done: 'تم تنزيل النسخة الاحتياطية: {name}',
+    bk_missing: 'تعذّر نسخ {n} من ملفات الصور.',
+    bk_fail: 'لم تُعمل النسخة الاحتياطية. تحقق من الاتصال وأعد المحاولة.',
+    bk_opening: 'جارٍ فتح الملف...',
+    bk_bad: 'هذا الملف ليس نسخة احتياطية من هذا التطبيق.',
+    bk_of: 'نسخة احتياطية بتاريخ {d}',
+    bk_holds: 'فيها: {photos} مادة لها صور، {notes} ملاحظة، {offers} عرض شركات، {prices} سعر خاص، {groups} إعداد أصناف، وإعدادات المحل.',
+    bk_people: 'الحسابات في الملف: {n}. الحسابات وكلمات السر لا تُسترجع من ملف، وفي سحابة جديدة تُنشأ من جديد.',
+    bk_warn: 'الاسترجاع يعيد ما في الملف ويستبدل القيم الحالية للأشياء نفسها. ما أُضيف بعد النسخة يبقى كما هو. عروض الشركات المحذوفة بعد النسخة ترجع.',
+    bk_go: 'استرجع الآن',
+    bk_cancel: 'إلغاء',
+    bk_restoring: 'جارٍ الاسترجاع...',
+    bk_putting: 'جارٍ إرجاع الصور: {n} من {all}...',
+    bk_restored: 'انتهى الاسترجاع. ملفات الصور المُرجعة: {n}.',
+    bk_part: 'انتهى الاسترجاع، لكن {n} من ملفات الصور لم ترجع. أعد الاسترجاع مرة ثانية.',
+    bk_ok_short: 'انتهى الاسترجاع',
+    bk_part_short: 'انتهى الاسترجاع مع صور ناقصة',
+    bk_again: 'توقف الاسترجاع في منتصفه. أعده مرة ثانية، وما رجع من قبل يُكتب من جديد فقط.',
+    bk_due: 'لا توجد نسخة احتياطية منذ {n} يوماً',
+    bk_due_never: 'لم تُعمل أي نسخة احتياطية بعد',
+    bk_readme: 'نسخة احتياطية من موقع المحل. لاسترجاعها: الإعدادات، ثم النسخة الاحتياطية، ثم استرجاع من نسخة احتياطية، واختر هذا الملف. لا تفك ضغطه ولا تعدّل عليه.',
     cond: 'الحالة',
     cond_new: 'جديد',
     cond_used: 'مستعمل',
@@ -1216,6 +1409,7 @@ var LEXICON = {
      price, and a word in front of a note. */
   blockHead: 'رقم|الرقم|no\\.?|num(?:ber)?|item|#',
   priceWord: 'السعر|سعر|price',
+  sizeUnits: 'غ|غرام|واط|متر|ملم|ملغ',
   availWord: 'متوفر|متوفره|متوفرة|متاح|available|in stock',
   noteWord: 'ملاحظات|ملاحظة|ملاحظه|notes?',
   /* A number followed by one of these is a spec, not a price. */
@@ -1237,8 +1431,8 @@ var LEXICON = {
 var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
-var CLOUD = { url: 'https://uogjnknguwhevbjjdysm.supabase.co', key: 'sb_publishable_LWI-49Y5BCYEV6kHIuA5Og_ymPaIhN1', pollMs: 10000 };
-var APP_BUILD = '2.7';
+var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
+var APP_BUILD = '2.11';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -1261,6 +1455,9 @@ var state = {
   quote: {}, gquote: {}, quoteDisc: 0, quoteCustomer: '',
   offerMode: 'paste', pasteText: '', supplier: '', draft: [], draftCur: 'USD', skipped: 0,
   offerMargin: null,    // profit % for supplier offers; null = the general one
+  lastBackup: '',       // when the manager last downloaded a backup
+  finds: [], findItems: {}, findsOk: false,   // photos the cloud found online, waiting for the manager
+  photoAuto: true, photoCap: 900,
   offerQuery: '', replaceOld: false, replaceTouched: false, ocrMsg: '', ocrBusy: false,
   need: '',             // manager's list filter: '' | noprice | pending | nophoto
   media: {}, mediaOk: false, photoBusy: false,
@@ -1423,7 +1620,7 @@ function reprice() { if (isAdmin()) state.items.forEach(resolveItem); }
 function applySettings(rows) {
   var shop = { name: 'Kouki Technology', phone: '', note: '', validDays: 3 }, auto = true;
   state.rateSrc = 'books'; state.rateManual = 0;
-  state.guestOn = true; state.guestSyp = true; state.maxDiscount = 5; state.floorMode = 'peek'; state.codeWord = 'BLACKHORSE'; state.pricing.lowAt = 1; state.offerMargin = null;
+  state.guestOn = true; state.guestSyp = true; state.maxDiscount = 5; state.floorMode = 'peek'; state.codeWord = 'BLACKHORSE'; state.pricing.lowAt = 1; state.offerMargin = null; state.lastBackup = ''; state.photoAuto = true; state.photoCap = 900;
   (rows || []).forEach(function (r) {
     var v = r.value || {};
     if (r.key === 'shop') {
@@ -1435,6 +1632,8 @@ function applySettings(rows) {
       if (v.rateSrc === 'manual' && v.rateManual > 0) { state.rateSrc = 'manual'; state.rateManual = Number(v.rateManual); }
     }
     else if (r.key === 'offers') { if (v.margin >= 0 && v.margin !== null) state.offerMargin = Number(v.margin); }
+    else if (r.key === 'backup') state.lastBackup = typeof v.at === 'string' ? v.at : '';
+    else if (r.key === 'photos') { state.photoAuto = v.auto !== false; state.photoCap = v.cap >= 0 && v.cap !== null ? Number(v.cap) : 900; }
     else if (r.key === 'floor') {
       if (v.maxDiscount >= 0 && v.maxDiscount <= 100) state.maxDiscount = Number(v.maxDiscount);
       if (v.lowAt >= 0) state.pricing.lowAt = Number(v.lowAt);
@@ -1483,6 +1682,7 @@ function applyCloud(d) {
   (d.costs || []).forEach(function (c) { costs[c.item_id] = c; });
   /* Photos live in the cloud's file store; a cloud that has not had its second update yet simply has none. */
   state.mediaOk = Array.isArray(d.media);
+  if (d.finds !== undefined) applyFinds(d.finds, d.findItems);
   state.notesOk = Array.isArray(d.notes);
   state.notes = {};
   (d.notes || []).forEach(function (m) { if (m.note) state.notes['m' + m.item_id] = String(m.note); });
@@ -1529,6 +1729,7 @@ function applyCloud(d) {
   }
   /* a quote keeps only items that still exist and have a price */
   [state.quote, state.gquote].forEach(function (c) { Object.keys(c).forEach(function (id) { var it = byId(id); if (!it || !hasPrice(it)) delete c[id]; }); });
+  if (isAdmin()) setTimeout(wantOfferPhotos, 0);   // new supplier goods get their photo search
 }
 
 /* ---------- Quote ---------- */
@@ -2150,12 +2351,15 @@ function fetchData() {
     jobs.push(pages('/rest/v1/item_costs?select=*&order=item_id'), pages('/rest/v1/item_pricing?select=*&order=item_id'),
       pages('/rest/v1/group_pricing?select=*&order=group_id'), api('GET', '/rest/v1/pricing_rules?select=*').then(need),
       pages('/rest/v1/offers?select=*&order=created_at.desc,id'), pages('/rest/v1/profiles?select=*&order=created_at,id'),
-      api('GET', '/rest/v1/stock_events?select=*&order=id.desc&limit=40').then(need));
+      api('GET', '/rest/v1/stock_events?select=*&order=id.desc&limit=40').then(need),
+      pagesSoft('/rest/v1/photo_finds?select=query,label,kind,status,results,note,photo&status=in.(queued,asked,done,none,failed)&order=query'),
+      pagesSoft('/rest/v1/photo_find_items?select=item_id,query&order=item_id'));
   }
   jobs.push(pagesSoft('/rest/v1/rpc/catalog_offers?order=name,id'), pagesSoft('/rest/v1/item_notes?select=item_id,note&order=item_id'));
   return Promise.all(jobs).then(function (a) {
     return { notes: a[a.length - 1], shop: a[a.length - 2], items: a[0], groups: a[1], currencies: a[2], warehouses: a[3], settings: a[4], status: (a[5] || [])[0] || null, media: a[6],
-      costs: a[7], itemPricing: a[8], groupPricing: a[9], rules: a[10], offers: a[11], people: a[12], events: a[13] };
+      costs: a[7], itemPricing: a[8], groupPricing: a[9], rules: a[10], offers: a[11], people: a[12], events: a[13],
+      finds: isAdmin() ? a[14] : undefined, findItems: isAdmin() ? a[15] : undefined };
   });
 }
 var reloading = null;
@@ -2164,7 +2368,7 @@ function reload() {
     reloading = fetchData().then(function (d) {
       reloading = null;
       /* Something typed here is still waiting to be sent: older cloud data must not overwrite it. The next check reloads. */
-      if (Object.keys(laterJobs).length) { state.sync.version = null; return; }
+      if (Object.keys(laterJobs).length || writing) { state.sync.version = null; return; }
       applyCloud(d); softRepaint();
     },
       function (e) { reloading = null; throw e; });
@@ -2200,6 +2404,8 @@ function poll() {
 /* ---------- Signing in and out ---------- */
 function clearAccount() {
   stopScan();
+  backup.file = null; backup.msg = '';
+  finds.state = null; finds.sent = {}; finds.editKey = false; state.finds = []; state.findItems = {}; state.findsOk = false;
   state.session = null; state.me = null; state.role = null; state.busy = false; state.peekId = null;
   state.items = []; state.offers = []; state.people = []; state.events = []; state.cats = [];
   state.draft = []; state.pasteText = ''; state.supplier = ''; state.skipped = 0; state.ocrMsg = ''; state.offerQuery = ''; state.need = '';
@@ -2288,12 +2494,15 @@ function fetchPublic() {
 /* ---------- Writing (manager) ----------
    The screen changes at once; if the cloud refuses or cannot be reached, the manager is told and the
    screen goes back to what the cloud holds. */
+var writing = 0;   // writes sent and not answered yet
 function sent(promise) {
+  writing++;
   return promise.then(function (r) {
+    writing--;
     if (!r.ok) throw r;
     setTimeout(poll, 1200);
     return r;
-  }).catch(function (e) {
+  }, function (e) { writing--; throw e; }).catch(function (e) {
     if (e && e.gone) { sessionLost(); return null; }
     toast(t(e && e.json && /only manager/.test(e.json.message || '') ? 'last_admin' : 'save_fail'));
     reload().catch(function () { /* still offline: the next successful check repairs the screen */ });
@@ -2326,12 +2535,14 @@ function saveRules() {
   later('rules', function () { sent(api('PATCH', '/rest/v1/pricing_rules?id=eq.1', { default_margin: state.pricing.defMargin }, 'return=minimal')); });
 }
 function saveSetting(key) {
-  var scope = key === 'floor' ? 'staff' : (key === 'offers' ? 'admin' : 'public');
+  var scope = key === 'floor' ? 'staff' : (key === 'offers' || key === 'backup' || key === 'photos' ? 'admin' : 'public');
   later('set-' + key, function () {
     var value = key === 'shop' ? { name: state.shop.name, phone: state.shop.phone, note: state.shop.note, validDays: state.shop.validDays }
       : key === 'guest' ? { enabled: state.guestOn, sypOnly: state.guestSyp }
       : key === 'money' ? { sypMode: state.sypMode, rateSrc: state.rateSrc, rateManual: state.rateManual }
       : key === 'offers' ? { margin: state.offerMargin }
+      : key === 'backup' ? { at: state.lastBackup }
+      : key === 'photos' ? { auto: state.photoAuto, cap: state.photoCap }
       : { maxDiscount: state.maxDiscount, lowAt: state.pricing.lowAt, mode: state.floorMode, codeWord: state.codeWord };
     sent(api('POST', '/rest/v1/app_settings?on_conflict=key', [{ key: key, scope: scope, value: value }], 'resolution=merge-duplicates,return=minimal'));
   });
@@ -2580,6 +2791,8 @@ function paintTab() {
   m.innerHTML = views[state.tab]();
   if (state.tab === 'items') paintItems();
   if (state.tab === 'offers') { paintDraft(); paintOffers(); }
+  if (state.tab === 'settings') { paintBackup(); loadPhotoState(); }
+  if (state.tab === 'overview') freshFinds(function () { var n = $('#pf-note'); if (n) n.innerHTML = photosNoteInner(); });
   paintHeader();
 }
 /* New data arrived while the app is open: refresh what is on screen without disturbing someone who is typing. */
@@ -2667,6 +2880,7 @@ function listHtml() {
       if ((!n && state.need !== k) || (k === 'nophoto' && !state.mediaOk)) return '';
       return '<button class="chip need" data-action="need" data-v="' + k + '" aria-pressed="' + (state.need === k) + '">' + t('need_' + k, { n: n }) + '</button>';
     }).join('') : '') +
+    (isAdmin() && state.mediaOk && base.some(function (it) { return !it.photo; }) ? '<button class="chip shootchip" data-action="psstart">' + icon('camera', 15) + t('ps_start') + '</button>' : '') +
     (cpus.length > 1 ? chipRow('cpu', 'v', cpus.map(function (c) { return { v: c.v, label: c.v === 'ryzen' ? 'Ryzen' : (/^i\d$/.test(c.v) ? 'Core ' + c.v : c.v.charAt(0).toUpperCase() + c.v.slice(1)) }; }), state.cpu) : '') +
     (rams.length > 1 ? chipRow('ram', 'v', rams.map(function (r) { return { v: r.v, label: r.v + 'GB' }; }), state.ram) : '') +
     (brands.length > 1 ? chipRow('brand', 'v', brands.map(function (b) { return { v: b.v, label: label[b.v] || b.v }; }), state.brand) : '');
@@ -2841,6 +3055,7 @@ function openItem(id) {
 }
 function closeSheet(fromRoute) {
   closeZoom();
+  var wasShoot = !!$('#shoot');
   var sh = $('#sheet'), wasItem = !!state.sheetId;
   stopScan();
   sh.hidden = true;
@@ -2848,6 +3063,10 @@ function closeSheet(fromRoute) {
   state.sheetId = null;
   document.body.classList.remove('lock');
   if (wasItem && !fromRoute) clearItemHash();
+  if (wasShoot) {   // the new photos show on the list; uploads still going carry on in the background
+    if (state.tab === 'items') paintItems();
+    if (shoot && (shoot.busy || shoot.jobs.length)) toast(t('ps_bg'));
+  }
 }
 
 /* ---------- Quote for a customer, or a guest's price request ---------- */
@@ -3263,8 +3482,9 @@ function viewOverview() {
     sell += (it.sell || 0) * n;
     if (stockState(it) === 'low') alerts++;
   });
-  var feed = state.events.map(eventRow).join('');
-  return '<div class="kpis">' + kpi(usd(cost), t('kpi_cost'), sypOf(cost)) + kpi(usd(sell), t('kpi_sell'), sypOf(sell)) +
+  var feed = state.events.map(eventRow).join(''), days = backupDays();
+  return photosNote() + (days < 0 || days > 14 ? '<section class="panel row"><span class="grow warn strong">' + (days < 0 ? t('bk_due_never') : t('bk_due', { n: days })) + '</span>' +
+    '<button class="btn sm" data-action="gobackup">' + t('bk_make') + '</button></section>' : '') + '<div class="kpis">' + kpi(usd(cost), t('kpi_cost'), sypOf(cost)) + kpi(usd(sell), t('kpi_sell'), sypOf(sell)) +
     kpi(usd(sell - cost), t('kpi_profit'), num(sell > 0 ? (sell - cost) / sell * 100 : 0, 1) + '%') + kpi(String(alerts), t('kpi_alert'), '', 'golow') + '</div>' +
     '<section class="panel"><div><h2 class="h">' + t('activity') + '</h2><p class="sub">' + t('activity_sub2') + '</p></div>' +
     (feed ? '<ul class="feed">' + feed + '</ul>' : '<p class="empty">' + t('no_activity') + '</p>') + '</section>';
@@ -3338,7 +3558,7 @@ function viewSettings() {
       '<label class="check" for="guest-syp"><input id="guest-syp" type="checkbox" data-input="guestsyp"' + (state.guestSyp ? ' checked' : '') + '><span>' + t('guest_syp') + '</span></label></section>';
   }
   h += securityPanel();
-  if (isAdmin()) h += peoplePanel();
+  if (isAdmin()) h += peoplePanel() + photosPanel() + backupPanel();
   h += '<section class="panel"><h2 class="h">' + t('set_app') + '</h2>' +
     (state.me ? '<p class="sub"><span dir="auto">' + esc(state.me.name || '') + '</span> · <span class="code">' + esc(state.me.email || '') + '</span></p>' : '') +
     '<div class="row"><span class="grow">' + t('language') + '</span>' +
@@ -3492,7 +3712,7 @@ function changePhotos(id, list, gone, said) {
   sent(sendPhotos(it, list)).then(function (r) {
     if (r) {
       keepPhotos(it, list);
-      if (gone) dropPhotoFiles(gone);
+      if (gone && !photoInUse(gone, id)) dropPhotoFiles(gone);   // another item may still show it
       toast(t(said));
     }
     photoDone(id);
@@ -3515,8 +3735,8 @@ function photoControls(it) {
       '<button class="x" data-action="phdel" data-id="' + it.id + '" data-b="' + b + '" aria-label="' + t('photo_del') + '"' + off + '>' + icon('x', 16) + '</button></span>';
   }).join('') + '</div>' : '') +
     '<div class="row"><label class="btn' + (state.photoBusy ? ' off' : '') + '" for="ph-file">' + icon('camera', 18) + t(state.photoBusy ? 'photo_up' : 'photo_add') + '</label>' +
-    '<input type="file" id="ph-file" accept="image/*" multiple data-id="' + it.id + '"' + off + ' hidden></div>' +
-    '<p class="sub">' + t('photo_hint', { n: MAX_PHOTOS }) + '</p>';
+    '<input type="file" id="ph-file" accept="image/*" multiple data-id="' + it.id + '"' + off + ' hidden>' + webSearchLink(modelOf(it).label) + '</div>' +
+    '<p class="sub">' + t('photo_hint', { n: MAX_PHOTOS }) + (canHover ? ' ' + t('ph_paste') : '') + '</p>';
 }
 
 /* ---------- Looking at photos: pick one, enlarge under the pointer, open it full screen ---------- */
@@ -3864,6 +4084,622 @@ function noteInput(it) {
     esc(t('note_ph')) + '">' + esc(it.note || '') + '</textarea></div>';
 }
 
+/* ---------- Photographing many items quickly (manager) ----------
+   Goes through the items of the current list that have no photo, one model at a time. Items whose names share
+   the model ("DELL LATITUDE 5420 ..." in several builds, or one product in several sizes) get the same photo in
+   one go, and any of them can be unticked. The photo is taken with the camera or chosen from the gallery, and
+   the next model shows at once while the photo uploads in the background. */
+var RE_MODEL_END = /[^a-z0-9](?:i[3579](?:[ -]?\d|(?=[^a-z0-9]))|ryzen|r[3579][ -]?\d{4}|core ?(?:i?[3579]|ultra)(?=[^a-z0-9])|ultra ?[579](?=[^a-z0-9])|celeron|pentium|xeon|atom|athlon|snapdragon|m[1-4](?: ?pro| ?max)?(?=[^a-z0-9])|rtx|gtx|nvidia|quadro)/;
+var RE_SIZE_WORD = new RegExp('(^|\\s)\\d+(?:\\.\\d+)?\\s?(?:tb|gb|mb|g|t|w|mah|ml|' + LEXICON.sizeUnits + ')(?=\\s|$)', 'gi');
+var RE_WORDY = new RegExp('[a-z' + LEXICON.letters + ']{2,}', 'gi');
+/* What else a photo of this item fits: { key, label }. A computer is known by the words before its processor;
+   anything else by its name without sizes. Items read neither way stand alone. */
+function modelOf(it) {
+  var base = ' ' + toLatinDigits(it.name).replace(/[\\\/|,()]+/g, ' ').replace(/\s+/g, ' ') + ' ', m, head;
+  if (!it.offer && (m = RE_MODEL_END.exec(base.toLowerCase()))) {
+    head = base.slice(0, m.index).replace(/[\s\-]+$/, '').trim();
+    if (head.split(' ').length >= 2 && head.length >= 6) return { key: 'm:' + normalize(head), label: head };
+  }
+  head = base.replace(RE_SIZE_WORD, '$1').replace(/\s+/g, ' ').trim();
+  if ((head.match(RE_WORDY) || []).length >= 2) return { key: 's:' + normalize(head), label: head };
+  return { key: 'i:' + it.id, label: it.name };
+}
+/* An image search for the model in a new tab: the manager picks a photo there (so nothing wrong is chosen for
+   him), copies or saves it, and pastes it here or picks it from the gallery. */
+function webSearchLink(text) {
+  return '<a class="btn ghost grow" href="https://www.google.com/search?tbm=isch&amp;q=' + encodeURIComponent(text) + '" target="_blank" rel="noopener noreferrer" data-web="1">' +
+    icon('search', 18) + t('ps_web') + '</a>';
+}
+/* A photo may be shared by several items: its files go only when no item names it any more. */
+function photoInUse(base, exceptId) {
+  return Object.keys(state.media).some(function (id) { return id !== exceptId && state.media[id].split(',').indexOf(base) !== -1; });
+}
+var shoot = null;   // the session: { groups, at, jobs, busy, sent, failed }
+function startShoot() {
+  if (!state.mediaOk) { toast(t('photo_setup')); return; }
+  var by = {}, groups = [];
+  visibleItems().forEach(function (it) {
+    if (it.photo) return;
+    var mo = modelOf(it), g = by[mo.key];
+    if (!g) { g = by[mo.key] = { label: mo.label, ids: [], off: {} }; groups.push(g); }
+    g.ids.push(it.id);
+  });
+  if (!groups.length) { toast(t('ps_none')); return; }
+  groups.sort(function (a, b) { return b.ids.length - a.ids.length || (a.label < b.label ? -1 : (a.label > b.label ? 1 : 0)); });   // the photos that cover most first
+  if (shoot && (shoot.jobs.length || shoot.busy || shoot.failed.length)) { shoot.groups = groups; shoot.at = 0; }   // uploads of the last round carry on
+  else shoot = { groups: groups, at: 0, jobs: [], busy: false, sent: 0, failed: [] };
+  var sh = $('#sheet');
+  closeSheet();
+  sh.innerHTML = '<div class="sheet shoot" role="dialog" aria-modal="true" aria-label="' + t('ps_title') + '" id="shoot"></div>';
+  sh.hidden = false;
+  document.body.classList.add('lock');
+  paintShoot();
+}
+function shootStatus() {
+  var s = shoot, pend = s.jobs.length + (s.busy ? 1 : 0), out = [];
+  if (pend) out.push(t('ps_up', { n: pend }));
+  if (s.sent) out.push(t('ps_sent', { n: s.sent }));
+  if (s.failed.length) out.push(t('ps_failed', { n: s.failed.length }));
+  return out.join(DOT);
+}
+function paintShootStatus() {
+  var el = $('#ps-status'), r = $('#ps-retry'), full;
+  if (!el || !shoot) return;
+  el.textContent = shootStatus();
+  if (r) r.hidden = !shoot.failed.length;
+  full = shoot.jobs.length >= 6;   // only a few photos wait at a time: phones have little memory
+  Array.prototype.forEach.call(document.querySelectorAll('#shoot .ps-in'), function (x) { x.disabled = full; });
+  Array.prototype.forEach.call(document.querySelectorAll('#shoot .ps-btn'), function (x) { x.classList.toggle('off', full); });
+}
+function paintShoot() {
+  var box = $('#shoot'), s = shoot, g, first;
+  if (!box || !s) return;
+  g = s.groups[s.at];
+  var head = '<div class="row"><h2 class="h grow">' + t('ps_title') + '</h2>' + (g ? '<span class="sub code">' + (s.at + 1) + ' / ' + s.groups.length + '</span>' : '') +
+    '<button class="x" id="sheet-close" data-action="close" aria-label="' + t('close') + '">' + icon('x') + '</button></div>';
+  var foot = '<p class="sub" id="ps-status" role="status"></p><button class="btn sm" id="ps-retry" data-action="psretry" hidden>' + t('ps_retry') + '</button>';
+  if (!g) {
+    box.innerHTML = head + '<p class="strong">' + t('ps_end') + '</p>' + foot + '<button class="btn primary" data-action="close">' + t('ps_close') + '</button>';
+    paintShootStatus();
+    return;
+  }
+  first = byId(g.ids[0]);
+  box.innerHTML = head +
+    '<div class="row pshead">' + (first ? coverHtml(first) : '') + '<div class="grow"><p class="h small" dir="auto">' + esc(g.label) + '</p>' +
+    '<p class="sub">' + t(g.ids.length > 1 ? 'ps_many' : 'ps_one', { n: g.ids.length }) + '</p></div></div>' +
+    (g.ids.length > 1 ? '<div class="pslist">' + g.ids.map(function (id) {
+      var it = byId(id);
+      return it ? '<label class="check"><input type="checkbox" data-input="psitem" data-id="' + id + '"' + (g.off[id] ? '' : ' checked') + '><span dir="auto">' + esc(it.name) + '</span></label>' : '';
+    }).join('') + '</div>' : '') +
+    '<div class="row"><label class="btn primary grow ps-btn" for="ps-cam">' + icon('camera', 18) + t('ps_take') + '</label>' +
+    '<input type="file" id="ps-cam" class="ps-in" accept="image/*" capture="environment" hidden>' +
+    '<label class="btn grow ps-btn" for="ps-pick">' + icon('plus', 18) + t('ps_pick') + '</label>' +
+    '<input type="file" id="ps-pick" class="ps-in" accept="image/*" multiple hidden></div>' +
+    '<div class="row">' + webSearchLink(g.label) + '</div><p class="sub">' + t('ps_web_hint') + '</p>' +
+    '<div class="row"><button class="btn ghost grow" data-action="psskip">' + t('ps_skip') + '</button>' +
+    (s.at > 0 ? '<button class="btn ghost grow" data-action="psback">' + t('ps_back') + '</button>' : '') + '</div>' +
+    (canHover ? '<p class="sub">' + t('ps_paste') + '</p>' : '') + foot;
+  paintShootStatus();
+}
+function shootFiles(files) {
+  var s = shoot, g = s && s.groups[s.at], ids;
+  if (!g || s.jobs.length >= 6) return;
+  files = Array.prototype.slice.call(files).filter(function (f) { return /^image\//.test(f.type || '') || /\.(jpe?g|png|webp|heic|gif|bmp)$/i.test(f.name || ''); }).slice(0, MAX_PHOTOS);
+  if (!files.length) { toast(t('photo_bad')); return; }
+  ids = g.ids.filter(function (id) { return !g.off[id]; });
+  if (!ids.length) { toast(t('ps_noneticked')); return; }
+  s.jobs.push({ ids: ids, files: files });
+  s.at++;
+  paintShoot();
+  pumpShoot();
+}
+/* Uploads one waiting photo set at a time, then names it on every item it was taken for. */
+function pumpShoot() {
+  var s = shoot, job, bases = [], n;
+  if (!s || s.busy || !s.jobs.length) return;
+  s.busy = true;
+  job = s.jobs.shift();
+  n = Number(String(job.ids[0]).slice(1));
+  paintShootStatus();
+  job.files.reduce(function (chain, file, k) {
+    return chain.then(function () {
+      var base = 'p' + n + '-' + Date.now().toString(36) + k;
+      return loadPicture(file).then(function (img) { return Promise.all([jpegOf(img, 1600, 0.84), jpegOf(img, 420, 0.8)]); }).then(function (b) {
+        return storageCall('POST', 'items/' + base + '.jpg', b[0], 'image/jpeg').then(function (r) {
+          if (!r.ok) throw r;
+          return storageCall('POST', 'items/' + base + '-s.jpg', b[1], 'image/jpeg');
+        });
+      }).then(function (r) { if (!r.ok) throw r; bases.push(base); });
+    });
+  }, Promise.resolve()).then(function () {
+    return api('POST', '/rest/v1/item_media?on_conflict=item_id', job.ids.map(function (id) {
+      var it = byId(id);
+      return { item_id: Number(id.slice(1)), photo: (it ? it.photos : []).concat(bases).slice(0, MAX_PHOTOS).join(',') };
+    }), 'resolution=merge-duplicates,return=minimal');
+  }).then(function (r) {
+    if (!r.ok) throw r;
+    job.ids.forEach(function (id) { var it = byId(id); if (it) keepPhotos(it, it.photos.concat(bases).slice(0, MAX_PHOTOS)); });
+    s.sent += job.files.length;
+  }).catch(function (e) {
+    if (e && e.gone) { s.busy = false; sessionLost(); throw e; }
+    job.why = photoProblem(e);
+    s.failed.push(job);   // the files are kept: trying again sends them once more
+  }).then(function () {
+    s.busy = false;
+    paintShootStatus();
+    if (s.jobs.length) { pumpShoot(); return; }
+    if (!$('#shoot')) {   // the session was closed while photos were still going up
+      if (state.tab === 'items') paintItems();
+      toast(s.failed.length ? t('ps_failed', { n: s.failed.length }) : t('ps_done', { n: s.sent }));
+    }
+    setTimeout(poll, 1200);
+  }, function () { /* signed out: nothing more to do */ });
+}
+
+/* ---------- A picture pasted or dropped: into the photo session, or onto the open item ---------- */
+function imageFiles(dt) {
+  var out = [];
+  if (!dt) return out;
+  Array.prototype.forEach.call(dt.files || [], function (f) { if (/^image\//.test(f.type || '')) out.push(f); });
+  if (!out.length && dt.items) {
+    Array.prototype.forEach.call(dt.items, function (x) {
+      var f = x.kind === 'file' && /^image\//.test(x.type || '') ? x.getAsFile() : null;
+      if (f) out.push(f);
+    });
+  }
+  return out;
+}
+function photoTarget() {
+  if (!isAdmin() || !state.mediaOk) return '';
+  if ($('#shoot') && shoot && shoot.groups[shoot.at]) return 'shoot';
+  if (state.sheetId && $('#ph-file') && !state.photoBusy) return 'item';
+  return '';
+}
+function takePictures(e, dt) {
+  var where = photoTarget(), files = where ? imageFiles(dt) : [];
+  if (!files.length) return;
+  e.preventDefault();
+  if (where === 'shoot') shootFiles(files); else addPhotos(state.sheetId, files);
+}
+document.addEventListener('paste', function (e) { takePictures(e, e.clipboardData); });
+document.addEventListener('dragover', function (e) {
+  if (photoTarget() && e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') !== -1) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }
+});
+document.addEventListener('drop', function (e) { takePictures(e, e.dataTransfer); });
+
+/* ---------- Backup of what lives only in the cloud (manager) ----------
+   Stock, costs and the accounting program's prices come back by themselves through the sync. What only the
+   cloud holds is saved in one file: photos, notes, supplier offers, the manager's own prices and margins, and
+   the settings. The list of accounts goes in for reference only: passwords cannot be copied out of the cloud.
+   The cloud's free plan keeps no backups of its own. */
+var ZIP_URLS = ['https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'];
+/* name in the file, where it is read from, the column that tells rows apart */
+var BACKUP_TABLES = [
+  ['app_settings', '/rest/v1/app_settings?select=*&order=key', 'key'],
+  ['pricing_rules', '/rest/v1/pricing_rules?select=*', 'id'],
+  ['group_pricing', '/rest/v1/group_pricing?select=*&order=group_id', 'group_id'],
+  ['item_pricing', '/rest/v1/item_pricing?select=*&order=item_id', 'item_id'],
+  ['item_notes', '/rest/v1/item_notes?select=*&order=item_id', 'item_id'],
+  ['offers', '/rest/v1/offers?select=*&order=created_at,id', 'id'],
+  ['item_media', '/rest/v1/item_media?select=*&order=item_id', 'item_id']
+];
+var backup = { busy: false, msg: '', file: null };   // file: a backup that was opened and waits for the manager's yes
+
+function backupSay(msg) {
+  backup.msg = msg;
+  var el = $('#bk-msg');
+  if (el) el.textContent = msg;
+}
+function backupDays() { return state.lastBackup ? Math.floor((Date.now() - Date.parse(state.lastBackup)) / 864e5) : -1; }
+function photoNames(media) {   // every picture file named by the photo rows, once each: the large one and the small one
+  var out = [], seen = {};
+  (media || []).forEach(function (m) {
+    String(m.photo || '').split(',').filter(Boolean).forEach(function (b) { if (!seen[b]) { seen[b] = 1; out.push(b + '.jpg', b + '-s.jpg'); } });
+  });
+  return out;
+}
+/* Runs fn over the list, a few at a time. */
+function eachLimit(list, limit, fn) {
+  var at = 0;
+  function lane() { if (at >= list.length) return Promise.resolve(); var i = at++; return fn(list[i], i).then(lane); }
+  var lanes = [];
+  for (var k = 0; k < Math.min(limit, list.length); k++) lanes.push(lane());
+  return Promise.all(lanes);
+}
+function downloadBlob(blob, name) {
+  var url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 120000);
+}
+function loadZip() { return loadScript(ZIP_URLS, function () { return !!window.JSZip; }); }
+
+function makeBackup() {
+  if (backup.busy) return;
+  var data = {}, zip, folder, names, done = 0, missing = [], status = null, people = [];
+  backup.busy = true; backup.file = null;
+  paintBackup();
+  backupSay(t('bk_reading'));
+  loadZip().then(function () {
+    return Promise.all(BACKUP_TABLES.map(function (b) { return pages(b[1]); })
+      .concat([pages('/rest/v1/profiles?select=email,name,role,active&order=email'), pages('/rest/v1/sync_status?select=company,synced_at')]));
+  }).then(function (a) {
+    BACKUP_TABLES.forEach(function (b, i) { data[b[0]] = a[i]; });
+    people = a[BACKUP_TABLES.length]; status = (a[BACKUP_TABLES.length + 1] || [])[0] || {};
+    zip = new window.JSZip();
+    folder = zip.folder('photos');
+    names = photoNames(data.item_media);
+    return eachLimit(names, 4, function (name) {
+      return fetch(CLOUD.url + '/storage/v1/object/public/items/' + encodeURIComponent(name), { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) { missing.push(name); return null; }
+        return r.blob().then(function (b) { folder.file(name, b); });
+      }, function () { throw { net: true }; }).then(function () { backupSay(t('bk_photos', { n: ++done, all: names.length })); });
+    });
+  }).then(function () {
+    var info = { kind: 'raff-backup', format: 1, takenAt: new Date().toISOString(), build: APP_BUILD, cloud: CLOUD.url,
+      company: status.company || '', photos: names.length - missing.length, missingPhotos: missing, people: people, data: data };
+    zip.file('backup.json', JSON.stringify(info, null, 1));
+    zip.file('README.txt', '﻿' + t('bk_readme'));
+    backupSay(t('bk_packing'));
+    return zip.generateAsync({ type: 'blob', compression: 'STORE' });   // pictures are already compressed
+  }).then(function (blob) {
+    var name = 'kouki-backup-' + new Date().toISOString().slice(0, 10) + '.zip';
+    downloadBlob(blob, name);
+    state.lastBackup = new Date().toISOString();
+    saveSetting('backup');
+    backup.busy = false;
+    paintBackup();
+    backupSay(t('bk_done', { name: name }) + (missing.length ? ' ' + t('bk_missing', { n: missing.length }) : ''));
+  }).catch(function (e) {
+    backup.busy = false;
+    paintBackup();
+    if (e && e.gone) { sessionLost(); return; }
+    backupSay(t('bk_fail'));
+  });
+}
+
+/* ---------- Restoring ---------- */
+function openBackup(file) {
+  if (backup.busy) return;
+  backup.busy = true; backup.file = null;
+  paintBackup();
+  backupSay(t('bk_opening'));
+  loadZip().then(function () { return window.JSZip.loadAsync(file); }).then(function (zip) {
+    var f = zip.file('backup.json');
+    if (!f) throw new Error('not a backup');
+    return f.async('string').then(function (text) {
+      var info = JSON.parse(text);
+      if (!info || info.kind !== 'raff-backup' || !info.data || typeof info.data !== 'object') throw new Error('not a backup');
+      backup.file = { zip: zip, info: info };
+      backup.busy = false;
+      backupSay('');
+      paintBackup();
+    });
+  }).catch(function () {
+    backup.busy = false;
+    paintBackup();
+    backupSay(t('bk_bad'));
+  });
+}
+function rowsOf(info, name) { var r = info.data[name]; return Array.isArray(r) ? r : []; }
+function cleanRows(rows, skip) {   // the columns the cloud fills in by itself are left to it
+  return rows.filter(function (r) { return r && typeof r === 'object' && !(skip && skip(r)); }).map(function (r) {
+    var o = {};
+    Object.keys(r).forEach(function (k) { if (k !== 'updated_at' && k !== 'created_by') o[k] = r[k]; });
+    return o;
+  });
+}
+function upsertRows(table, key, rows) {   // added, or replacing the row with the same key; two hundred per request
+  var chunks = [];
+  for (var i = 0; i < rows.length; i += 200) chunks.push(rows.slice(i, i + 200));
+  return chunks.reduce(function (chain, part) {
+    return chain.then(function () {
+      return api('POST', '/rest/v1/' + table + '?on_conflict=' + key, part, 'resolution=merge-duplicates,return=minimal').then(function (r) { if (!r.ok) throw r; });
+    });
+  }, Promise.resolve());
+}
+function runRestore() {
+  var f = backup.file, info, files, done = 0, failed = 0, steps;
+  if (!f || backup.busy) return;
+  info = f.info;
+  files = [];
+  f.zip.folder('photos').forEach(function (path, entry) { if (!entry.dir && /^[A-Za-z0-9_-]+\.jpg$/.test(path)) files.push(path); });
+  backup.busy = true;
+  paintBackup();
+  steps = [
+    function () { return upsertRows('app_settings', 'key', cleanRows(rowsOf(info, 'app_settings'), function (r) { return r.key === 'backup'; })); },
+    function () {
+      var rule = rowsOf(info, 'pricing_rules')[0];
+      return rule && rule.default_margin >= 0
+        ? api('PATCH', '/rest/v1/pricing_rules?id=eq.1', { default_margin: rule.default_margin }, 'return=minimal').then(function (r) { if (!r.ok) throw r; })
+        : null;
+    },
+    function () { return upsertRows('group_pricing', 'group_id', cleanRows(rowsOf(info, 'group_pricing'))); },
+    function () { return upsertRows('item_pricing', 'item_id', cleanRows(rowsOf(info, 'item_pricing'))); },
+    function () { return upsertRows('item_notes', 'item_id', cleanRows(rowsOf(info, 'item_notes'))); },
+    function () { return upsertRows('offers', 'id', cleanRows(rowsOf(info, 'offers'))); },
+    function () {   // the picture files go in before the rows that name them
+      return eachLimit(files, 3, function (name) {
+        return f.zip.file('photos/' + name).async('blob').then(function (b) {
+          return storageCall('POST', 'items/' + name, b, 'image/jpeg');
+        }).then(function (r) {
+          if (!r.ok && !(r.json && String(r.json.statusCode) === '409')) failed++;   // 409: already there
+          backupSay(t('bk_putting', { n: ++done, all: files.length }));
+        });
+      });
+    },
+    function () { return upsertRows('item_media', 'item_id', cleanRows(rowsOf(info, 'item_media'))); }
+  ];
+  backupSay(t('bk_restoring'));
+  steps.reduce(function (chain, step) { return chain.then(step); }, Promise.resolve()).then(function () {
+    backup.busy = false;
+    backup.file = null;
+    backupSay(failed ? t('bk_part', { n: failed }) : t('bk_restored', { n: files.length }));
+    toast(t(failed ? 'bk_part_short' : 'bk_ok_short'));
+    return reload().then(function () { if (state.tab === 'settings') paintTab(); });
+  }).catch(function (e) {
+    backup.busy = false;
+    paintBackup();
+    if (e && e.gone) { sessionLost(); return; }
+    backupSay(t('bk_again'));
+  });
+}
+
+/* ---------- The backup panel in the settings ---------- */
+function backupPanel() {
+  var days = backupDays();
+  return '<section class="panel" id="backup"><div><h2 class="h">' + t('set_backup') + '</h2><p class="sub">' + t('bk_sub') + '</p></div>' +
+    '<p class="sub strong' + (days < 0 || days > 14 ? ' warn' : '') + '">' + (days < 0 ? t('bk_never') : t('bk_last', { d: when(state.lastBackup) })) + '</p>' +
+    '<div id="bk-body"></div><p class="sub" id="bk-msg" role="status">' + esc(backup.msg) + '</p><p class="sub">' + t('bk_keep') + '</p></section>';
+}
+function paintBackup() {
+  var el = $('#bk-body'), f = backup.file, off = backup.busy ? ' disabled' : '', i, c;
+  if (!el) return;
+  if (f) {
+    i = f.info;
+    c = { photos: rowsOf(i, 'item_media').length, notes: rowsOf(i, 'item_notes').length, offers: rowsOf(i, 'offers').length,
+      prices: rowsOf(i, 'item_pricing').length, groups: rowsOf(i, 'group_pricing').length };
+    el.innerHTML = '<div class="private-box"><p class="strong">' + t('bk_of', { d: esc(when(i.takenAt)) }) + (i.company ? ' <span class="code">' + esc(i.company) + '</span>' : '') + '</p>' +
+      '<p class="sub">' + t('bk_holds', c) + '</p>' +
+      (Array.isArray(i.people) && i.people.length ? '<p class="sub">' + t('bk_people', { n: i.people.length }) + '</p>' : '') +
+      '<p class="sub warn">' + t('bk_warn') + '</p>' +
+      '<div class="row"><button class="btn primary grow" data-action="bkgo"' + off + '>' + t('bk_go') + '</button><button class="btn ghost" data-action="bkcancel"' + off + '>' + t('bk_cancel') + '</button></div></div>';
+    return;
+  }
+  el.innerHTML = '<div class="row"><button class="btn primary grow" data-action="bkmake"' + off + '>' + icon('drive', 18) + t('bk_make') + '</button>' +
+    '<label class="btn grow' + (backup.busy ? ' off' : '') + '" for="bk-file">' + icon('refresh', 18) + t('bk_restore') + '</label>' +
+    '<input type="file" id="bk-file" accept=".zip,application/zip"' + off + ' hidden></div>';
+}
+
+/* ---------- Photos found on the internet, waiting for the manager (see the cloud file, "photos from the internet") ----------
+   The cloud searches by itself, once a minute, for items in stock without a photo, one search per model. Nothing
+   it finds is shown to customers: the manager picks the right picture here, and only then is it copied into the
+   shop's own photo store and put on the items. */
+var finds = { busy: false, msg: '', list: [], at: 0, pick: -1, sent: {}, gone: {}, state: null };
+
+/* Supplier goods exist only in the app: their search words are handed to the cloud when they first appear, and they
+   are taken off again when they are gone (a list deleted or changed) or have a photo, so no search is spent on them. */
+function wantOfferPhotos() {
+  if (!isAdmin() || !state.findsOk || !state.photoAuto) return;
+  var list = state.items.filter(function (it) { return it.offer && !it.photo && !state.findItems[it.id] && !finds.sent[it.id]; }),
+    gone = !state.shopOk ? [] : Object.keys(state.findItems).filter(function (id) {
+      var it = byId(id);
+      return Number(id.slice(1)) >= 1e12 && (!it || it.photo) && !finds.gone[id];
+    });
+  if (gone.length) {
+    gone.forEach(function (id) { finds.gone[id] = 1; delete finds.sent[id]; });
+    api('POST', '/rest/v1/rpc/photo_drop', { p_items: gone.map(function (id) { return Number(id.slice(1)); }) }).then(function (r) {
+      if (!r.ok) throw r;
+      gone.forEach(function (id) { delete state.findItems[id]; });
+    }).catch(function () { gone.forEach(function (id) { delete finds.gone[id]; }); });
+  }
+  if (!list.length) return;
+  list.forEach(function (it) { finds.sent[it.id] = 1; });
+  api('POST', '/rest/v1/rpc/photo_want', { p_items: list.map(function (it) { return { item_id: idNum(it), label: modelOf(it).label }; }) })
+    .catch(function () { list.forEach(function (it) { delete finds.sent[it.id]; }); });
+}
+/* Searches that have pictures to choose from, with the items still without a photo, most items first. */
+function reviewList() {
+  var by = {};
+  Object.keys(state.findItems).forEach(function (id) {
+    var it = byId(id);
+    if (it && !it.photo) (by[state.findItems[id]] = by[state.findItems[id]] || []).push(id);
+  });
+  return state.finds.filter(function (f) { return f.status === 'done' && by[f.query]; })
+    .map(function (f) { return { f: f, ids: by[f.query], off: {} }; })
+    .sort(function (a, b) { return b.ids.length - a.ids.length || (a.f.label < b.f.label ? -1 : 1); });
+}
+function findsWaiting() { return state.finds.filter(function (f) { return f.status === 'queued' || f.status === 'asked'; }).length; }
+function refreshFinds() {
+  return Promise.all([pagesSoft('/rest/v1/photo_finds?select=query,label,kind,status,results,note,photo&status=in.(queued,asked,done,none,failed)&order=query'),
+    pagesSoft('/rest/v1/photo_find_items?select=item_id,query&order=item_id')]).then(function (a) { applyFinds(a[0], a[1]); });
+}
+function applyFinds(list, links) {
+  state.findsOk = Array.isArray(list);
+  state.finds = list || [];
+  state.findItems = {};
+  (links || []).forEach(function (r) { state.findItems['m' + r.item_id] = r.query; });
+}
+
+/* ---------- Copying the chosen picture into the shop's own photo store ---------- */
+function fetchImage(url, ms) {
+  var ctl = window.AbortController ? new AbortController() : null, timer = ctl ? setTimeout(function () { ctl.abort(); }, ms) : 0;
+  return fetch(url, { mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer', signal: ctl ? ctl.signal : undefined }).then(function (r) {
+    if (!r.ok) throw new Error('http ' + r.status);
+    return r.blob();
+  }).then(function (b) {
+    clearTimeout(timer);
+    if ((b.type && !/^image\//.test(b.type)) || b.size < 1500) throw new Error('not a picture');
+    return b;
+  }, function (e) { clearTimeout(timer); throw e; });
+}
+/* The full picture from its own site when that site allows it, otherwise the search's copy (500 pixels wide). */
+function fetchPicture(c) {
+  return (c.url ? fetchImage(c.url, 8000) : Promise.reject(new Error('no address'))).catch(function () {
+    return fetchImage(c.thumb, 12000);
+  }).catch(function () { throw { copy: true }; });
+}
+function putPhoto(blob, n) {
+  var base = 'p' + n + '-' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
+  return loadPicture(blob).then(function (img) { return Promise.all([jpegOf(img, 1600, 0.84), jpegOf(img, 420, 0.8)]); }).then(function (b) {
+    return storageCall('POST', 'items/' + base + '.jpg', b[0], 'image/jpeg').then(function (r) {
+      if (!r.ok) throw r;
+      return storageCall('POST', 'items/' + base + '-s.jpg', b[1], 'image/jpeg');
+    });
+  }).then(function (r) { if (!r.ok) throw r; return base; });
+}
+
+/* ---------- The review screen ---------- */
+function candidates(r) {
+  var list = (r.f.results || []).filter(function (c) { return c && c.thumb; }).slice(0, 8);
+  return r.f.photo ? [{ own: r.f.photo }].concat(list) : list;
+}
+function findsSay(msg) { finds.msg = msg; var el = $('#pf-msg'); if (el) el.textContent = msg; }
+function openReview() {
+  refreshFinds().then(function () {
+    finds.list = reviewList(); finds.at = 0; finds.pick = -1; finds.busy = false; finds.msg = '';
+    if (!finds.list.length) { toast(t('pf_nothing')); return; }
+    var sh = $('#sheet');
+    closeSheet();
+    sh.innerHTML = '<div class="sheet review" role="dialog" aria-modal="true" aria-label="' + t('pf_title') + '" id="review"></div>';
+    sh.hidden = false;
+    document.body.classList.add('lock');
+    paintReview();
+  }, function (e) { if (e && e.gone) sessionLost(); else toast(t('net_fail')); });
+}
+function paintReview() {
+  var box = $('#review'), r = finds.list[finds.at], off = finds.busy ? ' disabled' : '', cands;
+  if (!box) return;
+  var head = '<div class="row"><h2 class="h grow">' + t('pf_title') + '</h2>' + (r ? '<span class="sub code">' + (finds.at + 1) + ' / ' + finds.list.length + '</span>' : '') +
+    '<button class="x" id="sheet-close" data-action="close" aria-label="' + t('close') + '">' + icon('x') + '</button></div>';
+  if (!r) {
+    box.innerHTML = head + '<p class="strong">' + t('pf_end') + '</p><button class="btn primary" data-action="close">' + t('ps_close') + '</button>';
+    return;
+  }
+  cands = candidates(r);
+  box.innerHTML = head + '<p class="h small" dir="auto">' + esc(r.f.label) + '</p>' +
+    '<p class="sub">' + t(r.ids.length > 1 ? 'ps_many' : 'ps_one', { n: r.ids.length }) + ' ' + t('pf_hint') + '</p>' +
+    (r.ids.length > 1 ? '<div class="pslist">' + r.ids.map(function (id) {
+      var it = byId(id);
+      return it ? '<label class="check"><input type="checkbox" data-input="pfitem" data-id="' + id + '"' + (r.off[id] ? '' : ' checked') + off + '><span dir="auto">' + esc(it.name) + '</span></label>' : '';
+    }).join('') + '</div>' : '') +
+    '<div class="pfgrid">' + cands.map(function (c, i) {
+      return '<button class="pfc" data-action="pfpick" data-i="' + i + '" aria-pressed="' + (finds.pick === i) + '"' + off + '>' +
+        '<img src="' + esc(c.own ? photoUrl(c.own, true) : c.thumb) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.hidden=true">' +
+        '<span dir="auto">' + esc(c.own ? t('pf_before') : (c.host || '')) + '</span></button>';
+    }).join('') + '</div>' +
+    '<button class="btn primary" data-action="pfuse"' + (finds.pick < 0 || finds.busy ? ' disabled' : '') + '>' + t('pf_use') + '</button>' +
+    '<div class="row"><button class="btn ghost grow" data-action="pfreject"' + off + '>' + t('pf_reject') + '</button>' +
+    '<button class="btn ghost grow" data-action="pfskip"' + off + '>' + t('ps_skip') + '</button></div>' +
+    '<form class="manual" data-form="pfagain"><div class="field"><label for="pf-words">' + t('pf_words') + '</label>' +
+    '<input class="input" id="pf-words" dir="auto" autocomplete="off" value="' + esc(r.f.label) + '"' + off + '></div>' +
+    '<button class="btn" type="submit"' + off + '>' + t('pf_again') + '</button></form>' +
+    '<p class="sub" id="pf-msg" role="status">' + esc(finds.msg) + '</p>';
+}
+function nextReview() { finds.at++; finds.pick = -1; finds.busy = false; paintReview(); }
+function useFind() {
+  var r = finds.list[finds.at], c = r && candidates(r)[finds.pick], ids;
+  if (!c || finds.busy) return;
+  ids = r.ids.filter(function (id) { return !r.off[id]; });
+  if (!ids.length) { toast(t('ps_noneticked')); return; }
+  finds.busy = true;
+  paintReview();
+  findsSay(t('pf_saving'));
+  (c.own ? Promise.resolve(c.own) : fetchPicture(c).then(function (blob) { return putPhoto(blob, Number(ids[0].slice(1))); })).then(function (base) {
+    return api('POST', '/rest/v1/item_media?on_conflict=item_id', ids.map(function (id) {
+      var it = byId(id);
+      return { item_id: Number(id.slice(1)), photo: (it ? it.photos : []).concat([base]).slice(0, MAX_PHOTOS).join(',') };
+    }), 'resolution=merge-duplicates,return=minimal').then(function (res) { if (!res.ok) throw res; return base; });
+  }).then(function (base) {
+    ids.forEach(function (id) { var it = byId(id); if (it) keepPhotos(it, it.photos.concat([base]).slice(0, MAX_PHOTOS)); delete state.findItems[id]; });
+    sent(api('POST', '/rest/v1/rpc/photo_decide', { p_query: r.f.query, p_action: 'use', p_photo: base, p_items: ids.map(function (id) { return Number(id.slice(1)); }) }));
+    r.f.photo = base;
+    if (ids.length === r.ids.length) r.f.status = 'approved';
+    findsSay('');
+    toast(t('photo_ok'));
+    nextReview();
+  }).catch(function (e) {
+    finds.busy = false;
+    if (e && e.gone) { sessionLost(); return; }
+    paintReview();
+    findsSay(e && e.copy ? t('pf_nocopy') : t(photoProblem(e)));
+  });
+}
+function decideFind(action, words) {
+  var r = finds.list[finds.at];
+  if (!r || finds.busy) return;
+  finds.busy = true;
+  sent(api('POST', '/rest/v1/rpc/photo_decide', { p_query: r.f.query, p_action: action, p_label: words || '' })).then(function (res) {
+    if (!res) { finds.busy = false; paintReview(); return; }
+    if (action === 'reject') r.f.status = 'rejected';
+    else { r.f.status = 'queued'; r.f.label = words; r.f.results = []; toast(t('pf_queued')); }
+    findsSay('');
+    nextReview();
+  });
+}
+
+/* ---------- The settings panel ---------- */
+function photosPanel() {
+  return '<section class="panel" id="photos-panel"><div><h2 class="h">' + t('pf_set') + '</h2><p class="sub">' + t('pf_sub') + '</p></div><div id="pf-body"></div></section>';
+}
+function paintPhotos() {
+  var el = $('#pf-body'), s = finds.state, review = state.findsOk ? reviewList().length : 0, html, keep = {}, focus = document.activeElement && document.activeElement.id;
+  if (!el) return;
+  ['pf-key', 'photo-cap'].forEach(function (id) { var x = $('#' + id); if (x && x === document.activeElement) keep[id] = x.value; else if (x && id === 'pf-key' && x.value) keep[id] = x.value; });   // a repaint never loses what is being typed
+  if (!state.findsOk) { el.innerHTML = '<p class="sub warn">' + t('pf_setup') + '</p>'; return; }
+  html = '<label class="check" for="photo-auto"><input id="photo-auto" type="checkbox" data-input="photoauto"' + (state.photoAuto ? ' checked' : '') + '><span>' + t('pf_auto') + '</span></label>';
+  if (!s) { el.innerHTML = html + '<p class="sub">' + t('pf_loading') + '</p>'; return; }
+  if (!s.ready) html += '<p class="sub warn">' + t('pf_notready') + '</p>';
+  if (s.hasKey && !finds.editKey) {
+    html += '<div class="row"><span class="sub grow">' + t('pf_haskey', { end: '<span class="code">••••' + esc(s.keyEnd) + '</span>' }) + '</span>' +
+      '<button class="btn sm" data-action="pfkeyedit">' + t('pf_keychange') + '</button></div>';
+    if (s.refused) html += '<p class="sub warn">' + t('pf_refused') + '</p>';
+  } else {
+    html += '<form class="manual" data-form="pfkey"><div class="field"><label for="pf-key">' + t('pf_key') + '</label>' +
+      '<input class="input" id="pf-key" type="password" autocomplete="off" spellcheck="false" dir="ltr"></div>' +
+      '<div class="row"><button class="btn primary grow" type="submit">' + t('pf_keysave') + '</button>' +
+      (s.hasKey ? '<button class="btn ghost" type="button" data-action="pfkeydel">' + t('pf_keydel') + '</button>' : '') + '</div></form>' +
+      '<p class="sub">' + t('pf_keyhint') + '</p>';
+  }
+  html += '<div class="row"><label class="sub grow" for="photo-cap">' + t('pf_used', { n: s.used, cap: state.photoCap }) + '</label>' +
+    '<input class="input mini" id="photo-cap" data-input="photocap" type="number" inputmode="numeric" min="0" step="1" value="' + state.photoCap + '" aria-label="' + t('pf_cap') + '"></div>' +
+    '<p class="sub">' + t('pf_queue', { n: s.queued }) + (s.failed ? DOT + t('pf_failed', { n: s.failed }) : '') + '</p>' +
+    (review ? '<button class="btn primary" data-action="pfreview">' + icon('camera', 18) + t('pf_review', { n: review }) + '</button>' : '');
+  el.innerHTML = html;
+  Object.keys(keep).forEach(function (id) { var x = $('#' + id); if (x) x.value = keep[id]; });
+  if (focus && (focus === 'pf-key' || focus === 'photo-cap') && $('#' + focus)) $('#' + focus).focus();
+}
+function loadPhotoState() {
+  if (!isAdmin() || !state.findsOk) { paintPhotos(); return; }
+  freshFinds(paintPhotos);
+  api('POST', '/rest/v1/rpc/photo_state', {}).then(function (r) {
+    if (r.ok) finds.state = r.json;
+    paintPhotos();
+  }, function () { paintPhotos(); });
+}
+function savePhotoKey(key) {
+  sent(api('POST', '/rest/v1/rpc/photo_set_key', { p_key: key })).then(function (r) {
+    if (!r) return;
+    finds.editKey = false;
+    toast(t(key ? 'pf_keysaved' : 'pf_keygone'));
+    loadPhotoState();
+  });
+}
+/* A line on the overview: suggestions waiting, or searching under way, or the key still missing. */
+function photosNote() { return '<div id="pf-note">' + photosNoteInner() + '</div>'; }
+function photosNoteInner() {
+  if (!isAdmin() || !state.findsOk || !state.photoAuto) return '';
+  var n = reviewList().length, q = findsWaiting();
+  if (n) return '<section class="panel row"><span class="grow strong">' + t('pf_waiting', { n: n }) + '</span><button class="btn sm primary" data-action="pfreview">' + t('pf_open') + '</button></section>';
+  if (q) return '<p class="sub">' + t('pf_queue', { n: q }) + '</p>';
+  return '';
+}
+/* The cloud keeps searching while the app is open: the overview and the settings ask for the latest each time they show. */
+function freshFinds(paint) {
+  if (!isAdmin() || !state.findsOk) return;
+  refreshFinds().then(paint, function () { /* offline: the next view tries again */ });
+}
+
 /* ---------- Excel / CSV import (reader loads only when a file is picked) ---------- */
 var RE_PRICE_HEAD = new RegExp(LEXICON.priceHead, 'i'), RE_SKIP_HEAD = new RegExp(LEXICON.skipHead, 'i');
 function loadXlsx() {
@@ -3975,6 +4811,21 @@ document.addEventListener('click', function (e) {
   else if (a === 'instock') { state.inStockOnly = !state.inStockOnly; state.limit = 60; paintItems(); }
   else if (a === 'brand' || a === 'cpu' || a === 'ram' || a === 'need') toggle(a, el.getAttribute('data-v'));
   else if (a === 'scan') openScan();
+  else if (a === 'bkmake') makeBackup();
+  else if (a === 'psstart') startShoot();
+  else if (a === 'pfreview') openReview();
+  else if (a === 'pfpick') { finds.pick = Number(el.getAttribute('data-i')); paintReview(); }
+  else if (a === 'pfuse') useFind();
+  else if (a === 'pfreject') decideFind('reject');
+  else if (a === 'pfskip') nextReview();
+  else if (a === 'pfkeyedit') { finds.editKey = true; paintPhotos(); p = $('#pf-key'); if (p) p.focus(); }
+  else if (a === 'pfkeydel') savePhotoKey('');
+  else if (a === 'psskip') { shoot.at++; paintShoot(); }
+  else if (a === 'psback') { shoot.at = Math.max(0, shoot.at - 1); paintShoot(); }
+  else if (a === 'psretry') { shoot.jobs = shoot.jobs.concat(shoot.failed); shoot.failed = []; pumpShoot(); paintShootStatus(); }
+  else if (a === 'bkgo') runRestore();
+  else if (a === 'bkcancel') { backup.file = null; backupSay(''); paintBackup(); }
+  else if (a === 'gobackup') { goTab('settings'); p = $('#backup'); if (p) p.scrollIntoView({ block: 'start' }); }
   else if (a === 'cmp') toggleCompare(id);
   else if (a === 'cmpopen') openCompare();
   else if (a === 'cmpclear') { state.cmp = []; paintCompareBar(); if (state.tab === 'items') paintItems(); }
@@ -4105,6 +4956,10 @@ document.addEventListener('input', function (e) {
     saveSetting('offers'); paintDraft(); paintOfferRows();
   }
   else if (k === 'inote') saveNote(el.getAttribute('data-id'), el.value);
+  else if (k === 'pfitem') { d = finds.list[finds.at]; if (d) d.off[el.getAttribute('data-id')] = !el.checked; }
+  else if (k === 'photoauto') { state.photoAuto = el.checked; saveSetting('photos'); flushLater(); }
+  else if (k === 'photocap') { v = parseInt(el.value, 10); if (v >= 0) { state.photoCap = v; saveSetting('photos'); } }
+  else if (k === 'psitem') { d = shoot && shoot.groups[shoot.at]; if (d) d.off[el.getAttribute('data-id')] = !el.checked; }
   else if (k === 'ratemanual') {   // typed in the lira shown on screen
     v = parseFloat(el.value);
     if (v > 0) { state.rateManual = v / sypFactor(); useRate(); saveSetting('money'); paintHeader(); }
@@ -4144,6 +4999,8 @@ document.addEventListener('change', function (e) {
   var el = e.target, k = el.getAttribute && el.getAttribute('data-change'), id, v, it;
   if (el.id === 'file' && el.files && el.files[0]) importFile(el.files[0]);
   else if (el.id === 'shot' && el.files && el.files.length) readOfferPictures(el.files);
+  else if (el.id === 'bk-file' && el.files && el.files[0]) { openBackup(el.files[0]); el.value = ''; }
+  else if ((el.id === 'ps-cam' || el.id === 'ps-pick') && el.files && el.files.length) shootFiles(el.files);
   else if (el.id === 'ph-file' && el.files && el.files[0]) addPhotos(el.getAttribute('data-id'), el.files);
   else if (k === 'sort') { state.sort = el.value; state.limit = 60; paintItems(); }
   else if (k === 'extra' || k === 'manual') {   // manager's per-item adjustments, applied when the field is left
@@ -4162,11 +5019,17 @@ document.addEventListener('change', function (e) {
 
 document.addEventListener('submit', function (e) {
   e.preventDefault();
-  var f = e.target.getAttribute('data-form');
+  var f = e.target.getAttribute('data-form'), p;
   if (f === 'signin') {
     var email = $('#si-email').value.trim(), pass = $('#si-pass').value;
     if (!email || !pass) { state.authMsg = t('bad_login'); paintSignIn(); return; }
     signIn(email, pass);
+  } else if (f === 'pfkey') {
+    p = $('#pf-key').value.trim();
+    if (p) savePhotoKey(p);
+  } else if (f === 'pfagain') {
+    p = $('#pf-words').value.trim();
+    if (p) decideFind('again', p);
   } else if (f === 'scancode') {
     onScanned($('#scan-code').value);
   } else if (f === 'manual') {
