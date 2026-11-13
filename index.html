@@ -422,10 +422,11 @@ body.no-nav #cmpbar { bottom:calc(84px + env(safe-area-inset-bottom,0px)) }
 .strong { font-weight:700 }
 .pfgrid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px }
 @media (min-width:700px) { .pfgrid { grid-template-columns:repeat(4, minmax(0, 1fr)) } }
-.pfc { display:flex; flex-direction:column; gap:4px; padding:6px; border:2px solid var(--line); border-radius:12px; background:var(--surface); color:var(--muted); font-size:11.5px; cursor:pointer; min-width:0 }
+.pfc { position:relative; display:flex; flex-direction:column; gap:4px; padding:6px; border:2px solid var(--line); border-radius:12px; background:var(--surface); color:var(--muted); font-size:11.5px; cursor:pointer; min-width:0 }
 .pfc img { width:100%; aspect-ratio:4 / 3; object-fit:contain; background:var(--surface-2); border-radius:8px }
 .pfc span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 .pfc[aria-pressed="true"] { border-color:var(--brand); box-shadow:0 0 0 2px var(--brand) }
+.pfn { position:absolute; top:10px; inset-inline-start:10px; min-width:26px; height:26px; padding:0 6px; border-radius:13px; background:var(--brand); color:var(--brand-ink); font-size:14px; font-weight:700; line-height:26px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,.25) }
 .shoot .pshead { align-items:center }
 .shoot .pshead .cover { width:84px; height:84px; flex:none }
 .pslist { display:flex; flex-direction:column; gap:4px; max-height:34vh; overflow:auto; padding:2px }
@@ -767,15 +768,19 @@ var LOCALES = {
     pf_waiting: 'Photos found online, waiting for your choice: {n}',
     pf_open: 'Choose',
     pf_title: 'Photos found online',
-    pf_hint: 'Press the right picture, then the green button.',
+    pf_hint: 'Press one picture or more; the first you press becomes the main photo. Then press the green button.',
+    pf_all: 'Choose all',
+    pf_clear: 'Clear the choice',
+    pf_max: 'Up to {n} photos per item.',
+    pf_skipped: 'Saved. {n} of the pictures could not be copied from their sites.',
     pf_before: 'The photo used before',
-    pf_use: 'Use this photo',
+    pf_use: 'Use the chosen photos ({n})',
     pf_reject: 'None fits',
     pf_words: 'Other words to search',
     pf_again: 'Search again with these words',
     pf_queued: 'It will be searched again within a few minutes.',
     pf_saving: 'Copying the photo into the shop...',
-    pf_nocopy: 'This picture cannot be copied from its site. Choose another one.',
+    pf_nocopy: 'These pictures cannot be copied from their sites. Choose others.',
     pf_end: 'That was the last one for now.',
     pf_nothing: 'No photos are waiting for your choice yet.',
     ps_web: 'Find a photo online',
@@ -783,8 +788,8 @@ var LOCALES = {
     ps_start: 'Photograph items quickly',
     ps_title: 'Quick photos',
     ps_none: 'Every item in this list already has a photo.',
-    ps_one: 'This photo goes on this item only.',
-    ps_many: 'This photo goes on {n} items of the same model. Untick any that should not get it.',
+    ps_one: 'Goes on this item only.',
+    ps_many: 'Goes on {n} items of the same model. Untick any that should not get it.',
     ps_take: 'Take a photo',
     ps_pick: 'From the gallery',
     ps_skip: 'Skip',
@@ -1211,15 +1216,19 @@ var LOCALES = {
     pf_waiting: 'صور من الإنترنت تنتظر اختيارك: {n}',
     pf_open: 'اختر',
     pf_title: 'صور من الإنترنت',
-    pf_hint: 'اضغط على الصورة الصحيحة، ثم على الزر الأخضر.',
+    pf_hint: 'اضغط على صورة أو أكثر، وأول صورة تختارها تصبح الرئيسية. ثم اضغط الزر الأخضر.',
+    pf_all: 'اختيار الكل',
+    pf_clear: 'إلغاء الاختيار',
+    pf_max: 'الحد {n} صور لكل مادة.',
+    pf_skipped: 'تم الحفظ. {n} من الصور لم يمكن نسخها من مواقعها.',
     pf_before: 'الصورة المستعملة سابقاً',
-    pf_use: 'استعمل هذه الصورة',
+    pf_use: 'استعمل الصور المختارة ({n})',
     pf_reject: 'لا شيء مناسب',
     pf_words: 'كلمات أخرى للبحث',
     pf_again: 'ابحث من جديد بهذه الكلمات',
     pf_queued: 'سيُبحث عنها من جديد خلال دقائق.',
     pf_saving: 'جارٍ نسخ الصورة إلى المحل...',
-    pf_nocopy: 'لا يمكن نسخ هذه الصورة من موقعها. اختر صورة أخرى.',
+    pf_nocopy: 'لا يمكن نسخ هذه الصور من مواقعها. اختر صوراً أخرى.',
     pf_end: 'انتهت الصور المقترحة حالياً.',
     pf_nothing: 'لا توجد صور تنتظر اختيارك بعد.',
     ps_web: 'ابحث عن صورة بالإنترنت',
@@ -1227,8 +1236,8 @@ var LOCALES = {
     ps_start: 'تصوير المواد بسرعة',
     ps_title: 'تصوير سريع',
     ps_none: 'كل المواد في هذه القائمة لها صور.',
-    ps_one: 'الصورة لهذه المادة فقط.',
-    ps_many: 'الصورة ستوضع على {n} مواد من الموديل نفسه. أزل العلامة عن أي مادة لا تناسبها.',
+    ps_one: 'توضع على هذه المادة فقط.',
+    ps_many: 'توضع على {n} من مواد الموديل نفسه. أزل العلامة عن أي مادة لا تناسبها.',
     ps_take: 'صوّر الآن',
     ps_pick: 'من المعرض',
     ps_skip: 'تخطَّ',
@@ -1432,7 +1441,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.11';
+var APP_BUILD = '2.12';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -4475,7 +4484,7 @@ function paintBackup() {
    The cloud searches by itself, once a minute, for items in stock without a photo, one search per model. Nothing
    it finds is shown to customers: the manager picks the right picture here, and only then is it copied into the
    shop's own photo store and put on the items. */
-var finds = { busy: false, msg: '', list: [], at: 0, pick: -1, sent: {}, gone: {}, state: null };
+var finds = { busy: false, msg: '', list: [], at: 0, picks: [], sent: {}, gone: {}, state: null };
 
 /* Supplier goods exist only in the app: their search words are handed to the cloud when they first appear, and they
    are taken off again when they are gone (a list deleted or changed) or have a photo, so no search is spent on them. */
@@ -4551,13 +4560,51 @@ function putPhoto(blob, n) {
 
 /* ---------- The review screen ---------- */
 function candidates(r) {
-  var list = (r.f.results || []).filter(function (c) { return c && c.thumb; }).slice(0, 8);
-  return r.f.photo ? [{ own: r.f.photo }].concat(list) : list;
+  var own = String(r.f.photo || '').split(',').filter(Boolean).map(function (b) { return { own: b }; }),
+    list = (r.f.results || []).filter(function (c) { return c && c.thumb; }).slice(0, 8);
+  return own.concat(list);
+}
+/* Pressing a picture adds it to the choice and pressing it again takes it out. The order of pressing is the order of
+   the photos on the item: the first one is the main photo. */
+function shownPicks() {
+  return Array.prototype.map.call(document.querySelectorAll('#review .pfc:not([hidden])'), function (b) { return Number(b.getAttribute('data-i')); }).slice(0, MAX_PHOTOS);
+}
+function allPicked() {
+  var shown = shownPicks();
+  return shown.length > 0 && shown.every(function (i) { return finds.picks.indexOf(i) >= 0; });
+}
+function pickFind(i) {
+  var at = finds.picks.indexOf(i);
+  if (finds.busy) return;
+  if (at >= 0) finds.picks.splice(at, 1);
+  else if (finds.picks.length >= MAX_PHOTOS) { toast(t('pf_max', { n: MAX_PHOTOS })); return; }
+  else finds.picks.push(i);
+  paintPicks();
+}
+function pickAllFinds() {
+  if (finds.busy) return;
+  finds.picks = allPicked() ? [] : finds.picks.concat(shownPicks().filter(function (i) { return finds.picks.indexOf(i) < 0; })).slice(0, MAX_PHOTOS);
+  paintPicks();
+}
+/* Only the marks and the buttons change, so words typed below stay and the pictures do not load again. */
+function paintPicks() {
+  var box = $('#review'), use, all;
+  if (!box) return;
+  Array.prototype.forEach.call(box.querySelectorAll('.pfc'), function (b) {
+    var at = finds.picks.indexOf(Number(b.getAttribute('data-i'))), n = b.querySelector('.pfn');
+    b.setAttribute('aria-pressed', String(at >= 0));
+    n.textContent = at >= 0 ? String(at + 1) : '';
+    n.hidden = at < 0;
+  });
+  use = box.querySelector('[data-action="pfuse"]');
+  if (use) { use.textContent = t('pf_use', { n: finds.picks.length }); use.disabled = !finds.picks.length || finds.busy; }
+  all = box.querySelector('[data-action="pfall"]');
+  if (all) all.textContent = t(allPicked() ? 'pf_clear' : 'pf_all');
 }
 function findsSay(msg) { finds.msg = msg; var el = $('#pf-msg'); if (el) el.textContent = msg; }
 function openReview() {
   refreshFinds().then(function () {
-    finds.list = reviewList(); finds.at = 0; finds.pick = -1; finds.busy = false; finds.msg = '';
+    finds.list = reviewList(); finds.at = 0; finds.picks = []; finds.busy = false; finds.msg = '';
     if (!finds.list.length) { toast(t('pf_nothing')); return; }
     var sh = $('#sheet');
     closeSheet();
@@ -4584,39 +4631,54 @@ function paintReview() {
       return it ? '<label class="check"><input type="checkbox" data-input="pfitem" data-id="' + id + '"' + (r.off[id] ? '' : ' checked') + off + '><span dir="auto">' + esc(it.name) + '</span></label>' : '';
     }).join('') + '</div>' : '') +
     '<div class="pfgrid">' + cands.map(function (c, i) {
-      return '<button class="pfc" data-action="pfpick" data-i="' + i + '" aria-pressed="' + (finds.pick === i) + '"' + off + '>' +
+      return '<button class="pfc" data-action="pfpick" data-i="' + i + '" aria-pressed="false"' + off + '>' +
         '<img src="' + esc(c.own ? photoUrl(c.own, true) : c.thumb) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.hidden=true">' +
-        '<span dir="auto">' + esc(c.own ? t('pf_before') : (c.host || '')) + '</span></button>';
+        '<b class="pfn" hidden></b><span dir="auto">' + esc(c.own ? t('pf_before') : (c.host || '')) + '</span></button>';
     }).join('') + '</div>' +
-    '<button class="btn primary" data-action="pfuse"' + (finds.pick < 0 || finds.busy ? ' disabled' : '') + '>' + t('pf_use') + '</button>' +
+    '<button class="btn ghost" data-action="pfall"' + off + '></button>' +
+    '<button class="btn primary" data-action="pfuse" disabled></button>' +
     '<div class="row"><button class="btn ghost grow" data-action="pfreject"' + off + '>' + t('pf_reject') + '</button>' +
     '<button class="btn ghost grow" data-action="pfskip"' + off + '>' + t('ps_skip') + '</button></div>' +
     '<form class="manual" data-form="pfagain"><div class="field"><label for="pf-words">' + t('pf_words') + '</label>' +
     '<input class="input" id="pf-words" dir="auto" autocomplete="off" value="' + esc(r.f.label) + '"' + off + '></div>' +
     '<button class="btn" type="submit"' + off + '>' + t('pf_again') + '</button></form>' +
     '<p class="sub" id="pf-msg" role="status">' + esc(finds.msg) + '</p>';
+  paintPicks();
 }
-function nextReview() { finds.at++; finds.pick = -1; finds.busy = false; paintReview(); }
+function nextReview() { finds.at++; finds.picks = []; finds.busy = false; paintReview(); }
 function useFind() {
-  var r = finds.list[finds.at], c = r && candidates(r)[finds.pick], ids;
-  if (!c || finds.busy) return;
+  var r = finds.list[finds.at], cands = r ? candidates(r) : [], picked = finds.picks.map(function (i) { return cands[i]; }).filter(Boolean),
+    bases = [], skipped = 0, ids, n;
+  if (!picked.length || finds.busy) return;
   ids = r.ids.filter(function (id) { return !r.off[id]; });
   if (!ids.length) { toast(t('ps_noneticked')); return; }
+  n = Number(ids[0].slice(1));
   finds.busy = true;
   paintReview();
   findsSay(t('pf_saving'));
-  (c.own ? Promise.resolve(c.own) : fetchPicture(c).then(function (blob) { return putPhoto(blob, Number(ids[0].slice(1))); })).then(function (base) {
+  /* One picture after another, so a phone is never asked to shrink eight big pictures at once. A picture whose site
+     refuses copying is left out and the others still go in. */
+  picked.reduce(function (p, c) {
+    return p.then(function () {
+      if (c.own) { bases.push(c.own); return null; }
+      return fetchPicture(c).then(function (blob) { return putPhoto(blob, n); }).then(function (b) { bases.push(b); }, function (e) {
+        if (e && e.copy) { skipped++; return null; }
+        throw e;
+      });
+    });
+  }, Promise.resolve()).then(function () {
+    if (!bases.length) throw { copy: true };
     return api('POST', '/rest/v1/item_media?on_conflict=item_id', ids.map(function (id) {
       var it = byId(id);
-      return { item_id: Number(id.slice(1)), photo: (it ? it.photos : []).concat([base]).slice(0, MAX_PHOTOS).join(',') };
-    }), 'resolution=merge-duplicates,return=minimal').then(function (res) { if (!res.ok) throw res; return base; });
-  }).then(function (base) {
-    ids.forEach(function (id) { var it = byId(id); if (it) keepPhotos(it, it.photos.concat([base]).slice(0, MAX_PHOTOS)); delete state.findItems[id]; });
-    sent(api('POST', '/rest/v1/rpc/photo_decide', { p_query: r.f.query, p_action: 'use', p_photo: base, p_items: ids.map(function (id) { return Number(id.slice(1)); }) }));
-    r.f.photo = base;
+      return { item_id: Number(id.slice(1)), photo: (it ? it.photos : []).concat(bases).slice(0, MAX_PHOTOS).join(',') };
+    }), 'resolution=merge-duplicates,return=minimal').then(function (res) { if (!res.ok) throw res; });
+  }).then(function () {
+    ids.forEach(function (id) { var it = byId(id); if (it) keepPhotos(it, it.photos.concat(bases).slice(0, MAX_PHOTOS)); delete state.findItems[id]; });
+    sent(api('POST', '/rest/v1/rpc/photo_decide', { p_query: r.f.query, p_action: 'use', p_photo: bases.join(','), p_items: ids.map(function (id) { return Number(id.slice(1)); }) }));
+    r.f.photo = bases.join(',');
     if (ids.length === r.ids.length) r.f.status = 'approved';
     findsSay('');
-    toast(t('photo_ok'));
+    toast(skipped ? t('pf_skipped', { n: skipped }) : t('photo_ok'));
     nextReview();
   }).catch(function (e) {
     finds.busy = false;
@@ -4814,7 +4876,8 @@ document.addEventListener('click', function (e) {
   else if (a === 'bkmake') makeBackup();
   else if (a === 'psstart') startShoot();
   else if (a === 'pfreview') openReview();
-  else if (a === 'pfpick') { finds.pick = Number(el.getAttribute('data-i')); paintReview(); }
+  else if (a === 'pfpick') pickFind(Number(el.getAttribute('data-i')));
+  else if (a === 'pfall') pickAllFinds();
   else if (a === 'pfuse') useFind();
   else if (a === 'pfreject') decideFind('reject');
   else if (a === 'pfskip') nextReview();
