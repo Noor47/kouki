@@ -204,6 +204,15 @@ button.kpi { cursor:pointer }
 .facts dd { margin:0; font:600 14.5px var(--font-body); font-variant-numeric:tabular-nums; overflow-wrap:anywhere }
 .private-box { background:var(--private-soft); color:var(--private); border-radius:var(--r); padding:12px 14px; display:flex; flex-direction:column; gap:10px }
 .private-box dt { color:var(--private); opacity:.85 }
+.dqty { display:flex; align-items:center; gap:8px }
+.qrbox { display:flex; flex-direction:column; align-items:center; gap:8px; padding:14px; border:1px solid var(--line); border-radius:var(--r); text-align:center }
+.qrimg { width:240px; max-width:100%; aspect-ratio:1; display:grid; place-items:center; background:#fff; border-radius:8px }
+.qrimg svg { display:block; width:100%; height:100% }
+.qline .qsrc { display:block; font-size:12px; color:var(--muted) }
+.qrlabel { width:62mm; margin:12mm; padding:4mm; border:1px dashed #888; display:flex; flex-direction:column; align-items:center; gap:2mm;
+  color:#000; background:#fff; font:10pt/1.35 system-ui, sans-serif; text-align:center }
+.qrlabel svg { width:40mm; height:40mm }
+.qrlabel small { font-size:8pt }
 /* Ordering a supplier's device on WhatsApp (staff), and correcting an offer or a supplier after saving */
 .order-box { border:1px solid var(--line); border-radius:var(--r); padding:12px 14px; display:flex; flex-direction:column; gap:8px }
 .order-box .orow { align-items:center; flex-wrap:wrap; gap:8px }
@@ -856,6 +865,7 @@ var LOCALES = {
     cond_used: 'Used',
     cat_offer_new: 'New, on order',
     cat_offer_used: 'Used, on order',
+    grp_laptop: 'Laptop',
     grp_laptop_new: 'New laptops',
     grp_laptop_used: 'Used laptops',
     sup_edit: 'Edit',
@@ -889,9 +899,28 @@ var LOCALES = {
     cat_auto: 'Automatic (by what the item is)',
     cat_new_ph: 'Or a new category name',
     oe_qty: 'Quantity',
+    own_qty: 'How many you have',
+    own_less: 'One fewer',
+    own_more: 'One more',
+    own_have: 'Already among your goods, {n} left. Leave the quantity empty to keep it.',
+    own_sold: 'Sold one',
+    own_sold_hint: 'Not in the accounting program: count here each one you sell.',
+    own_sold_done: 'Counted. {n} left.',
+    own_sold_none: 'None left to count.',
+    saved_nm: 'Saved {n} new items and brought {m} up to date',
     hidden_badge: 'Hidden from customers',
-    hidden_note: 'Customers do not see this item; staff still do.',
-    shown_note: 'Customers see this item.',
+    hidden_note: 'Customers do not see this item; employees still do.',
+    shown_note: 'Customers and employees see this item.',
+    hidden2_badge: 'Hidden from customers and employees',
+    group_hidden_note: 'Its group is hidden from employees and customers in the price settings, so only managers see it.',
+    hidden2_note: 'Only managers see this item: it is hidden from customers and employees.',
+    unhide_all: 'Show to everyone',
+    hide_staff: 'Hide from employees too',
+    unhide_staff: 'Show to employees',
+    hidden2_done: 'Hidden from customers and employees.',
+    staff_shown_done: 'Employees see it again; customers still do not.',
+    all_shown_done: 'Everyone sees it again.',
+    hidden_count2: 'Items hidden from customers: {n}, {m} of them from employees too',
     hide_item: 'Hide from customers',
     unhide_item: 'Show to customers',
     hidden_done: 'Hidden from customers.',
@@ -946,7 +975,24 @@ var LOCALES = {
     ocr_fail: 'The picture could not be read. Check the connection, or try a clearer picture.',
     ocr_empty: 'No text was found in the picture.',
     scan: 'Scan a barcode',
-    scan_hint: 'Point the camera at the barcode.',
+    scan_hint: 'Point the camera at the barcode or the QR code.',
+    qr_btn: 'QR code',
+    qr_loading: 'Drawing the code...',
+    qr_fail: 'Could not draw the code. Check the connection.',
+    qr_hint_guest: 'Show this code to the staff at the shop: it opens this same item on their device.',
+    qr_hint_staff: 'Scan it with the barcode button on any staff device to open this item with all its details, or print it as a label.',
+    qr_num: 'Item number: {n}',
+    qr_print: 'Print label',
+    qr_label_scan: 'Scan for the price and specs',
+    list_hint_guest: 'Show this code to the staff at the shop: it opens your whole list on their device.',
+    list_hint_staff: 'Scan it on another staff device to open this same list there.',
+    list_long: 'The list is too long for one code. Send it on WhatsApp instead.',
+    list_in: 'List opened: {n} items.',
+    list_in_missing: 'List opened: {n} items. {m} are not available now.',
+    list_gone: 'None of the items in this list is available now.',
+    list_replace_q: 'Replace the current list with the one just opened?',
+    scan_item_gone: 'That item is not available now, or not shown to you.',
+    q_cost: 'Cost {c} · profit {p} ({m}%)',
     scan_start: 'Starting the camera...',
     scan_denied: 'Camera access was refused. Allow it in the browser settings, or type the number.',
     scan_nocam: 'No camera could be opened on this device. Type the number instead.',
@@ -1355,6 +1401,7 @@ var LOCALES = {
     cond_used: 'مستعمل',
     cat_offer_new: 'جديد - عند الطلب',
     cat_offer_used: 'مستعمل - عند الطلب',
+    grp_laptop: 'لابتوب',
     grp_laptop_new: 'لابتوب جديد',
     grp_laptop_used: 'لابتوب مستعمل',
     sup_edit: 'تعديل',
@@ -1388,9 +1435,28 @@ var LOCALES = {
     cat_auto: 'تلقائي (حسب نوع المادة)',
     cat_new_ph: 'أو اكتب اسم قسم جديد',
     oe_qty: 'الكمية',
+    own_qty: 'الكمية الموجودة عندك',
+    own_less: 'إنقاص واحدة',
+    own_more: 'زيادة واحدة',
+    own_have: 'موجودة بين بضاعتك، الكمية {n}. اترك خانة الكمية فارغة لتبقى كما هي.',
+    own_sold: 'بعت قطعة',
+    own_sold_hint: 'هذه المادة ليست في برنامج المحاسبة: سجّل هنا كل قطعة تبيعها.',
+    own_sold_done: 'تم التسجيل. بقي {n}.',
+    own_sold_none: 'لم يبق منها شيء.',
+    saved_nm: 'تم حفظ {n} مادة جديدة وتحديث {m} موجودة',
     hidden_badge: 'مخفية عن الزبائن',
     hidden_note: 'الزبائن لا يرون هذه المادة، والموظفون يرونها.',
-    shown_note: 'الزبائن يرون هذه المادة.',
+    shown_note: 'الزبائن والموظفون يرون هذه المادة.',
+    hidden2_badge: 'مخفية عن الزبائن والموظفين',
+    group_hidden_note: 'قسمها مخفي عن الموظفين والزبائن من إعدادات الأسعار، فلا يراها إلا المسؤولون.',
+    hidden2_note: 'لا يرى هذه المادة إلا المسؤولون: هي مخفية عن الزبائن والموظفين.',
+    unhide_all: 'إظهار للجميع',
+    hide_staff: 'إخفاء عن الموظفين أيضاً',
+    unhide_staff: 'إظهار للموظفين',
+    hidden2_done: 'أُخفيت عن الزبائن والموظفين.',
+    staff_shown_done: 'صار الموظفون يرونها من جديد، وما زالت مخفية عن الزبائن.',
+    all_shown_done: 'صار الجميع يرونها من جديد.',
+    hidden_count2: 'مواد مخفية عن الزبائن: {n}، منها {m} مخفية عن الموظفين أيضاً',
     hide_item: 'إخفاء عن الزبائن',
     unhide_item: 'إظهار للزبائن',
     hidden_done: 'أُخفيت عن الزبائن.',
@@ -1445,7 +1511,24 @@ var LOCALES = {
     ocr_fail: 'تعذّرت قراءة الصورة. تحقق من الاتصال أو جرّب صورة أوضح.',
     ocr_empty: 'لم يُعثر على نص في الصورة.',
     scan: 'مسح الباركود',
-    scan_hint: 'وجّه الكاميرا نحو الباركود.',
+    scan_hint: 'وجّه الكاميرا نحو الباركود أو رمز QR.',
+    qr_btn: 'رمز QR',
+    qr_loading: 'جارٍ رسم الرمز...',
+    qr_fail: 'تعذّر رسم الرمز. تحقق من الاتصال.',
+    qr_hint_guest: 'اعرض هذا الرمز على الموظف في المحل، فتفتح عنده المادة نفسها.',
+    qr_hint_staff: 'امسحه بزر مسح الباركود على جهاز أي موظف أو مسؤول لتفتح المادة بكامل معلوماتها، أو اطبعه ملصقاً.',
+    qr_num: 'رقم المادة: {n}',
+    qr_print: 'طباعة ملصق',
+    qr_label_scan: 'امسح الرمز لترى السعر والمواصفات',
+    list_hint_guest: 'اعرض هذا الرمز على الموظف في المحل، فيفتح طلبك كاملاً عنده.',
+    list_hint_staff: 'امسحه على جهاز موظف آخر ليفتح هذه القائمة نفسها عنده.',
+    list_long: 'الطلب أطول من أن يتسع له رمز واحد. أرسله عبر واتساب بدلاً من ذلك.',
+    list_in: 'تم فتح الطلب: {n} مادة.',
+    list_in_missing: 'تم فتح الطلب: {n} مادة، و{m} غير متوفرة الآن.',
+    list_gone: 'لا توجد في هذا الطلب أي مادة متوفرة الآن.',
+    list_replace_q: 'استبدال القائمة الحالية بالطلب الذي فُتح الآن؟',
+    scan_item_gone: 'هذه المادة غير متوفرة الآن أو غير ظاهرة لك.',
+    q_cost: 'التكلفة {c} · الربح {p} ({m}%)',
     scan_start: 'جارٍ تشغيل الكاميرا...',
     scan_denied: 'تم رفض إذن الكاميرا. اسمح به من إعدادات المتصفح، أو اكتب الرقم.',
     scan_nocam: 'تعذّر فتح الكاميرا على هذا الجهاز. اكتب الرقم بدلاً من ذلك.',
@@ -1552,7 +1635,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.17';
+var APP_BUILD = '2.19';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -1584,6 +1667,7 @@ var state = {
   hidden: {}, onlyHidden: false,              // items the manager hid from customers, and the list showing only those
   groupNames: {},                             // the accounting program's groups by number
   draftOwn: false, draftCat: '', draftCatName: '',   // a list being added: the shop's own goods, and its category
+  qrFor: '', qrCart: false,                          // the QR code shown on an open item, or under the quote
   photoAuto: true, photoCap: 900,
   offerQuery: '', replaceOld: false, replaceTouched: false, ocrMsg: '', ocrBusy: false,
   need: '',             // manager's list filter: '' | noprice | pending | nophoto
@@ -1819,7 +1903,7 @@ function applyCloud(d) {
   state.groupNames = names;
   if (d.hidden !== undefined) {
     state.hidden = {};
-    (d.hidden || []).forEach(function (h) { state.hidden['m' + h.item_id] = true; });
+    (d.hidden || []).forEach(function (h) { state.hidden['m' + h.item_id] = h.staff === true ? 2 : 1; });   // 2: from employees too
     if (!(d.hidden || []).length) state.onlyHidden = false;
   }
   p.margins = {}; p.hidden = {}; p.manual = {}; p.extra = {}; p.defMargin = 12;
@@ -1978,7 +2062,7 @@ function setDraft(rows) {
 function offerRow(o) {
   return { id: o.id, supplier: o.supplier, name: o.name, price: Number(o.price), cur: o.cur === 'SYP' ? 'SYP' : 'USD', note: o.note || '', at: o.created_at || '',
     cond: o.cond === 'used' ? 'used' : 'new', listed: o.listed !== false, own: o.own === true, cat: o.cat || '',
-    qty: o.qty === null || o.qty === undefined ? null : Number(o.qty), hidden: o.hidden === true };
+    qty: o.qty === null || o.qty === undefined ? null : Number(o.qty), hidden: o.hidden === true, staffHidden: o.staff_hidden === true };
 }
 
 /* ---------- Matching an offer to an item already in stock ----------
@@ -2143,8 +2227,13 @@ function itemLink(it) { return location.origin + location.pathname + '#p' + idNu
 /* ---------- Links to one item: "#p123" opens it, and the phone's back button closes it ---------- */
 var hashByApp = false;
 function routeHash() {
-  var m = /^#p(\d+)$/.exec(location.hash);
+  var m = /^#p(\d+)$/.exec(location.hash), list = LIST_RE.exec(location.hash);
   if (state.screen !== 'app') return;
+  if (list) {   // "#q": a whole list, from a customer's code or message; the link is not kept in the address
+    history.replaceState(null, '', location.pathname + location.search);
+    openSharedList(list[1]);
+    return;
+  }
   if (m && byId('m' + m[1])) { if (state.sheetId !== 'm' + m[1]) openItem('m' + m[1]); }
   else if (state.sheetId) closeSheet(true);
 }
@@ -2357,14 +2446,17 @@ function shopItems(list, used) {
   var best = {};
   state.shopOk = Array.isArray(list);
   (list || []).forEach(function (o) {
-    var sp = readNote(o.note), sell = Number(o.sell), key, b;
+    var sp = readNote(o.note), sell = Number(o.sell), key, b, q, st;
     if (!(sell > 0)) return;
     key = offerKey(o);
-    b = best[key] = best[key] || { o: null, sp: sp, sell: 0, rows: [], from: [], own: null, ownSp: null, ownSell: 0, ownQty: 0 };
+    b = best[key] = best[key] || { o: null, sp: sp, sell: 0, rows: [], from: [], own: null, ownSp: null, ownSell: 0, ownQty: 0, ownStock: 'out' };
     b.rows.push(o.id);
     if (o.own) {   // the shop's own goods outside the accounting program: what counts is how many are left
-      b.ownQty += Math.max(0, Number(o.qty) || 0);
-      if (!b.own || (Number(o.qty) > 0 && !(Number(b.own.qty) > 0))) { b.own = o; b.ownSp = sp; b.ownSell = sell; }
+      q = Math.max(0, Number(o.qty) || 0);
+      st = o.stock || (q > 0 ? 'ok' : 'out');   // what guests are told: none, few or enough
+      b.ownQty += q;
+      if (STOCK_RANK[st] > STOCK_RANK[b.ownStock]) b.ownStock = st;
+      if (!b.own || (q > 0 && !(Number(b.own.qty) > 0))) { b.own = o; b.ownSp = sp; b.ownSell = sell; }
       return;
     }
     if (!b.o || sell < b.sell) { b.o = o; b.sp = sp; b.sell = sell; }
@@ -2377,9 +2469,10 @@ function shopItems(list, used) {
       cat = offerCat(o, sp, kinds), own = null, i;
     var id = 'm' + offerNum(k), mine = (state.media[id] || '').split(',').filter(Boolean);
     var it = { id: id, code: '', barcode: '', cat: cat, name: String(o.name), sell: mineOwn ? b.ownSell : b.sell, auto: true, min: 0,
-      qty: mineOwn ? b.ownQty : 1, other: [], stock: mineOwn ? (b.ownQty > 0 ? 'ok' : 'out') : 'low',
+      qty: mineOwn ? b.ownQty : 1, other: [], stock: mineOwn ? ownStockOf(b.ownQty, b.ownStock) : 'low',
       note: state.notes[id] || sp.notes.join('\n'), photos: mine, photo: mine[0] || '',
       offer: { rows: b.rows, from: b.from.sort(function (x, y) { return x.sell - y.sell; }), supplier: mineOwn ? '' : (o.supplier || ''), own: mineOwn,
+        ownRow: b.own ? b.own.id : '', ownQty: b.ownQty,
         cond: o.cond === 'used' ? 'used' : 'new', sp: sp, note: o.note || '' } };
     if (isAdmin()) {
       for (i = 0; i < state.offers.length && !own; i++) if (state.offers[i].id === o.id) own = state.offers[i];
@@ -2388,6 +2481,12 @@ function shopItems(list, used) {
     used[cat] = true;
     state.items.push(it);
   });
+}
+/* How the shop's own goods stand: staff know the exact count, guests only what the cloud told them. */
+var STOCK_RANK = { out: 0, low: 1, ok: 2 };
+function ownStockOf(n, told) {
+  if (isGuest()) return told || (n > 0 ? 'ok' : 'out');
+  return n > 0 ? (n <= state.pricing.lowAt ? 'low' : 'ok') : 'out';
 }
 function describeOffer(it) {
   var sp = it.offer.sp, chips = offerChips(sp);
@@ -2420,7 +2519,8 @@ function groupsByKind() {
    items of that kind. Only goods matching neither keep a group of supplier goods. */
 function offerCat(o, sp, kinds) {
   var used = o.cond === 'used', kind = sp.cpu ? 'laptop' : nameKind(o.name), g = '', c = String(o.cat || '');
-  if (/^g:\d+$/.test(c) && state.groupNames[c.slice(2)]) return c.slice(2);   // the category the manager chose
+  if (c && (c === 'g:' + state.lapNew || c === 'g:' + state.lapUsed)) kind = 'laptop';   // a laptop: its condition says new or used
+  else if (/^g:\d+$/.test(c) && state.groupNames[c.slice(2)]) return c.slice(2);   // the category the manager chose
   if (/^n:./.test(c)) return 'x:' + c.slice(2);
   if (kind === 'laptop') g = used ? state.lapUsed : state.lapNew;
   else if (kind) g = kinds[kind] || '';
@@ -2579,8 +2679,8 @@ function fetchData() {
       pagesSoft('/rest/v1/photo_finds?select=query,label,kind,status,results,note,photo&status=in.(queued,asked,done,none,failed)&order=query'),
       pagesSoft('/rest/v1/photo_find_items?select=item_id,query&order=item_id'), pagesSoft('/rest/v1/photo_jobs?select=id&order=id'));
   }
-  /* items hidden from customers, suppliers' numbers, and what staff asked them in the last 30 days */
-  jobs.push(pagesSoft('/rest/v1/item_hidden?select=item_id&order=item_id'), pagesSoft('/rest/v1/suppliers?select=name,whatsapp&order=name'),
+  /* items hidden from customers (some from employees too), suppliers' numbers, and what staff asked them in the last 30 days */
+  jobs.push(pagesSoft('/rest/v1/item_hidden?select=*&order=item_id'), pagesSoft('/rest/v1/suppliers?select=name,whatsapp&order=name'),
     pagesSoft('/rest/v1/supplier_requests?select=id,offer_id,supplier,item,kind,sent_by,sent_by_name,sent_at&order=sent_at.desc&sent_at=gte.' +
       encodeURIComponent(new Date(Date.now() - 30 * 864e5).toISOString())));
   jobs.push(pagesSoft('/rest/v1/rpc/catalog_offers?order=name,id'), pagesSoft('/rest/v1/item_notes?select=item_id,note&order=item_id'));
@@ -2804,6 +2904,8 @@ var ICONS = {
   lock: 'M6 11h12v9H6z M9 11V8a3 3 0 0 1 6 0v3',
   user: 'M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8z M4 21c1-4 4-6 8-6s7 2 8 6',
   plus: 'M12 5v14 M5 12h14',
+  minus: 'M5 12h14',
+  qr: 'M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h2v2h-2z M18 18h2v2h-2z M18 14h2 M14 18h2',
   copy: 'M9 9h11v11H9z M5 15V4h11',
   chat: 'M4 5h16v11H9l-5 4V5z',
   x: 'M6 6l12 12 M18 6L6 18',
@@ -3185,7 +3287,7 @@ function itemCard(it) {
     '<span class="item-name" dir="auto">' + esc(it.name) + '</span>' + chipsHtml(it) + (it.note ? '<span class="cnote" dir="auto">' + esc(it.note.split('\n')[0]) + '</span>' : '') +
     '<span class="price">' + priceHtml(it) + '</span></button>' + extra +
     (isGuest() ? '' : '<div class="src' + (it.offer && !it.offer.own ? ' ext' : '') + '" dir="auto">' + esc(sourceOf(it)) + '</div>') +
-    '<div class="item-foot">' + (!isGuest() && state.hidden[it.id] ? '<span class="pill out hid">' + t('hidden_badge') + '</span>' : '') +
+    '<div class="item-foot">' + hiddenBadge(it) +
     '<span class="pill ' + stockState(it) + '">' + stockLabel(it) + '</span>' + (isAdmin() || isGuest() ? '' : floorHtml(it)) +
     '<button class="cmpb" data-action="cmp" data-id="' + it.id + '" aria-pressed="' + inCompare(it.id) + '" aria-label="' + t('cmp_add') + '" title="' + t('cmp_add') + '">' + icon('compare', 18) + '</button>' +
     '<button class="add" data-action="add" data-id="' + it.id + '" aria-label="' + addLabel() + '" title="' + addLabel() + '"' + (hasPrice(it) ? '' : ' disabled') + '>' + icon('plus', 18) + '</button></div></article>';
@@ -3256,28 +3358,89 @@ function orderBox(it) {
             esc(t('sup_wa')) + '"><button class="btn sm" type="submit">' + t('sreq_addnum') + '</button></form>') + '</div>';
     }).join('') + '</section>';
 }
-/* ---------- Hiding an item from customers (manager) ----------
-   Any item, from the accounting program or from the offers. The cloud leaves it out of what customers get; staff
-   still see it, marked. An offer's rows are marked too, so customers never even receive them. */
-function hiddenCount() { return state.items.filter(function (it) { return state.hidden[it.id]; }).length; }
-function hideControl(it) {
-  var h = !!state.hidden[it.id];
-  return '<div class="row"><span class="sub grow">' + t(h ? 'hidden_note' : 'shown_note') + '</span><button class="btn sm" data-action="hideitem" data-id="' + it.id + '">' +
-    t(h ? 'unhide_item' : 'hide_item') + '</button></div>';
+/* ---------- Hiding an item (manager) ----------
+   Any item, from the accounting program or from the offers. Level 1: the cloud leaves it out of what customers get;
+   staff still see it, marked. Level 2: hidden from employees too, so only managers get it. An offer's rows are
+   marked too, so the ones it is hidden from never even receive them. */
+function hideLevel(id) { return state.hidden[id] || 0; }
+function hiddenCount(level) { return state.items.filter(function (it) { return level ? hideLevel(it.id) === level : hideLevel(it.id) > 0; }).length; }
+function hiddenBadge(it) {
+  var h = isGuest() ? 0 : hideLevel(it.id);
+  return h ? '<span class="pill out hid' + (h === 2 ? ' hid2' : '') + '">' + t(h === 2 ? 'hidden2_badge' : 'hidden_badge') + '</span>' : '';
 }
-function toggleHidden(it) {
-  var hide = !state.hidden[it.id], n = Number(it.id.slice(1));
-  if (hide) state.hidden[it.id] = true; else delete state.hidden[it.id];
-  sent(hide ? api('POST', '/rest/v1/item_hidden?on_conflict=item_id', { item_id: n }, 'resolution=merge-duplicates,return=minimal')
+function hideControl(it) {
+  var h = hideLevel(it.id), grp = !it.offer && state.pricing.hidden[it.cat];   // its whole group is hidden in the price settings
+  return '<p class="sub">' + t(grp ? 'group_hidden_note' : ['shown_note', 'hidden_note', 'hidden2_note'][h]) + '</p><div class="row">' +
+    '<button class="btn sm" data-action="hideitem" data-id="' + it.id + '">' + t(['hide_item', 'unhide_item', 'unhide_all'][h]) + '</button>' +
+    '<button class="btn sm" data-action="hidestaff" data-id="' + it.id + '">' + t(h === 2 ? 'unhide_staff' : 'hide_staff') + '</button></div>';
+}
+/* The row kept in the cloud for a hidden item. "staff" is only sent when it changes, so the first kind of hiding
+   keeps working on a cloud that does not have the second yet. */
+function hideRow(n, level, was) {
+  var r = { item_id: n };
+  if (level === 2 || was === 2) r.staff = level === 2;
+  return r;
+}
+function setHidden(it, level) {
+  var was = hideLevel(it.id), n = Number(it.id.slice(1)), patch;
+  if (level === was) return;
+  if (level) state.hidden[it.id] = level; else delete state.hidden[it.id];
+  sent(level ? api('POST', '/rest/v1/item_hidden?on_conflict=item_id', hideRow(n, level, was), 'resolution=merge-duplicates,return=minimal')
     : api('DELETE', '/rest/v1/item_hidden?item_id=eq.' + n, undefined, 'return=minimal'));
   if (it.offer && it.offer.rows.length) {
-    state.offers.forEach(function (o) { if (it.offer.rows.indexOf(o.id) !== -1) o.hidden = hide; });
-    sent(api('PATCH', '/rest/v1/offers?id=in.(' + it.offer.rows.join(',') + ')', { hidden: hide }, 'return=minimal'));
+    patch = { hidden: level > 0 };
+    if (level === 2 || was === 2) patch.staff_hidden = level === 2;
+    state.offers.forEach(function (o) { if (it.offer.rows.indexOf(o.id) !== -1) { o.hidden = level > 0; o.staffHidden = level === 2; } });
+    sent(api('PATCH', '/rest/v1/offers?id=in.(' + it.offer.rows.join(',') + ')', patch, 'return=minimal'));
   }
   if (!Object.keys(state.hidden).length) state.onlyHidden = false;   // nothing hidden any more: the whole list again
-  toast(t(hide ? 'hidden_done' : 'shown_done'));
+  toast(t(level === 2 ? 'hidden2_done' : (level ? (was === 2 ? 'staff_shown_done' : 'hidden_done') : (was === 2 ? 'all_shown_done' : 'shown_done'))));
   if ($('#item-list')) paintItems();
   openItem(it.id);
+}
+/* ---------- The shop's own goods: how many are left ----------
+   They are not in the accounting program, so sales are counted here: the manager sets the number, staff count one
+   sold at a time. */
+function ownQtyControl(it) {
+  if (!it.offer || !it.offer.ownRow) return '';
+  return '<div class="row"><label class="grow" for="own-qty">' + t('own_qty') + '</label>' +
+    '<button class="btn sm" data-action="ownqty" data-id="' + it.id + '" data-d="-1" aria-label="' + t('own_less') + '">' + icon('minus', 16) + '</button>' +
+    '<input class="input mini" id="own-qty" data-change="ownqty" data-id="' + it.id + '" type="number" inputmode="numeric" min="0" step="1" value="' + it.offer.ownQty + '">' +
+    '<button class="btn sm" data-action="ownqty" data-id="' + it.id + '" data-d="1" aria-label="' + t('own_more') + '">' + icon('plus', 16) + '</button></div>';
+}
+function setOwnQty(it, total) {
+  var o = offerById(it.offer.ownRow), mine, others;
+  if (!o || !(total >= 0)) return;
+  mine = Math.max(0, Number(o.qty) || 0);
+  others = Math.max(0, it.offer.ownQty - mine);   // more rows of the same device from before stay as they are
+  total = Math.max(others, Math.round(total));
+  if (total - others !== mine) {
+    o.qty = total - others;
+    it.offer.ownQty = total;
+    if (it.offer.own) { it.qty = total; it.stock = ownStockOf(total); }
+    sent(api('PATCH', '/rest/v1/offers?id=eq.' + encodeURIComponent(o.id), { qty: o.qty }, 'return=minimal'));
+    if ($('#item-list')) paintItems();
+  }
+  openItem(it.id);
+}
+function soldControl(it) {
+  if (isGuest() || isAdmin() || !it.offer || !it.offer.own || !(it.offer.ownQty > 0)) return '';
+  return '<div class="row"><span class="sub grow">' + t('own_sold_hint') + '</span><button class="btn sm" data-action="ownsold" data-id="' + it.id + '">' + t('own_sold') + '</button></div>';
+}
+function soldOne(it, btn) {
+  if (btn) btn.disabled = true;
+  sent(api('POST', '/rest/v1/rpc/own_sold', { p_id: it.offer.ownRow })).then(function (r) {
+    if (!r) return;   // not counted: the message about it is already on screen
+    if (typeof r.json !== 'number') toast(t('own_sold_none'));
+    else {
+      it.offer.ownQty = Math.max(0, it.offer.ownQty - 1);
+      it.qty = it.offer.ownQty;
+      it.stock = ownStockOf(it.qty);
+      toast(t('own_sold_done', { n: num(it.qty, 0) }));
+    }
+    if ($('#item-list')) paintItems();
+    if (state.sheetId === it.id) openItem(it.id);
+  });
 }
 function listPrice(o) { return o.cur === 'SYP' ? num(o.price, 0) + ' ' + t('syp_unit') : usd(o.price); }
 /* The message, with what identifies the device in the supplier's own list; the manager's also carries the price. */
@@ -3323,11 +3486,11 @@ function openItem(id) {
     '<div class="row"><h2 class="h grow" dir="auto">' + esc(it.name) + '</h2><button class="x" id="sheet-close" data-action="close" aria-label="' + t('close') + '">' + icon('x') + '</button></div>' +
     coverHtml(it, true) +
     '<div class="row">' + priceHtml(it, true) + '<span class="pill ' + stockState(it) + '">' + stockLabel(it) + '</span></div>' +
-    (!isGuest() && state.hidden[it.id] ? '<p><span class="pill out hid">' + t('hidden_badge') + '</span></p>' : '') +
-    '<dl class="facts">' + facts + '</dl>' + noteHtml(it) + (it.offer && !it.offer.own && !isGuest() ? orderBox(it) : '');
+    (hiddenBadge(it) ? '<p>' + hiddenBadge(it) + '</p>' : '') +
+    '<dl class="facts">' + facts + '</dl>' + noteHtml(it) + (it.offer && !it.offer.own && !isGuest() ? orderBox(it) : '') + soldControl(it);
   if (isAdmin() && it.offer) {
     html += '<div class="private-box"><div class="row priv-title">' + icon('lock', 15) + t('admin_only') + '</div><dl class="facts">' +
-      fact(t('offer_buy'), usd(it.cost)) + fact(t('profit_unit'), usd(it.sell - it.cost)) + '</dl>' + priceInputs(it) + noteInput(it) + photoControls(it) + hideControl(it) + '</div>';
+      fact(t('offer_buy'), usd(it.cost)) + fact(t('profit_unit'), usd(it.sell - it.cost)) + '</dl>' + ownQtyControl(it) + priceInputs(it) + noteInput(it) + photoControls(it) + hideControl(it) + '</div>';
   } else if (isAdmin()) {
     var best = bestOfferFor(it), f = floorPrice(it);
     html += '<div class="private-box"><div class="row priv-title">' + icon('lock', 15) + t('admin_only') + '</div><dl class="facts">' +
@@ -3338,11 +3501,13 @@ function openItem(id) {
       realFacts(it) + '</dl>' + priceInputs(it) + noteInput(it) + photoControls(it) + hideControl(it) + '</div>';
   }
   var line = it.name + (priced ? '\n' + usd(it.sell) + ' (' + sypOf(it.sell) + ')' : '');   // staff only
+  if (state.qrFor === it.id) html += qrItemBox(it);
   html += '<div class="row"><button class="btn primary grow" data-action="add" data-id="' + it.id + '" data-close="1"' + (priced ? '' : ' disabled') + '>' + icon('plus', 18) + addLabel() + '</button>' +
     (isGuest()
       ? (state.shop.phone ? '<a class="btn grow" target="_blank" rel="noopener" href="' + esc(shopWa(t('ask_item', { name: it.name, code: it.code }) + '\n' + itemLink(it))) + '">' + icon('chat', 18) + t('ask_whatsapp') + '</a>' : '')
       : '<a class="btn grow" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(line + '\n' + state.shop.name + '\n' + itemLink(it)) + '">' + icon('send', 18) + t('share_price') + '</a>') +
     '<button class="btn" data-action="cmp" data-id="' + it.id + '" aria-pressed="' + inCompare(it.id) + '">' + icon('compare', 18) + t('cmp_add') + '</button>' +
+    '<button class="btn" data-action="qr" data-id="' + it.id + '" aria-pressed="' + (state.qrFor === it.id) + '">' + icon('qr', 18) + t('qr_btn') + '</button>' +
     (navigator.share ? '<button class="btn" data-action="share" data-id="' + it.id + '">' + icon('send', 18) + t('share') + '</button>'
       : '<button class="btn" data-action="copylink" data-id="' + it.id + '">' + icon('copy', 18) + t('copy_link') + '</button>') + '</div>';
   if (like.length) html += '<section class="shelf"><h3 class="h small">' + t('similar') + '</h3><div class="shelf-row">' + like.map(function (o) { return itemCard(o); }).join('') + '</div></section>';
@@ -3369,6 +3534,7 @@ function closeSheet(fromRoute) {
   sh.hidden = true;
   sh.innerHTML = '';
   state.sheetId = null;
+  state.qrFor = '';
   document.body.classList.remove('lock');
   if (wasItem && !fromRoute) clearItemHash();
   if (wasShoot) {   // the new photos show on the list; uploads still going carry on in the background
@@ -3389,6 +3555,7 @@ function quoteText() {
   }
   out.push(t('total') + ': ' + px(q.total) + (px2(q.total) ? ' (' + px2(q.total) + ')' : ''));
   if (!guest) out.push(t('doc_valid', { n: state.shop.validDays }));
+  else if (q.lines.length <= LIST_MAX) out.push(listLink());   // the shop opens the same list from the message
   return out.join('\n');
 }
 function waLink(text, toShop) {
@@ -3399,7 +3566,14 @@ function sumHtml(q) {
     ? '<div class="sumline"><span>' + t('subtotal') + '</span><span class="code">' + px(q.sub) + '</span></div>' +
       '<div class="sumline"><span>' + t('discount') + ' ' + num(q.pct, 1) + '%</span><span class="code">-' + px(q.disc) + '</span></div>'
     : '') +
-    '<div class="total"><span>' + t('total') + '</span><span class="price"><span class="tag big">' + px(q.total) + '</span><span class="syp big">' + px2(q.total) + '</span></span></div>';
+    '<div class="total"><span>' + t('total') + '</span><span class="price"><span class="tag big">' + px(q.total) + '</span><span class="syp big">' + px2(q.total) + '</span></span></div>' +
+    (isAdmin() ? quoteCostHtml(q) : '');
+}
+/* The manager's own view of a quote: what the goods cost, and the profit left after the discount. */
+function quoteCostHtml(q) {
+  var cost = q.lines.reduce(function (s, l) { return s + (l.it.cost || 0) * l.n; }, 0), profit = q.total - cost;
+  return '<div class="private-box"><div class="row priv-title">' + icon('lock', 15) + t('admin_only') + '</div><p class="code">' +
+    t('q_cost', { c: usd(cost), p: usd(profit), m: num(q.total > 0 ? profit / q.total * 100 : 0, 1) }) + '</p></div>';
 }
 function viewQuote() {
   var q = quoteCalc(), guest = isGuest(), title = t(guest ? 'request_title' : 'quote_title');
@@ -3407,7 +3581,8 @@ function viewQuote() {
   if (!q.lines.length) return '<section class="panel"><h2 class="h">' + title + '</h2><p class="empty">' + t(guest ? 'request_empty' : 'quote_empty') + '</p>' + backBtn + '</section>';
   var rows = q.lines.map(function (l) {
     var tot = l.it.sell * l.n;
-    return '<div class="qline"><div class="grow"><div class="nm" dir="auto">' + esc(l.it.name) + '</div><div class="meta"><span class="code">' + px(l.it.sell) + ' × ' + l.n + '</span></div></div>' +
+    return '<div class="qline"><div class="grow"><div class="nm" dir="auto">' + esc(l.it.name) + '</div><div class="meta"><span class="code">' + px(l.it.sell) + ' × ' + l.n + '</span></div>' +
+      (guest ? '' : '<span class="qsrc" dir="auto">' + esc(sourceOf(l.it)) + '</span>') + '</div>' +
       '<div class="price"><b class="qsum code">' + px(tot) + '</b><span class="syp">' + px2(tot) + '</span></div>' +
       '<div class="stepper"><button data-action="qdec" data-id="' + l.it.id + '" aria-label="-1">−</button><output>' + l.n + '</output>' +
       '<button data-action="qinc" data-id="' + l.it.id + '" aria-label="+1">+</button></div></div>';
@@ -3420,8 +3595,10 @@ function viewQuote() {
     ? (state.shop.phone ? '<a class="btn primary grow" id="wa-link" target="_blank" rel="noopener" href="' + esc(waLink(text, true)) + '">' + icon('chat', 18) + t('send_shop') + '</a>' : '') + copyBtn
     : '<button class="btn primary grow" data-action="doc">' + icon('file', 18) + t('pdf') + '</button>' + copyBtn +
       '<a class="btn grow" id="wa-link" target="_blank" rel="noopener" href="' + esc(waLink(text, false)) + '">' + icon('chat', 18) + t('whatsapp') + '</a>';
+  var qrBtn = '<button class="btn" data-action="qrlist" aria-pressed="' + state.qrCart + '">' + icon('qr', 18) + t('qr_btn') + '</button>';
   return '<section class="panel"><h2 class="h">' + title + '</h2><div>' + rows + '</div>' + form + '<div id="q-sum">' + sumHtml(q) + '</div>' +
-    '<div class="row">' + actions + '<button class="btn ghost danger" data-action="qclear">' + t('clear') + '</button></div>' +
+    (state.qrCart ? listQrBox() : '') +
+    '<div class="row">' + actions + qrBtn + '<button class="btn ghost danger" data-action="qclear">' + t('clear') + '</button></div>' +
     '<textarea class="input quote-text" id="quote-text" readonly dir="auto" hidden>' + esc(text) + '</textarea>' + backBtn + '</section>';
 }
 function paintQuoteSum() {
@@ -3672,7 +3849,11 @@ function paintDraft() {
   if (!state.draft.length) { el.innerHTML = note; return; }
   el.innerHTML = '<h3 class="h small">' + t('preview', { n: state.draft.length }) + '</h3>' + note +
     '<p class="sub" id="draft-hint" hidden>' + t('missing_hint') + '</p><div>' + state.draft.map(function (d, i) {
-      return '<div class="prow tall"><div class="grow ocol">' + offerHead(d) + '<span class="calc code" id="dc-' + i + '">' + esc(draftCalc(d)) + '</span></div><span class="pin">' +
+      var same = state.draftOwn ? ownSame(d) : null, have = same ? num(Math.max(0, Number(same.qty) || 0), 0) : '';
+      return '<div class="prow tall"><div class="grow ocol">' + offerHead(d) + '<span class="calc code" id="dc-' + i + '">' + esc(draftCalc(d)) + '</span>' +
+        (state.draftOwn ? '<span class="dqty"><label class="sub" for="dq-' + i + '">' + t('oe_qty') + '</label><input class="input mini" id="dq-' + i + '" data-input="dqty" data-i="' + i +
+          '" type="number" inputmode="numeric" min="0" step="1" placeholder="' + (same ? have : '1') + '" value="' + (typeof d.qty === 'number' ? d.qty : '') + '"></span>' +
+          (same ? '<span class="sub ownhave">' + t('own_have', { n: have }) + '</span>' : '') : '') + '</div><span class="pin">' +
         '<input class="input mini" id="dp-' + i + '" data-input="dprice" data-i="' + i + '" type="number" inputmode="decimal" min="0" step="any" required aria-label="' +
         t('price') + '" value="' + (d.price == null ? '' : d.price) + '"><span class="cur">' + t(d.cur.toLowerCase()) + '</span></span>' +
         '<button class="x" data-action="drm" data-i="' + i + '" aria-label="' + t('remove') + '">' + icon('x', 18) + '</button></div>';
@@ -3691,49 +3872,82 @@ function paintDraftFoot() {
   $('#repl-text').textContent = t('replace_old', { n: old });
 }
 /* The categories an offer can be put in: found from the item, one of the accounting program's groups, or one the
-   manager named for offers before. */
+   manager named for offers before. The new and used laptop groups are one choice, "Laptop": the condition picks the group. */
+var LAP = '~lap';
+function isLapGroup(id) { return !!id && (id === state.lapNew || id === state.lapUsed); }
 function catOptions(current) {
-  var groups = Object.keys(state.groupNames).map(function (id) { return { v: 'g:' + id, label: catName({ id: id, name: state.groupNames[id] }) }; })
-    .sort(function (a, b) { return catRank({ id: a.v.slice(2) }) - catRank({ id: b.v.slice(2) }) || (a.label < b.label ? -1 : 1); }),
+  var lap = state.lapNew || state.lapUsed,
+    groups = Object.keys(state.groupNames).filter(function (id) { return !isLapGroup(id); })
+      .map(function (id) { return { v: 'g:' + id, label: catName({ id: id, name: state.groupNames[id] }) }; })
+      .sort(function (a, b) { return a.label < b.label ? -1 : 1; }),
     named = uniq(state.offers.map(function (o) { return o.cat; }).filter(function (c) { return /^n:/.test(c); })).map(function (c) { return { v: c, label: c.slice(2) }; });
-  return [{ v: '', label: t('cat_auto') }].concat(groups, named).map(function (c) {
+  if (lap && /^g:/.test(current || '') && isLapGroup(current.slice(2))) current = LAP;
+  return [{ v: '', label: t('cat_auto') }].concat(lap ? [{ v: LAP, label: t('grp_laptop') }] : [], groups, named).map(function (c) {
     return '<option value="' + esc(c.v) + '"' + (c.v === current ? ' selected' : '') + '>' + esc(c.label) + '</option>';
   }).join('');
 }
-function catChosen(pick, typed) { typed = (typed || '').trim().slice(0, 60); return typed ? 'n:' + typed : (pick || ''); }
+/* What is kept for the category picked: a typed new name wins; "Laptop" becomes the new or the used laptop group by
+   the condition (none found for that condition: found from the item, like the automatic choice). */
+function catChosen(pick, typed, cond) {
+  var g;
+  typed = (typed || '').trim().slice(0, 60);
+  if (typed) return 'n:' + typed;
+  if (pick === LAP) { g = cond === 'used' ? state.lapUsed : state.lapNew; return g ? 'g:' + g : ''; }
+  return pick || '';
+}
 var OWN = '~own';   // the block of the shop's own goods on the offers screen
 function inBlock(o, block) { return block === OWN ? o.own : (!o.own && o.supplier === block); }
 function saveDraft() {
-  var own = state.draftOwn, sup = own ? (state.shop.name || 'Kouki') : state.supplier.trim(), cat = catChosen(state.draftCat, state.draftCatName);
+  var own = state.draftOwn, sup = own ? (state.shop.name || 'Kouki') : state.supplier.trim(), cat = catChosen(state.draftCat, state.draftCatName, state.draftCond);
   if (!sup) {
     toast(t('need_supplier'));
     var f = $('#supplier');
     if (f) f.focus();
     return;
   }
-  var rows = state.draft.filter(function (d) { return d.price > 0; })
-    .map(function (d) {
-      var r = { supplier: sup, name: d.name, price: d.price, cur: d.cur, note: d.note || '' };
-      if (state.shopOk) { r.cond = state.draftCond; r.sell = offerOwnSell('m' + offerNum(offerKey(r)), offerUsd(d)); }   // a price the manager set for this device before stays
-      if (own) { r.own = true; r.qty = 1; }
-      if (cat) r.cat = cat;
-      if (state.hidden['m' + offerNum(offerKey(r))]) r.hidden = true;   // a device hidden from customers stays hidden
-      return r;
-    });
+  var rows = [], updates = [];
+  state.draft.filter(function (d) { return d.price > 0; }).forEach(function (d) {
+    var r = { supplier: sup, name: d.name, price: d.price, cur: d.cur, note: d.note || '' }, same = own ? ownSame(d) : null, patch, lvl;
+    if (state.shopOk) { r.cond = state.draftCond; r.sell = offerOwnSell('m' + offerNum(offerKey(r)), offerUsd(d)); }   // a price the manager set for this device before stays
+    if (same) {   // one of my own goods saved before: brought up to date instead of added twice
+      patch = { price: r.price, cur: r.cur, note: r.note };
+      if (state.shopOk) patch.sell = r.sell;
+      if (cat) patch.cat = cat;
+      if (typeof d.qty === 'number') patch.qty = d.qty;   // no number typed: the quantity stays as it is
+      updates.push({ o: same, patch: patch });
+      return;
+    }
+    if (own) { r.own = true; r.qty = typeof d.qty === 'number' ? d.qty : 1; }
+    if (cat) r.cat = cat;
+    lvl = hideLevel('m' + offerNum(offerKey(r)));
+    if (lvl) r.hidden = true;               // a device hidden from customers stays hidden
+    if (lvl === 2) r.staff_hidden = true;   // and so does one hidden from employees too
+    rows.push(r);
+  });
   var old = state.replaceOld && !own ? sameSupplier().map(function (o) { return o.id; }) : [];
   var b = $('#draft-save');
   if (b) b.disabled = true;
-  addOffers(rows).then(function (n) {
-    if (!n) { paintDraftFoot(); return; }   // not saved: the list stays so nothing typed is lost
+  updates.forEach(function (u) {
+    Object.keys(u.patch).forEach(function (k) { u.o[k] = u.patch[k]; });
+    sent(api('PATCH', '/rest/v1/offers?id=eq.' + encodeURIComponent(u.o.id), u.patch, 'return=minimal'));
+  });
+  (rows.length ? addOffers(rows) : Promise.resolve(0)).then(function (n) {
+    if (rows.length && !n) { paintDraftFoot(); return; }   // not saved: the list stays so nothing typed is lost
     if (old.length) removeOffers(old);      // the earlier list goes only after the new one is safely in
     state.draft = [];
     state.skipped = 0;
     state.pasteText = '';
     state.ocrMsg = '';
     state.replaceTouched = false;
-    toast(t('saved_n', { n: n }));
+    toast(updates.length ? t('saved_nm', { n: n, m: updates.length }) : t('saved_n', { n: n }));
     paintTab();
   });
+}
+/* One of my own goods saved before that a row being added is the same device as (name, specs and condition). */
+function ownSame(d) {
+  var k = offerKey({ cond: state.draftCond, name: d.name, note: d.note || '' }), i;
+  for (i = 0; i < state.offers.length; i++) if (state.offers[i].own && offerKey(state.offers[i]) === k) return state.offers[i];
+  return null;
 }
 /* One supplier's offers in the order of the list they came from, newest list first. */
 function supplierList(sup) {
@@ -3746,6 +3960,7 @@ function offerRowHtml(o) {
   var it = matchItem(offerText(o)), u = offerUsd(o), s = offerSell(o);
   return '<div class="orow tall"><div class="grow ocol">' + offerHead(o) +
     '<span class="meta"><span class="secret">' + icon('lock', 13) + t('offer_buy') + ' <b>' + usd(u) + '</b>' + DOT + t('offer_profit', { p: '<b>' + usd(s - u) + '</b>' }) + '</span>' +
+    (o.own ? '<span class="pill ' + (o.qty > 0 ? 'ok' : 'out') + '">' + (o.qty > 0 ? t('in_stock', { n: num(o.qty, 0) }) : t('out_stock')) + '</span>' : '') +
     (it && it.cost > 0 ? cmpPill(u, it.cost) : '') + '</span></div>' +
     '<div class="price"><span class="tag sm">' + usd(s) + '</span><span class="syp">' + sypOf(s) + '</span></div>' +
     '<button class="x" data-action="oedit" data-id="' + esc(o.id) + '" aria-label="' + t('sup_edit') + '">' + icon('sliders', 18) + '</button>' +
@@ -3776,7 +3991,7 @@ function offerEditHtml(o) {
     '<div class="row"><button class="btn primary" type="submit">' + t('edit_save') + '</button><button class="btn ghost" type="button" data-action="oeditcancel">' + t('edit_cancel') + '</button></div></form>';
 }
 function saveOfferEdit(id) {
-  var o = offerById(id), sp, patch, oldId, newId;
+  var o = offerById(id), sp, patch, cat, oldId, newId;
   function val(sel) { var el = $(sel); return el ? el.value.trim() : ''; }
   if (!o) return;
   patch = { name: val('#oe-name'), price: Number(val('#oe-price')), cur: val('#oe-cur') === 'SYP' ? 'SYP' : 'USD', cond: val('#oe-cond') === 'used' ? 'used' : 'new' };
@@ -3785,7 +4000,8 @@ function saveOfferEdit(id) {
   sp.cpu = val('#oe-cpu'); sp.ram = val('#oe-ram'); sp.disk = val('#oe-disk'); sp.gpu = val('#oe-gpu'); sp.screen = val('#oe-screen');
   sp.notes = val('#oe-notes').split(/\s*\u00B7\s*|\n/).filter(Boolean);
   patch.note = writeNote(sp);
-  if (catChosen(val('#oe-cat'), val('#oe-catname')) !== o.cat) patch.cat = catChosen(val('#oe-cat'), val('#oe-catname'));
+  cat = catChosen(val('#oe-cat'), val('#oe-catname'), patch.cond);
+  if (cat !== o.cat) patch.cat = cat;
   if (o.own) patch.qty = Math.max(0, Math.round(Number(val('#oe-qty')) || 0));
   oldId = 'm' + offerNum(offerKey(o));
   Object.keys(patch).forEach(function (k) { o[k] = patch[k]; });
@@ -3797,10 +4013,10 @@ function saveOfferEdit(id) {
 }
 /* A new name or new specs give the device a new number in the store: the photos and note the manager gave it go along. */
 function carryOfferExtras(oldId, newId) {
-  var n = Number(newId.slice(1)), photo = state.media[oldId], note = state.notes[oldId];
-  if (state.hidden[oldId] && !state.hidden[newId]) {   // hidden from customers before: still hidden
-    state.hidden[newId] = true;
-    sent(api('POST', '/rest/v1/item_hidden?on_conflict=item_id', { item_id: n }, 'resolution=merge-duplicates,return=minimal'));
+  var n = Number(newId.slice(1)), photo = state.media[oldId], note = state.notes[oldId], lvl = hideLevel(oldId);
+  if (lvl && !hideLevel(newId)) {   // hidden before: still hidden, from the same people
+    state.hidden[newId] = lvl;
+    sent(api('POST', '/rest/v1/item_hidden?on_conflict=item_id', hideRow(n, lvl, 0), 'resolution=merge-duplicates,return=minimal'));
   }
   if (photo && !state.media[newId]) {
     state.media[newId] = photo;
@@ -3909,8 +4125,8 @@ function viewOverview() {
     if (stockState(it) === 'low') alerts++;
   });
   var feed = state.events.map(eventRow).join(''), days = backupDays();
-  var hid = hiddenCount();
-  return photosNote() + (hid ? '<section class="panel row"><span class="grow">' + t('hidden_count', { n: hid }) + '</span><button class="btn sm" data-action="showhidden">' + t('hidden_show') + '</button></section>' : '') +
+  var hid = hiddenCount(), hid2 = hiddenCount(2);
+  return photosNote() + (hid ? '<section class="panel row"><span class="grow">' + t(hid2 ? 'hidden_count2' : 'hidden_count', { n: hid, m: hid2 }) + '</span><button class="btn sm" data-action="showhidden">' + t('hidden_show') + '</button></section>' : '') +
     (days < 0 || days > 14 ? '<section class="panel row"><span class="grow warn strong">' + (days < 0 ? t('bk_due_never') : t('bk_due', { n: days })) + '</span>' +
     '<button class="btn sm" data-action="gobackup">' + t('bk_make') + '</button></section>' : '') + '<div class="kpis">' + kpi(usd(cost), t('kpi_cost'), sypOf(cost)) + kpi(usd(sell), t('kpi_sell'), sypOf(sell)) +
     kpi(usd(sell - cost), t('kpi_profit'), num(sell > 0 ? (sell - cost) / sell * 100 : 0, 1) + '%') + kpi(String(alerts), t('kpi_alert'), '', 'golow') + '</div>' +
@@ -4313,13 +4529,87 @@ function onScanned(code) {
   if (!code) return;
   try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) { /* no vibration on this device */ }
   closeSheet();
+  if (openLink(code)) return;
   var hits = itemsByCode(code);
   if (hits.length === 1) { openItem(hits[0].id); return; }
+  if (!hits.length && /^\d{1,16}$/.test(code) && byId('m' + Number(code))) { openItem('m' + Number(code)); return; }   // the item number under its QR code
   resetStore();
   state.inStockOnly = false;
   state.query = code;
   goTab('items');
   if (!hits.length && !visibleItems().length) toast(t('scan_none', { code: code }));
+}
+
+/* ---------- QR codes: a link to one item, or to a whole list ----------
+   The customer shows the code on their phone; the staff device that reads it opens the same item, or the same
+   list as a quote, with everything that device's role may see. The small drawing library is fetched the first
+   time a code is shown. */
+var QR_URLS = ['https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js', 'https://unpkg.com/qrcode-generator@1.4.4/qrcode.js'];
+var LIST_RE = /#q(\d{1,16}x\d{1,3}(?:-\d{1,16}x\d{1,3})*)$/, LIST_MAX = 40;
+function qrSvg(text) {
+  var qr = window.qrcode(0, 'M'), q = 4, n, d = '', r, c;
+  qr.addData(text);
+  qr.make();
+  n = qr.getModuleCount();
+  for (r = 0; r < n; r++) for (c = 0; c < n; c++) if (qr.isDark(r, c)) d += 'M' + (c + q) + ' ' + (r + q) + 'h1v1h-1z';
+  return '<svg viewBox="0 0 ' + (n + 2 * q) + ' ' + (n + 2 * q) + '" shape-rendering="crispEdges" role="img" aria-label="' + esc(t('qr_btn')) + '">' +
+    '<rect width="100%" height="100%" fill="#fff"/><path d="' + d + '" fill="#000"/></svg>';   // black on white in either theme, as readers need
+}
+function qrReady() { return typeof window.qrcode === 'function'; }
+function qrBox(link, hint, sub, extra) {
+  var ready = qrReady();
+  if (!ready) {
+    loadScript(QR_URLS, qrReady).then(function () {
+      var el = $('#qr-img');
+      if (el) el.innerHTML = qrSvg(el.getAttribute('data-link'));
+    }, function () { var el = $('#qr-img'); if (el) el.innerHTML = '<span class="sub">' + t('qr_fail') + '</span>'; });
+  }
+  return '<div class="qrbox" id="qr-box"><div class="qrimg" id="qr-img" data-link="' + esc(link) + '">' + (ready ? qrSvg(link) : '<span class="sub">' + t('qr_loading') + '</span>') + '</div>' +
+    '<p class="sub">' + hint + '</p>' + (sub ? '<p class="code">' + esc(sub) + '</p>' : '') + (extra || '') + '</div>';
+}
+function qrItemBox(it) {
+  return qrBox(itemLink(it), t(isGuest() ? 'qr_hint_guest' : 'qr_hint_staff'), t('qr_num', { n: idNum(it) }),
+    isGuest() ? '' : '<button class="btn sm" data-action="qrprint" data-id="' + it.id + '">' + icon('file', 16) + t('qr_print') + '</button>');
+}
+/* A label to stick on the item: no price on it, since prices follow the exchange rate; the code shows today's. */
+function printLabel(it) {
+  if (!qrReady()) { toast(t('qr_fail')); return; }
+  $('#print-area').innerHTML = '<div class="qrlabel"><b dir="auto">' + esc(state.shop.name) + '</b>' + qrSvg(itemLink(it)) + '<span dir="auto">' + esc(it.name) + '</span>' +
+    '<small>' + t('qr_label_scan') + '</small><small class="code">' + idNum(it) + '</small></div>';
+  setTimeout(function () { window.print(); }, 150);
+}
+/* The open list (a guest's basket or the staff quote) as a link: item numbers and how many of each. */
+function listLink() {
+  return location.origin + location.pathname + '#q' + quoteLines().map(function (l) { return idNum(l.it) + 'x' + Math.min(999, l.n); }).join('-');
+}
+function listQrBox() {
+  var n = quoteLines().length;
+  if (n > LIST_MAX) return '<div class="qrbox" id="qr-box"><p class="sub">' + t('list_long') + '</p></div>';
+  return qrBox(listLink(), t(isGuest() ? 'list_hint_guest' : 'list_hint_staff'), '', '');
+}
+/* A code or link read here: "#p" opens one item, "#q" a whole list. Anything else is left to the barcode search. */
+function openLink(text) {
+  var m = /(?:^|#)p(\d{1,16})$/.exec(text), list = LIST_RE.exec(text);
+  if (list) { openSharedList(list[1]); return true; }
+  if (!m) return false;
+  if (byId('m' + m[1])) openItem('m' + m[1]); else toast(t('scan_item_gone'));
+  return true;
+}
+function openSharedList(spec) {
+  var got = {}, missing = 0, c = cart(), n;
+  spec.split('-').forEach(function (p) {
+    var a = p.split('x'), id = 'm' + Number(a[0]), it = byId(id);
+    if (it && hasPrice(it)) got[id] = Math.min(999, (got[id] || 0) + Math.max(1, Number(a[1]) || 1)); else missing++;
+  });
+  n = Object.keys(got).length;
+  if (!n) { toast(t('list_gone')); return; }
+  if (Object.keys(c).length && JSON.stringify(c) !== JSON.stringify(got) && !window.confirm(t('list_replace_q'))) return;
+  if (isGuest()) state.gquote = got;
+  else { state.quote = got; state.quoteDisc = 0; state.quoteCustomer = ''; }
+  state.qrCart = false;
+  save(); paintBadge();
+  goTab('quote');
+  toast(missing ? t('list_in_missing', { n: n, m: missing }) : t('list_in', { n: n }));
 }
 
 /* ---------- Reading a supplier's price list from a picture (manager) ----------
@@ -5397,7 +5687,10 @@ document.addEventListener('click', function (e) {
   else if (a === 'instock') { state.inStockOnly = !state.inStockOnly; state.limit = 60; paintItems(); }
   else if (a === 'onlyhidden') { state.onlyHidden = !state.onlyHidden; state.limit = 60; paintItems(); }
   else if (a === 'showhidden') { resetStore(); state.onlyHidden = true; goTab('items'); }
-  else if (a === 'hideitem') { p = byId(id); if (p) toggleHidden(p); }
+  else if (a === 'hideitem') { p = byId(id); if (p) setHidden(p, hideLevel(p.id) ? 0 : 1); }        // customers: hide, or show to everyone
+  else if (a === 'hidestaff') { p = byId(id); if (p) setHidden(p, hideLevel(p.id) === 2 ? 1 : 2); }  // employees too, or back to them
+  else if (a === 'ownqty') { p = byId(id); if (p && p.offer) setOwnQty(p, p.offer.ownQty + Number(el.getAttribute('data-d'))); }
+  else if (a === 'ownsold') { p = byId(id); if (p && p.offer) soldOne(p, el); }
   else if (a === 'brand' || a === 'cpu' || a === 'ram' || a === 'need') toggle(a, el.getAttribute('data-v'));
   else if (a === 'scan') openScan();
   else if (a === 'bkmake') makeBackup();
@@ -5457,6 +5750,14 @@ document.addEventListener('click', function (e) {
     else { state.quote = {}; state.quoteDisc = 0; state.quoteCustomer = ''; }
     save(); paintTab(); paintBadge();
   }
+  else if (a === 'qr') {
+    state.qrFor = state.qrFor === id ? '' : id;
+    openItem(id);
+    p = $('#qr-box');
+    if (p && p.scrollIntoView) p.scrollIntoView({ block: 'nearest' });
+  }
+  else if (a === 'qrlist') { state.qrCart = !state.qrCart; paintTab(); }
+  else if (a === 'qrprint') { p = byId(id); if (p) printLabel(p); }
   else if (a === 'copy') copyQuote();
   else if (a === 'doc') openDoc();
   else if (a === 'pdfsave') savePdf();
@@ -5545,7 +5846,12 @@ document.addEventListener('input', function (e) {
   else if (k === 'guestsyp') { state.guestSyp = el.checked; saveSetting('guest'); }
   else if (k === 'paste') { state.pasteText = el.value; setDraft(parseOfferText(el.value, state.draftCur)); paintDraft(); }
   else if (k === 'supplier') { state.supplier = el.value; paintDraftFoot(); }
-  else if (k === 'downown') { state.draftOwn = el.checked; d = $('#supplier'); if (d) d.parentNode.hidden = el.checked; paintDraftFoot(); }
+  else if (k === 'downown') { state.draftOwn = el.checked; d = $('#supplier'); if (d) d.parentNode.hidden = el.checked; paintDraft(); }
+  else if (k === 'dqty') {   // how many of my own goods: empty keeps the usual (one, or what is there already)
+    d = state.draft[Number(el.getAttribute('data-i'))];
+    v = parseInt(el.value, 10);
+    if (d) d.qty = v >= 0 ? v : null;
+  }
   else if (k === 'dcat') state.draftCat = el.value;
   else if (k === 'dcatname') state.draftCatName = el.value;
   else if (k === 'replold') { state.replaceOld = el.checked; state.replaceTouched = true; }
@@ -5602,6 +5908,7 @@ document.addEventListener('change', function (e) {
   else if ((el.id === 'ps-cam' || el.id === 'ps-pick') && el.files && el.files.length) shootFiles(el.files);
   else if (el.id === 'ph-file' && el.files && el.files[0]) addPhotos(el.getAttribute('data-id'), el.files);
   else if (k === 'sort') { state.sort = el.value; state.limit = 60; paintItems(); }
+  else if (k === 'ownqty') { it = byId(el.getAttribute('data-id')); v = parseInt(el.value, 10); if (it && it.offer && v >= 0) setOwnQty(it, v); }
   else if (k === 'extra' || k === 'manual') {   // manager's per-item adjustments, applied when the field is left
     id = el.getAttribute('data-id'); v = parseFloat(el.value); it = byId(id);
     if (!it) return;
