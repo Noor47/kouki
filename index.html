@@ -208,7 +208,7 @@ button.kpi { cursor:pointer }
 .qrbox { display:flex; flex-direction:column; align-items:center; gap:8px; padding:14px; border:1px solid var(--line); border-radius:var(--r); text-align:center }
 .qrimg { width:240px; max-width:100%; aspect-ratio:1; display:grid; place-items:center; background:#fff; border-radius:8px }
 .qrimg svg { display:block; width:100%; height:100% }
-.qline .qsrc { display:block; font-size:12px; color:var(--muted) }
+.qline .qsrc, .qline .qspec { display:block; font-size:12px; color:var(--muted) }
 .qrlabel { width:62mm; margin:12mm; padding:4mm; border:1px dashed #888; display:flex; flex-direction:column; align-items:center; gap:2mm;
   color:#000; background:#fff; font:10pt/1.35 system-ui, sans-serif; text-align:center }
 .qrlabel svg { width:40mm; height:40mm }
@@ -993,6 +993,9 @@ var LOCALES = {
     list_replace_q: 'Replace the current list with the one just opened?',
     scan_item_gone: 'That item is not available now, or not shown to you.',
     q_cost: 'Cost {c} · profit {p} ({m}%)',
+    q_specs: 'Send the full specs and notes',
+    q_photos: 'Add the photos to the printable copy',
+    q_note: 'Note',
     scan_start: 'Starting the camera...',
     scan_denied: 'Camera access was refused. Allow it in the browser settings, or type the number.',
     scan_nocam: 'No camera could be opened on this device. Type the number instead.',
@@ -1529,6 +1532,9 @@ var LOCALES = {
     list_replace_q: 'استبدال القائمة الحالية بالطلب الذي فُتح الآن؟',
     scan_item_gone: 'هذه المادة غير متوفرة الآن أو غير ظاهرة لك.',
     q_cost: 'التكلفة {c} · الربح {p} ({m}%)',
+    q_specs: 'إرسال المواصفات الكاملة والملاحظات',
+    q_photos: 'إضافة صور المواد إلى نسخة الطباعة',
+    q_note: 'ملاحظة',
     scan_start: 'جارٍ تشغيل الكاميرا...',
     scan_denied: 'تم رفض إذن الكاميرا. اسمح به من إعدادات المتصفح، أو اكتب الرقم.',
     scan_nocam: 'تعذّر فتح الكاميرا على هذا الجهاز. اكتب الرقم بدلاً من ذلك.',
@@ -1635,7 +1641,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.19';
+var APP_BUILD = '2.20';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -1668,6 +1674,7 @@ var state = {
   groupNames: {},                             // the accounting program's groups by number
   draftOwn: false, draftCat: '', draftCatName: '',   // a list being added: the shop's own goods, and its category
   qrFor: '', qrCart: false,                          // the QR code shown on an open item, or under the quote
+  quoteSpecs: true, quotePhotos: true,               // what a quote for a customer carries besides names and prices
   photoAuto: true, photoCap: 900,
   offerQuery: '', replaceOld: false, replaceTouched: false, ocrMsg: '', ocrBusy: false,
   need: '',             // manager's list filter: '' | noprice | pending | nophoto
@@ -1687,6 +1694,8 @@ function load() {
   if (s.quote && typeof s.quote === 'object') state.quote = s.quote;
   if (s.quoteDisc >= 0 && s.quoteDisc <= 100) state.quoteDisc = s.quoteDisc;
   if (typeof s.quoteCustomer === 'string') state.quoteCustomer = s.quoteCustomer;
+  if (typeof s.quoteSpecs === 'boolean') state.quoteSpecs = s.quoteSpecs;
+  if (typeof s.quotePhotos === 'boolean') state.quotePhotos = s.quotePhotos;
   if (s.lockMin >= 0) state.lockMin = s.lockMin;
   if (s.bioIds && typeof s.bioIds === 'object') state.bio.ids = s.bioIds;
   if (s.session && s.session.rt && s.session.uid) state.session = s.session;
@@ -1695,6 +1704,7 @@ function save() {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
       lang: state.lang, langSet: state.langSet, quote: state.quote, quoteDisc: state.quoteDisc, quoteCustomer: state.quoteCustomer,
+      quoteSpecs: state.quoteSpecs, quotePhotos: state.quotePhotos,
       lockMin: state.lockMin, bioIds: state.bio.ids, session: state.session
     }));
   } catch (e) { /* storage unavailable: nothing is remembered on this device */ }
@@ -3337,6 +3347,30 @@ function specFacts(it) {
   if (sp.screen) h += fact(t('spec_screen'), ltr(sp.screen) + (sp.touch ? ' · ' + t('spec_touch') : ''));
   return h;
 }
+/* A computer's specs as [label, value] pairs, as its page lists them, for a quote; nothing for other goods. */
+function specList(it) {
+  var r = [], o, sp, cond;
+  if (it.offer) {
+    o = it.offer.sp;
+    if (o.cpu) r.push([t('spec_cpu'), o.cpu]);
+    if (o.ram) r.push([t('spec_ram'), o.ram]);
+    if (o.disk) r.push([t('spec_storage'), o.disk + (o.diskKind && o.diskKind !== 'STORAGE' ? ' ' + o.diskKind : '')]);
+    if (o.gpu) r.push([t('spec_gpu'), o.gpu]);
+    if (o.screen) r.push([t('spec_screen'), o.screen]);
+    if (r.length) r.push([t('cond'), t(it.offer.cond === 'used' ? 'cond_used' : 'cond_new')]);
+    return r;
+  }
+  sp = it.sp;
+  if (!sp) return r;
+  r.push([t('spec_cpu'), sp.cpuLabel + (sp.gen ? ' · ' + t('spec_gen', { n: sp.gen }) : '')]);
+  if (sp.ram) r.push([t('spec_ram'), sp.ram + 'GB']);
+  if (sp.disk) r.push([t('spec_storage'), sp.disk + (sp.diskKind ? ' ' + sp.diskKind : '')]);
+  if (sp.gpu) r.push([t('spec_gpu'), sp.gpu]);
+  if (sp.screen) r.push([t('spec_screen'), sp.screen + (sp.touch ? ' · ' + t('spec_touch') : '')]);
+  cond = it.cat && it.cat === state.lapUsed ? 'cond_used' : (it.cat && it.cat === state.lapNew ? 'cond_new' : '');   // the laptop groups say new or used
+  if (cond) r.push([t('cond'), t(cond)]);
+  return r;
+}
 /* Staff ask the supplier on WhatsApp whether the device is still there, or order it. Every supplier with the same
    device is listed, cheapest first, so another one can be asked when the first has none left. The last request on
    the device shows, so two people do not order it twice. */
@@ -3548,7 +3582,13 @@ function quoteText() {
   var q = quoteCalc(), guest = isGuest(), who = state.quoteCustomer.trim();
   var out = [state.shop.name, t(guest ? 'request_title' : 'quote_title') + ' ' + quoteNo() + ' · ' + new Date().toLocaleDateString('en-GB')];
   if (!guest && who) out.push(t('customer') + ': ' + who);
-  q.lines.forEach(function (l) { out.push('- ' + l.it.name + ' × ' + l.n + ' = ' + px(l.it.sell * l.n)); });
+  q.lines.forEach(function (l) {
+    var rows = !guest && state.quoteSpecs ? specList(l.it) : [], note = !guest && state.quoteSpecs ? String(l.it.note || '').replace(/\s+/g, ' ').trim() : '';
+    out.push('- ' + l.it.name + ' × ' + l.n + ' = ' + px(l.it.sell * l.n));
+    rows.forEach(function (r) { out.push('   ' + r[0] + ': ' + r[1]); });   // a computer's full specs under its name
+    if (note) out.push('   ' + t('q_note') + ': ' + note);
+    if (rows.length || note) out.push('');
+  });
   if (q.disc > 0) {
     out.push(t('subtotal') + ': ' + px(q.sub));
     out.push(t('discount') + ' ' + num(q.pct, 1) + '%: -' + px(q.disc));
@@ -3581,7 +3621,9 @@ function viewQuote() {
   if (!q.lines.length) return '<section class="panel"><h2 class="h">' + title + '</h2><p class="empty">' + t(guest ? 'request_empty' : 'quote_empty') + '</p>' + backBtn + '</section>';
   var rows = q.lines.map(function (l) {
     var tot = l.it.sell * l.n;
-    return '<div class="qline"><div class="grow"><div class="nm" dir="auto">' + esc(l.it.name) + '</div><div class="meta"><span class="code">' + px(l.it.sell) + ' × ' + l.n + '</span></div>' +
+    return '<div class="qline"><div class="grow"><div class="nm" dir="auto">' + esc(l.it.name) + '</div>' +
+      (l.it.chips && l.it.chips.length ? '<span class="qspec" dir="auto">' + esc(l.it.chips.join(' · ')) + '</span>' : '') +
+      '<div class="meta"><span class="code">' + px(l.it.sell) + ' × ' + l.n + '</span></div>' +
       (guest ? '' : '<span class="qsrc" dir="auto">' + esc(sourceOf(l.it)) + '</span>') + '</div>' +
       '<div class="price"><b class="qsum code">' + px(tot) + '</b><span class="syp">' + px2(tot) + '</span></div>' +
       '<div class="stepper"><button data-action="qdec" data-id="' + l.it.id + '" aria-label="-1">−</button><output>' + l.n + '</output>' +
@@ -3589,7 +3631,9 @@ function viewQuote() {
   }).join('');
   var text = quoteText();
   var form = guest ? '' : '<div class="qform"><div class="field"><label for="q-cust">' + t('customer') + '</label><input class="input" id="q-cust" data-input="qcust" dir="auto" autocomplete="off" value="' + esc(state.quoteCustomer) + '"></div>' +
-    '<div class="field"><label for="q-disc">' + t('discount_pct') + '</label><input class="input" id="q-disc" data-input="qdisc" type="number" inputmode="decimal" min="0" max="100" step="any" value="' + (state.quoteDisc || '') + '"></div></div>';
+    '<div class="field"><label for="q-disc">' + t('discount_pct') + '</label><input class="input" id="q-disc" data-input="qdisc" type="number" inputmode="decimal" min="0" max="100" step="any" value="' + (state.quoteDisc || '') + '"></div></div>' +
+    '<label class="check"><input type="checkbox" id="q-specs" data-input="qspecs"' + (state.quoteSpecs ? ' checked' : '') + '><span>' + t('q_specs') + '</span></label>' +
+    '<label class="check"><input type="checkbox" id="q-photos" data-input="qphotos"' + (state.quotePhotos ? ' checked' : '') + '><span>' + t('q_photos') + '</span></label>';
   var copyBtn = '<button class="btn grow" data-action="copy">' + icon('copy', 18) + t('copy') + '</button>';
   var actions = guest
     ? (state.shop.phone ? '<a class="btn primary grow" id="wa-link" target="_blank" rel="noopener" href="' + esc(waLink(text, true)) + '">' + icon('chat', 18) + t('send_shop') + '</a>' : '') + copyBtn
@@ -3635,8 +3679,25 @@ function fontsReady() {
   } catch (e) { /* draw with fallback fonts */ }
   return Promise.resolve();
 }
-function drawQuotePages() {
-  var W = 1190, H = 1684, M = 84, rtl = state.lang === 'ar', q = quoteCalc();
+/* The first photo of each line, for the printable copy. One that cannot be fetched in time is left out, and the
+   cloud must allow it to be drawn, so the copy can always be saved. */
+function quoteThumbs(lines) {
+  var out = {};
+  if (!state.quotePhotos) return Promise.resolve(out);
+  return Promise.all(lines.filter(function (l) { return l.it.photos && l.it.photos.length; }).map(function (l) {
+    return new Promise(function (res) {
+      var img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function () { if (img.naturalWidth) out[l.it.id] = img; res(); };
+      img.onerror = function () { res(); };
+      setTimeout(res, 6000);
+      img.src = photoUrl(l.it.photos[0], true);
+    });
+  })).then(function () { return out; });
+}
+function drawQuotePages(thumbs) {
+  var W = 1190, H = 1684, M = 84, rtl = state.lang === 'ar', q = quoteCalc(), TH = 110;
+  thumbs = thumbs || {};
   var FB = '"IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif', FD = '"Readex Pro", ' + FB;
   var INK = '#10242B', MUTE = '#5B6B72', LINE = '#D5DDE1', BAND = '#EEF3F4', TAG = '#FFD84D';   // ink on white paper
   var pages = [], ctx, y;
@@ -3661,6 +3722,15 @@ function drawQuotePages() {
     return lines.slice(0, 3);
   }
   function rule(yy, color, h) { ctx.fillStyle = color; ctx.fillRect(M, yy, W - 2 * M, h); }
+  function thumb(img, x, top, s) {   // a photo fitted into a square, on white
+    var k = Math.min(s / img.naturalWidth, s / img.naturalHeight), w = img.naturalWidth * k, h = img.naturalHeight * k;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(x, top, s, s);
+    ctx.drawImage(img, x + (s - w) / 2, top + (s - h) / 2, w, h);
+    ctx.strokeStyle = LINE;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, top + 0.5, s - 1, s - 1);
+  }
   function newPage() {
     var cv = document.createElement('canvas');
     cv.width = W; cv.height = H;
@@ -3691,18 +3761,26 @@ function drawQuotePages() {
     y += strong ? 46 : 38;
   }
   newPage();
-  var who = state.quoteCustomer.trim(), body = '400 23px ' + FB;
+  var who = state.quoteCustomer.trim(), body = '400 23px ' + FB, small = '400 19px ' + FB;
   if (who) { text(t('customer') + ': ' + who, sx(0), y, '400 24px ' + FB, INK, 'start'); y += 52; }
   tableHead();
   q.lines.forEach(function (l) {
-    var lines = wrap(l.it.name, body, W - 2 * M - 506), rowH = lines.length * 32 + 26;
-    if (y + rowH > H - M - 80) { newPage(); tableHead(); }
-    lines.forEach(function (ln, k) { text(ln, sx(16), y + k * 32, body, INK, 'start'); });
+    var img = thumbs[l.it.id], indent = img ? TH + 16 : 0, colW = W - 2 * M - 506 - indent, lines = wrap(l.it.name, body, colW), extra = [], first, bottom;
+    if (state.quoteSpecs) {   // a computer's full specs, and the item's note, under its name
+      specList(l.it).forEach(function (r) { extra = extra.concat(wrap(r[0] + ': ' + r[1], small, colW)); });
+      if (l.it.note) extra = extra.concat(wrap(t('q_note') + ': ' + l.it.note, small, colW));
+    }
+    first = (lines.length - 1) * 32 + 30;   // where the first line under the name sits
+    bottom = Math.max((extra.length ? first + (extra.length - 1) * 27 : (lines.length - 1) * 32) + 18, img ? TH - 14 : 0);
+    if (y + bottom + 40 > H - M - 80) { newPage(); tableHead(); }
+    if (img) thumb(img, rtl ? sx(16) - TH : sx(16), y - 24, TH);
+    lines.forEach(function (ln, k) { text(ln, sx(16 + indent), y + k * 32, body, INK, 'start'); });
+    extra.forEach(function (ln, k) { text(ln, sx(16 + indent), y + first + k * 27, small, MUTE, 'start'); });
     text(l.n, ex(430), y, body, INK, 'center');
     text(px(l.it.sell), ex(215), y, body, INK, 'end');
     text(px(l.it.sell * l.n), ex(16), y, '600 23px ' + FB, INK, 'end');
-    rule(y + (lines.length - 1) * 32 + 18, LINE, 1);
-    y += rowH;
+    rule(y + bottom, LINE, 1);
+    y += bottom + 40;
   });
   if (y + 260 > H - M - 80) newPage();
   y += 24;
@@ -3756,8 +3834,8 @@ function canShareFile() {
   try { var f = pdfFile(); return !!(f && navigator.canShare && navigator.share && navigator.canShare({ files: [f] })); } catch (e) { return false; }
 }
 function openDoc() {
-  fontsReady().then(function () {
-    docPages = drawQuotePages();
+  fontsReady().then(function () { return quoteThumbs(quoteLines()); }).then(function (thumbs) {
+    docPages = drawQuotePages(thumbs);
     var sh = $('#sheet');
     sh.innerHTML = '<div class="sheet doc" role="dialog" aria-modal="true" aria-label="' + t('doc_title') + '">' +
       '<div class="row"><h2 class="h grow">' + t('doc_title') + ' <span class="code">' + quoteNo() + '</span></h2><button class="x" id="sheet-close" data-action="close" aria-label="' + t('close') + '">' + icon('x') + '</button></div>' +
@@ -5847,6 +5925,8 @@ document.addEventListener('input', function (e) {
   else if (k === 'paste') { state.pasteText = el.value; setDraft(parseOfferText(el.value, state.draftCur)); paintDraft(); }
   else if (k === 'supplier') { state.supplier = el.value; paintDraftFoot(); }
   else if (k === 'downown') { state.draftOwn = el.checked; d = $('#supplier'); if (d) d.parentNode.hidden = el.checked; paintDraft(); }
+  else if (k === 'qspecs') { state.quoteSpecs = el.checked; save(); paintQuoteSum(); }
+  else if (k === 'qphotos') { state.quotePhotos = el.checked; save(); }
   else if (k === 'dqty') {   // how many of my own goods: empty keeps the usual (one, or what is there already)
     d = state.draft[Number(el.getAttribute('data-i'))];
     v = parseInt(el.value, 10);
