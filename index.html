@@ -882,6 +882,23 @@ var LOCALES = {
     sreq_order_msg: 'Hello, this is {shop}. We would like to order:\n{item}\nQuantity: 1',
     sreq_no: 'Number {n} in your list',
     sreq_price: 'Your price: {p}',
+    own_toggle: 'These are my own goods, not in the accounting program',
+    own_goods: 'My goods outside the accounting program',
+    src_extra: 'Ours, outside the accounting program',
+    cat_pick: 'Category',
+    cat_auto: 'Automatic (by what the item is)',
+    cat_new_ph: 'Or a new category name',
+    oe_qty: 'Quantity',
+    hidden_badge: 'Hidden from customers',
+    hidden_note: 'Customers do not see this item; staff still do.',
+    shown_note: 'Customers see this item.',
+    hide_item: 'Hide from customers',
+    unhide_item: 'Show to customers',
+    hidden_done: 'Hidden from customers.',
+    shown_done: 'Customers see it again.',
+    only_hidden: 'Hidden from customers ({n})',
+    hidden_count: 'Items hidden from customers: {n}',
+    hidden_show: 'Show them',
     source: 'Source',
     src_own: 'Our own stock',
     src_supplier: 'From supplier: {name}',
@@ -1364,6 +1381,23 @@ var LOCALES = {
     sreq_order_msg: 'مرحباً، معكم {shop}. نريد أن نطلب:\n{item}\nالكمية: 1',
     sreq_no: 'رقم {n} في قائمتكم',
     sreq_price: 'سعركم: {p}',
+    own_toggle: 'هذه بضاعتي أنا، وليست في برنامج المحاسبة',
+    own_goods: 'بضاعتي خارج برنامج المحاسبة',
+    src_extra: 'من عندنا، خارج برنامج المحاسبة',
+    cat_pick: 'القسم',
+    cat_auto: 'تلقائي (حسب نوع المادة)',
+    cat_new_ph: 'أو اكتب اسم قسم جديد',
+    oe_qty: 'الكمية',
+    hidden_badge: 'مخفية عن الزبائن',
+    hidden_note: 'الزبائن لا يرون هذه المادة، والموظفون يرونها.',
+    shown_note: 'الزبائن يرون هذه المادة.',
+    hide_item: 'إخفاء عن الزبائن',
+    unhide_item: 'إظهار للزبائن',
+    hidden_done: 'أُخفيت عن الزبائن.',
+    shown_done: 'صار الزبائن يرونها من جديد.',
+    only_hidden: 'المخفية عن الزبائن ({n})',
+    hidden_count: 'مواد مخفية عن الزبائن: {n}',
+    hidden_show: 'اعرضها',
     source: 'المصدر',
     src_own: 'من بضاعتنا',
     src_supplier: 'من شركة: {name}',
@@ -1518,7 +1552,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.16';
+var APP_BUILD = '2.17';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -1547,6 +1581,9 @@ var state = {
   lapNew: '', lapUsed: '',                    // the accounting program's new and used laptop groups, found by name
   suppliers: {}, requests: [],                // suppliers' WhatsApp numbers, and what staff asked them lately
   supEdit: null, offerEdit: null,             // the supplier or the offer being edited on the offers screen
+  hidden: {}, onlyHidden: false,              // items the manager hid from customers, and the list showing only those
+  groupNames: {},                             // the accounting program's groups by number
+  draftOwn: false, draftCat: '', draftCatName: '',   // a list being added: the shop's own goods, and its category
   photoAuto: true, photoCap: 900,
   offerQuery: '', replaceOld: false, replaceTouched: false, ocrMsg: '', ocrBusy: false,
   need: '',             // manager's list filter: '' | noprice | pending | nophoto
@@ -1619,6 +1656,7 @@ function catOf(it) {
 function catName(c) {
   if (c.id && c.id === state.lapNew) return t('grp_laptop_new');
   if (c.id && c.id === state.lapUsed) return t('grp_laptop_used');
+  if (c.id && c.id.indexOf('x:') === 0) return c.id.slice(2);   // a category named by the manager for offers
   return c.id === 'offer-new' || c.id === 'offer-used' ? t(c.id === 'offer-new' ? 'cat_offer_new' : 'cat_offer_used') : (c.name || '');
 }
 /* New laptops first, then used ones, then the other groups by name. */
@@ -1678,7 +1716,7 @@ function prep(it) {
 function stockState(it) { return it.stock || (it.qty <= 0 ? 'out' : (it.qty <= it.min ? 'low' : 'ok')); }
 function stockLabel(it) {
   var s = stockState(it);
-  if (it.offer) return t('limited');   // a supplier's goods: how many are left is not known
+  if (it.offer && !it.offer.own) return t('limited');   // a supplier's goods: how many are left is not known
   if (s === 'out') return t('out_stock');
   if (isGuest()) return t(s === 'low' ? 'limited' : 'avail');   // guests never see exact quantities
   return t(s === 'low' ? 'low_stock' : 'in_stock', { n: num(it.qty, 0) });
@@ -1778,6 +1816,12 @@ function applyCloud(d) {
   (d.warehouses || []).forEach(function (w) { state.whs[w.id] = w.name; if (!main || w.id < main) main = w.id; });
   (d.groups || []).forEach(function (g) { names[g.id] = g.name; });
   findLaptopGroups(d.groups || []);
+  state.groupNames = names;
+  if (d.hidden !== undefined) {
+    state.hidden = {};
+    (d.hidden || []).forEach(function (h) { state.hidden['m' + h.item_id] = true; });
+    if (!(d.hidden || []).length) state.onlyHidden = false;
+  }
   p.margins = {}; p.hidden = {}; p.manual = {}; p.extra = {}; p.defMargin = 12;
   if (d.rules && d.rules[0] && d.rules[0].default_margin >= 0) p.defMargin = Number(d.rules[0].default_margin);
   (d.groupPricing || []).forEach(function (g) {
@@ -1933,7 +1977,8 @@ function setDraft(rows) {
 }
 function offerRow(o) {
   return { id: o.id, supplier: o.supplier, name: o.name, price: Number(o.price), cur: o.cur === 'SYP' ? 'SYP' : 'USD', note: o.note || '', at: o.created_at || '',
-    cond: o.cond === 'used' ? 'used' : 'new', listed: o.listed !== false };
+    cond: o.cond === 'used' ? 'used' : 'new', listed: o.listed !== false, own: o.own === true, cat: o.cat || '',
+    qty: o.qty === null || o.qty === undefined ? null : Number(o.qty), hidden: o.hidden === true };
 }
 
 /* ---------- Matching an offer to an item already in stock ----------
@@ -2312,21 +2357,30 @@ function shopItems(list, used) {
   var best = {};
   state.shopOk = Array.isArray(list);
   (list || []).forEach(function (o) {
-    var sp = readNote(o.note), sell = Number(o.sell), key;
+    var sp = readNote(o.note), sell = Number(o.sell), key, b;
     if (!(sell > 0)) return;
     key = offerKey(o);
-    if (!best[key]) best[key] = { o: o, sp: sp, sell: sell, rows: [], from: [] };
-    else if (sell < best[key].sell) { best[key].o = o; best[key].sp = sp; best[key].sell = sell; }
-    best[key].rows.push(o.id);
-    best[key].from.push({ id: o.id, supplier: o.supplier || '', sell: sell, no: sp.no });
+    b = best[key] = best[key] || { o: null, sp: sp, sell: 0, rows: [], from: [], own: null, ownSp: null, ownSell: 0, ownQty: 0 };
+    b.rows.push(o.id);
+    if (o.own) {   // the shop's own goods outside the accounting program: what counts is how many are left
+      b.ownQty += Math.max(0, Number(o.qty) || 0);
+      if (!b.own || (Number(o.qty) > 0 && !(Number(b.own.qty) > 0))) { b.own = o; b.ownSp = sp; b.ownSell = sell; }
+      return;
+    }
+    if (!b.o || sell < b.sell) { b.o = o; b.sp = sp; b.sell = sell; }
+    b.from.push({ id: o.id, supplier: o.supplier || '', sell: sell, no: sp.no });
   });
   var kinds = Object.keys(best).length ? groupsByKind() : {};
   Object.keys(best).forEach(function (k) {
-    var b = best[k], o = b.o, cat = offerCat(o, b.sp, kinds), own = null, i;
+    /* the shop's own goods come first while any are left; a supplier's device is shown when the shop has none */
+    var b = best[k], mineOwn = !!b.own && (b.ownQty > 0 || !b.o), o = mineOwn ? b.own : b.o, sp = mineOwn ? b.ownSp : b.sp,
+      cat = offerCat(o, sp, kinds), own = null, i;
     var id = 'm' + offerNum(k), mine = (state.media[id] || '').split(',').filter(Boolean);
-    var it = { id: id, code: '', barcode: '', cat: cat, name: String(o.name), sell: b.sell, auto: true, min: 0, qty: 1, other: [], stock: 'low',
-      note: state.notes[id] || b.sp.notes.join('\n'), photos: mine, photo: mine[0] || '',
-      offer: { rows: b.rows, from: b.from.sort(function (x, y) { return x.sell - y.sell; }), supplier: o.supplier || '', cond: o.cond === 'used' ? 'used' : 'new', sp: b.sp, note: o.note || '' } };
+    var it = { id: id, code: '', barcode: '', cat: cat, name: String(o.name), sell: mineOwn ? b.ownSell : b.sell, auto: true, min: 0,
+      qty: mineOwn ? b.ownQty : 1, other: [], stock: mineOwn ? (b.ownQty > 0 ? 'ok' : 'out') : 'low',
+      note: state.notes[id] || sp.notes.join('\n'), photos: mine, photo: mine[0] || '',
+      offer: { rows: b.rows, from: b.from.sort(function (x, y) { return x.sell - y.sell; }), supplier: mineOwn ? '' : (o.supplier || ''), own: mineOwn,
+        cond: o.cond === 'used' ? 'used' : 'new', sp: sp, note: o.note || '' } };
     if (isAdmin()) {
       for (i = 0; i < state.offers.length && !own; i++) if (state.offers[i].id === o.id) own = state.offers[i];
       it.raw = { cost: own ? offerUsd(own) : 0 }; it.cost = it.raw.cost; it.pending = false; it.extra = 0; it.buy = null; it.sale = null;
@@ -2365,7 +2419,9 @@ function groupsByKind() {
 /* Supplier laptops join the shop's new or used laptop group, and other goods the group where the shop keeps its own
    items of that kind. Only goods matching neither keep a group of supplier goods. */
 function offerCat(o, sp, kinds) {
-  var used = o.cond === 'used', kind = sp.cpu ? 'laptop' : nameKind(o.name), g = '';
+  var used = o.cond === 'used', kind = sp.cpu ? 'laptop' : nameKind(o.name), g = '', c = String(o.cat || '');
+  if (/^g:\d+$/.test(c) && state.groupNames[c.slice(2)]) return c.slice(2);   // the category the manager chose
+  if (/^n:./.test(c)) return 'x:' + c.slice(2);
   if (kind === 'laptop') g = used ? state.lapUsed : state.lapNew;
   else if (kind) g = kinds[kind] || '';
   return g || (used ? 'offer-used' : 'offer-new');
@@ -2382,7 +2438,7 @@ function writeNote(sp) {
   if (sp.gpu) parts.push('GPU ' + sp.gpu);
   return parts.concat(sp.notes || []).join(DOT);
 }
-function sourceOf(it) { return it.offer ? t('src_supplier', { name: it.offer.supplier }) : t('src_own'); }
+function sourceOf(it) { return it.offer ? (it.offer.own ? t('src_extra') : t('src_supplier', { name: it.offer.supplier })) : t('src_own'); }
 
 /* ---------- What the offers screen shows for one offer ---------- */
 function offerInfo(o) {
@@ -2523,13 +2579,13 @@ function fetchData() {
       pagesSoft('/rest/v1/photo_finds?select=query,label,kind,status,results,note,photo&status=in.(queued,asked,done,none,failed)&order=query'),
       pagesSoft('/rest/v1/photo_find_items?select=item_id,query&order=item_id'), pagesSoft('/rest/v1/photo_jobs?select=id&order=id'));
   }
-  /* suppliers' numbers, and what staff asked them in the last 30 days */
-  jobs.push(pagesSoft('/rest/v1/suppliers?select=name,whatsapp&order=name'),
+  /* items hidden from customers, suppliers' numbers, and what staff asked them in the last 30 days */
+  jobs.push(pagesSoft('/rest/v1/item_hidden?select=item_id&order=item_id'), pagesSoft('/rest/v1/suppliers?select=name,whatsapp&order=name'),
     pagesSoft('/rest/v1/supplier_requests?select=id,offer_id,supplier,item,kind,sent_by,sent_by_name,sent_at&order=sent_at.desc&sent_at=gte.' +
       encodeURIComponent(new Date(Date.now() - 30 * 864e5).toISOString())));
   jobs.push(pagesSoft('/rest/v1/rpc/catalog_offers?order=name,id'), pagesSoft('/rest/v1/item_notes?select=item_id,note&order=item_id'));
   return Promise.all(jobs).then(function (a) {
-    return { notes: a[a.length - 1], shop: a[a.length - 2], requests: a[a.length - 3], suppliers: a[a.length - 4], items: a[0], groups: a[1], currencies: a[2], warehouses: a[3], settings: a[4], status: (a[5] || [])[0] || null, media: a[6],
+    return { notes: a[a.length - 1], shop: a[a.length - 2], requests: a[a.length - 3], suppliers: a[a.length - 4], hidden: a[a.length - 5], items: a[0], groups: a[1], currencies: a[2], warehouses: a[3], settings: a[4], status: (a[5] || [])[0] || null, media: a[6],
       costs: a[7], itemPricing: a[8], groupPricing: a[9], rules: a[10], offers: a[11], people: a[12], events: a[13],
       finds: isAdmin() ? a[14] : undefined, findItems: isAdmin() ? a[15] : undefined, jobs: isAdmin() ? a[16] : undefined };
   });
@@ -2579,7 +2635,7 @@ function clearAccount() {
   backup.file = null; backup.msg = '';
   finds.state = null; finds.sent = {}; finds.editKey = false; state.finds = []; state.findItems = {}; state.findsOk = false;
   state.photoJobs = []; state.jobsOk = false; photoWork.done = 0; photoWork.skipped = 0; photoWork.based = false;
-  state.suppliers = {}; state.requests = []; state.supEdit = null; state.offerEdit = null;
+  state.suppliers = {}; state.requests = []; state.supEdit = null; state.offerEdit = null; state.hidden = {}; state.onlyHidden = false;
   state.session = null; state.me = null; state.role = null; state.busy = false; state.peekId = null;
   state.items = []; state.offers = []; state.people = []; state.events = []; state.cats = [];
   state.draft = []; state.pasteText = ''; state.supplier = ''; state.skipped = 0; state.ocrMsg = ''; state.offerQuery = ''; state.need = '';
@@ -2604,7 +2660,7 @@ function startSession() {
     return fetchData().then(function (d) {
       applyCloud(d);
       state.busy = false; state.screen = 'app'; state.tab = 'items'; state.authMsg = '';
-      state.cat = 'all'; state.query = ''; state.brand = ''; state.cpu = ''; state.ram = ''; state.lowOnly = false; state.inStockOnly = true;
+      state.cat = 'all'; state.query = ''; state.brand = ''; state.cpu = ''; state.ram = ''; state.lowOnly = false; state.inStockOnly = true; state.onlyHidden = false;
       lastAct = Date.now();
       render(); window.scrollTo(0, 0); routeHash();
     });
@@ -2991,7 +3047,8 @@ function baseItems() {
   var q = normalize(state.query).split(' ').filter(Boolean);
   return state.items.filter(function (it) {
     return (state.cat === 'all' || it.cat === state.cat) &&
-      (!state.inStockOnly || it.qty > 0) && (!state.lowOnly || isGuest() || (stockState(it) === 'low' && !it.offer)) &&
+      (!state.inStockOnly || it.qty > 0 || state.onlyHidden) && (!state.lowOnly || isGuest() || (stockState(it) === 'low' && !it.offer)) &&
+      (!state.onlyHidden || !!state.hidden[it.id]) &&   // the hidden ones are all listed, sold out or not
       q.every(function (tok) { return it._hay.indexOf(tok) !== -1; });
   });
 }
@@ -3049,6 +3106,7 @@ function listHtml() {
   BRANDS.forEach(function (b) { label[b.id] = b.label; });
   var filters = '<button class="chip" data-action="instock" aria-pressed="' + state.inStockOnly + '">' + t('in_stock_only') + '</button>' +
     (isGuest() ? '' : '<button class="chip" data-action="low" aria-pressed="' + state.lowOnly + '">' + t('low_only') + '</button>') +
+    (isAdmin() && hiddenCount() ? '<button class="chip" data-action="onlyhidden" aria-pressed="' + state.onlyHidden + '">' + t('only_hidden', { n: hiddenCount() }) + '</button>' : '') +
     (isAdmin() ? Object.keys(NEEDS).map(function (k) {
       var n = base.filter(NEEDS[k]).length;
       if ((!n && state.need !== k) || (k === 'nophoto' && !state.mediaOk)) return '';
@@ -3126,8 +3184,9 @@ function itemCard(it) {
     '<button class="item-main" data-action="open" data-id="' + it.id + '">' + coverHtml(it) +
     '<span class="item-name" dir="auto">' + esc(it.name) + '</span>' + chipsHtml(it) + (it.note ? '<span class="cnote" dir="auto">' + esc(it.note.split('\n')[0]) + '</span>' : '') +
     '<span class="price">' + priceHtml(it) + '</span></button>' + extra +
-    (isGuest() ? '' : '<div class="src' + (it.offer ? ' ext' : '') + '" dir="auto">' + esc(sourceOf(it)) + '</div>') +
-    '<div class="item-foot"><span class="pill ' + stockState(it) + '">' + stockLabel(it) + '</span>' + (isAdmin() || isGuest() ? '' : floorHtml(it)) +
+    (isGuest() ? '' : '<div class="src' + (it.offer && !it.offer.own ? ' ext' : '') + '" dir="auto">' + esc(sourceOf(it)) + '</div>') +
+    '<div class="item-foot">' + (!isGuest() && state.hidden[it.id] ? '<span class="pill out hid">' + t('hidden_badge') + '</span>' : '') +
+    '<span class="pill ' + stockState(it) + '">' + stockLabel(it) + '</span>' + (isAdmin() || isGuest() ? '' : floorHtml(it)) +
     '<button class="cmpb" data-action="cmp" data-id="' + it.id + '" aria-pressed="' + inCompare(it.id) + '" aria-label="' + t('cmp_add') + '" title="' + t('cmp_add') + '">' + icon('compare', 18) + '</button>' +
     '<button class="add" data-action="add" data-id="' + it.id + '" aria-label="' + addLabel() + '" title="' + addLabel() + '"' + (hasPrice(it) ? '' : ' disabled') + '>' + icon('plus', 18) + '</button></div></article>';
 }
@@ -3197,6 +3256,29 @@ function orderBox(it) {
             esc(t('sup_wa')) + '"><button class="btn sm" type="submit">' + t('sreq_addnum') + '</button></form>') + '</div>';
     }).join('') + '</section>';
 }
+/* ---------- Hiding an item from customers (manager) ----------
+   Any item, from the accounting program or from the offers. The cloud leaves it out of what customers get; staff
+   still see it, marked. An offer's rows are marked too, so customers never even receive them. */
+function hiddenCount() { return state.items.filter(function (it) { return state.hidden[it.id]; }).length; }
+function hideControl(it) {
+  var h = !!state.hidden[it.id];
+  return '<div class="row"><span class="sub grow">' + t(h ? 'hidden_note' : 'shown_note') + '</span><button class="btn sm" data-action="hideitem" data-id="' + it.id + '">' +
+    t(h ? 'unhide_item' : 'hide_item') + '</button></div>';
+}
+function toggleHidden(it) {
+  var hide = !state.hidden[it.id], n = Number(it.id.slice(1));
+  if (hide) state.hidden[it.id] = true; else delete state.hidden[it.id];
+  sent(hide ? api('POST', '/rest/v1/item_hidden?on_conflict=item_id', { item_id: n }, 'resolution=merge-duplicates,return=minimal')
+    : api('DELETE', '/rest/v1/item_hidden?item_id=eq.' + n, undefined, 'return=minimal'));
+  if (it.offer && it.offer.rows.length) {
+    state.offers.forEach(function (o) { if (it.offer.rows.indexOf(o.id) !== -1) o.hidden = hide; });
+    sent(api('PATCH', '/rest/v1/offers?id=in.(' + it.offer.rows.join(',') + ')', { hidden: hide }, 'return=minimal'));
+  }
+  if (!Object.keys(state.hidden).length) state.onlyHidden = false;   // nothing hidden any more: the whole list again
+  toast(t(hide ? 'hidden_done' : 'shown_done'));
+  if ($('#item-list')) paintItems();
+  openItem(it.id);
+}
 function listPrice(o) { return o.cur === 'SYP' ? num(o.price, 0) + ' ' + t('syp_unit') : usd(o.price); }
 /* The message, with what identifies the device in the supplier's own list; the manager's also carries the price. */
 function orderText(kind, it, r) {
@@ -3241,10 +3323,11 @@ function openItem(id) {
     '<div class="row"><h2 class="h grow" dir="auto">' + esc(it.name) + '</h2><button class="x" id="sheet-close" data-action="close" aria-label="' + t('close') + '">' + icon('x') + '</button></div>' +
     coverHtml(it, true) +
     '<div class="row">' + priceHtml(it, true) + '<span class="pill ' + stockState(it) + '">' + stockLabel(it) + '</span></div>' +
-    '<dl class="facts">' + facts + '</dl>' + noteHtml(it) + (it.offer && !isGuest() ? orderBox(it) : '');
+    (!isGuest() && state.hidden[it.id] ? '<p><span class="pill out hid">' + t('hidden_badge') + '</span></p>' : '') +
+    '<dl class="facts">' + facts + '</dl>' + noteHtml(it) + (it.offer && !it.offer.own && !isGuest() ? orderBox(it) : '');
   if (isAdmin() && it.offer) {
     html += '<div class="private-box"><div class="row priv-title">' + icon('lock', 15) + t('admin_only') + '</div><dl class="facts">' +
-      fact(t('offer_buy'), usd(it.cost)) + fact(t('profit_unit'), usd(it.sell - it.cost)) + '</dl>' + priceInputs(it) + noteInput(it) + photoControls(it) + '</div>';
+      fact(t('offer_buy'), usd(it.cost)) + fact(t('profit_unit'), usd(it.sell - it.cost)) + '</dl>' + priceInputs(it) + noteInput(it) + photoControls(it) + hideControl(it) + '</div>';
   } else if (isAdmin()) {
     var best = bestOfferFor(it), f = floorPrice(it);
     html += '<div class="private-box"><div class="row priv-title">' + icon('lock', 15) + t('admin_only') + '</div><dl class="facts">' +
@@ -3252,7 +3335,7 @@ function openItem(id) {
       (priced ? fact(t('profit_unit'), usd(it.sell - it.cost)) + fact(t('margin'), num(marginPct(it), 1) + '%') + fact(t('floor'), usd(f) + ' · ' + sypOf(f)) : '') + '</dl>' +
       '<dl class="facts one">' + fact(t('stock_value'), usd(it.cost * totalQty(it))) +
       fact(t('best_offer'), best ? '<span dir="auto">' + esc(best.supplier) + '</span> · ' + usd(best.usd) + ' ' + cmpPill(best.usd, it.cost) : t('none_yet')) +
-      realFacts(it) + '</dl>' + priceInputs(it) + noteInput(it) + photoControls(it) + '</div>';
+      realFacts(it) + '</dl>' + priceInputs(it) + noteInput(it) + photoControls(it) + hideControl(it) + '</div>';
   }
   var line = it.name + (priced ? '\n' + usd(it.sell) + ' (' + sypOf(it.sell) + ')' : '');   // staff only
   html += '<div class="row"><button class="btn primary grow" data-action="add" data-id="' + it.id + '" data-close="1"' + (priced ? '' : ' disabled') + '>' + icon('plus', 18) + addLabel() + '</button>' +
@@ -3531,7 +3614,7 @@ function printDoc() {
 }
 
 /* ---------- Supplier offers (manager only) ---------- */
-function supplierNames() { return uniq(state.offers.map(function (o) { return o.supplier; })); }
+function supplierNames() { return uniq(state.offers.filter(function (o) { return !o.own; }).map(function (o) { return o.supplier; })); }
 function seg(action, attr, options, current, small) {
   return '<div class="seg' + (small ? ' small' : '') + '" role="group">' + options.map(function (o) {
     return '<button data-action="' + action + '" data-' + attr + '="' + o.v + '" aria-pressed="' + (String(current) === String(o.v)) + '">' + o.label + '</button>';
@@ -3555,10 +3638,14 @@ function viewOffers() {
   }
   return '<section class="panel"><div><h2 class="h">' + t('offers_title') + '</h2><p class="sub">' + t('offers_sub') + '</p></div>' +
     seg('omode', 'mode', ['paste', 'photo', 'file', 'manual'].map(function (m) { return { v: m, label: t('m_' + m) }; }), state.offerMode) +
-    '<div class="field"><label for="supplier">' + t('supplier') + '</label><input class="input" id="supplier" data-input="supplier" dir="auto" list="suppliers" autocomplete="off" placeholder="' +
+    '<label class="check"><input type="checkbox" id="d-own" data-input="downown"' + (state.draftOwn ? ' checked' : '') + '><span>' + t('own_toggle') + '</span></label>' +
+    '<div class="field"' + (state.draftOwn ? ' hidden' : '') + '><label for="supplier">' + t('supplier') + '</label><input class="input" id="supplier" data-input="supplier" dir="auto" list="suppliers" autocomplete="off" placeholder="' +
     esc(t('supplier_ph')) + '" value="' + esc(state.supplier) + '"><datalist id="suppliers">' + supplierNames().map(function (s) {
       return '<option value="' + esc(s) + '"></option>';
-    }).join('') + '</datalist></div>' + body +
+    }).join('') + '</datalist></div>' +
+    '<div class="qform even"><div class="field"><label for="d-cat">' + t('cat_pick') + '</label><select class="input" id="d-cat" data-input="dcat">' + catOptions(state.draftCat) + '</select></div>' +
+    '<div class="field"><label for="d-catname">' + t('cat_new_ph') + '</label><input class="input" id="d-catname" data-input="dcatname" dir="auto" maxlength="60" autocomplete="off" value="' +
+    esc(state.draftCatName) + '"></div></div>' + body +
     '<div class="row"><span class="sub grow">' + t('default_cur') + '</span>' +
     seg('dcur', 'cur', ['USD', 'SYP'].map(function (c) { return { v: c, label: t(c.toLowerCase()) }; }), state.draftCur, true) + '</div>' +
     '<div class="row"><span class="sub grow">' + t('cond') + '</span>' + seg('dcond', 'cond', ['new', 'used'].map(function (c) { return { v: c, label: t('cond_' + c) }; }), state.draftCond, true) + '</div>' +
@@ -3577,7 +3664,7 @@ function offerHead(o) {
     (info.notes.length ? '<span class="onote" dir="auto">' + esc(info.notes.join(DOT)) + '</span>' : '');
 }
 function draftCalc(d) { return d.price > 0 ? offerLine(d) : ''; }
-function sameSupplier() { var sup = state.supplier.trim(); return sup ? state.offers.filter(function (o) { return o.supplier === sup; }) : []; }
+function sameSupplier() { var sup = state.supplier.trim(); return sup ? state.offers.filter(function (o) { return o.supplier === sup && !o.own; }) : []; }
 function paintDraft() {
   var el = $('#draft');
   if (!el) return;
@@ -3596,15 +3683,28 @@ function paintDraft() {
 function paintDraftFoot() {
   var b = $('#draft-save'), box = $('#repl-box');
   if (!b) return;
-  var n = state.draft.filter(function (d) { return d.price > 0; }).length, old = sameSupplier().length;
+  var n = state.draft.filter(function (d) { return d.price > 0; }).length, old = state.draftOwn ? 0 : sameSupplier().length;
   b.textContent = t('save_n', { n: n });
   b.disabled = !n;
   $('#draft-hint').hidden = n === state.draft.length;
   box.hidden = !old;
   $('#repl-text').textContent = t('replace_old', { n: old });
 }
+/* The categories an offer can be put in: found from the item, one of the accounting program's groups, or one the
+   manager named for offers before. */
+function catOptions(current) {
+  var groups = Object.keys(state.groupNames).map(function (id) { return { v: 'g:' + id, label: catName({ id: id, name: state.groupNames[id] }) }; })
+    .sort(function (a, b) { return catRank({ id: a.v.slice(2) }) - catRank({ id: b.v.slice(2) }) || (a.label < b.label ? -1 : 1); }),
+    named = uniq(state.offers.map(function (o) { return o.cat; }).filter(function (c) { return /^n:/.test(c); })).map(function (c) { return { v: c, label: c.slice(2) }; });
+  return [{ v: '', label: t('cat_auto') }].concat(groups, named).map(function (c) {
+    return '<option value="' + esc(c.v) + '"' + (c.v === current ? ' selected' : '') + '>' + esc(c.label) + '</option>';
+  }).join('');
+}
+function catChosen(pick, typed) { typed = (typed || '').trim().slice(0, 60); return typed ? 'n:' + typed : (pick || ''); }
+var OWN = '~own';   // the block of the shop's own goods on the offers screen
+function inBlock(o, block) { return block === OWN ? o.own : (!o.own && o.supplier === block); }
 function saveDraft() {
-  var sup = state.supplier.trim();
+  var own = state.draftOwn, sup = own ? (state.shop.name || 'Kouki') : state.supplier.trim(), cat = catChosen(state.draftCat, state.draftCatName);
   if (!sup) {
     toast(t('need_supplier'));
     var f = $('#supplier');
@@ -3612,8 +3712,15 @@ function saveDraft() {
     return;
   }
   var rows = state.draft.filter(function (d) { return d.price > 0; })
-    .map(function (d) { var r = { supplier: sup, name: d.name, price: d.price, cur: d.cur, note: d.note || '' }; if (state.shopOk) { r.cond = state.draftCond; r.sell = offerOwnSell('m' + offerNum(offerKey(r)), offerUsd(d)); } return r; });   // a price the manager set for this device before stays
-  var old = state.replaceOld ? sameSupplier().map(function (o) { return o.id; }) : [];
+    .map(function (d) {
+      var r = { supplier: sup, name: d.name, price: d.price, cur: d.cur, note: d.note || '' };
+      if (state.shopOk) { r.cond = state.draftCond; r.sell = offerOwnSell('m' + offerNum(offerKey(r)), offerUsd(d)); }   // a price the manager set for this device before stays
+      if (own) { r.own = true; r.qty = 1; }
+      if (cat) r.cat = cat;
+      if (state.hidden['m' + offerNum(offerKey(r))]) r.hidden = true;   // a device hidden from customers stays hidden
+      return r;
+    });
+  var old = state.replaceOld && !own ? sameSupplier().map(function (o) { return o.id; }) : [];
   var b = $('#draft-save');
   if (b) b.disabled = true;
   addOffers(rows).then(function (n) {
@@ -3631,7 +3738,7 @@ function saveDraft() {
 /* One supplier's offers in the order of the list they came from, newest list first. */
 function supplierList(sup) {
   var no = {};
-  return state.offers.filter(function (o) { return o.supplier === sup; }).map(function (o) { no[o.id] = readNote(o.note).no || 100000; return o; })
+  return state.offers.filter(function (o) { return inBlock(o, sup); }).map(function (o) { no[o.id] = readNote(o.note).no || 100000; return o; })
     .sort(function (a, b) { return (a.at < b.at ? 1 : (a.at > b.at ? -1 : 0)) || no[a.id] - no[b.id] || (a.name < b.name ? -1 : (a.name > b.name ? 1 : 0)); });
 }
 function offerRowHtml(o) {
@@ -3659,7 +3766,10 @@ function offerEditHtml(o) {
   return '<form class="oedit" data-form="oedit" data-id="' + esc(o.id) + '">' + field('oe-name', t('oe_name'), o.name, ' dir="auto" required') +
     '<div class="qform even">' + field('oe-price', t('oe_price'), o.price, ' type="number" inputmode="decimal" min="0" step="any" required') +
     choice('oe-cur', t('oe_cur'), [{ v: 'USD', label: t('usd') }, { v: 'SYP', label: t('syp') }], o.cur) +
-    choice('oe-cond', t('oe_cond'), [{ v: 'new', label: t('cond_new') }, { v: 'used', label: t('cond_used') }], o.cond) + '</div>' +
+    choice('oe-cond', t('oe_cond'), [{ v: 'new', label: t('cond_new') }, { v: 'used', label: t('cond_used') }], o.cond) +
+    (o.own ? field('oe-qty', t('oe_qty'), o.qty === null ? 1 : o.qty, ' type="number" inputmode="numeric" min="0" step="1"') : '') + '</div>' +
+    '<div class="qform even"><div class="field"><label for="oe-cat">' + t('cat_pick') + '</label><select class="input" id="oe-cat">' + catOptions(o.cat) + '</select></div>' +
+    field('oe-catname', t('cat_new_ph'), '', ' dir="auto" maxlength="60" autocomplete="off"') + '</div>' +
     '<div class="qform even">' + field('oe-cpu', t('spec_cpu'), sp.cpu, ' dir="ltr"') + field('oe-ram', t('spec_ram'), sp.ram, ' dir="ltr"') +
     field('oe-disk', t('spec_storage'), sp.disk, ' dir="ltr"') + field('oe-gpu', t('spec_gpu'), sp.gpu, ' dir="ltr"') + field('oe-screen', t('spec_screen'), sp.screen, ' dir="ltr"') + '</div>' +
     field('oe-notes', t('oe_notes'), sp.notes.join(DOT)) +
@@ -3675,6 +3785,8 @@ function saveOfferEdit(id) {
   sp.cpu = val('#oe-cpu'); sp.ram = val('#oe-ram'); sp.disk = val('#oe-disk'); sp.gpu = val('#oe-gpu'); sp.screen = val('#oe-screen');
   sp.notes = val('#oe-notes').split(/\s*\u00B7\s*|\n/).filter(Boolean);
   patch.note = writeNote(sp);
+  if (catChosen(val('#oe-cat'), val('#oe-catname')) !== o.cat) patch.cat = catChosen(val('#oe-cat'), val('#oe-catname'));
+  if (o.own) patch.qty = Math.max(0, Math.round(Number(val('#oe-qty')) || 0));
   oldId = 'm' + offerNum(offerKey(o));
   Object.keys(patch).forEach(function (k) { o[k] = patch[k]; });
   newId = 'm' + offerNum(offerKey(o));
@@ -3686,6 +3798,10 @@ function saveOfferEdit(id) {
 /* A new name or new specs give the device a new number in the store: the photos and note the manager gave it go along. */
 function carryOfferExtras(oldId, newId) {
   var n = Number(newId.slice(1)), photo = state.media[oldId], note = state.notes[oldId];
+  if (state.hidden[oldId] && !state.hidden[newId]) {   // hidden from customers before: still hidden
+    state.hidden[newId] = true;
+    sent(api('POST', '/rest/v1/item_hidden?on_conflict=item_id', { item_id: n }, 'resolution=merge-duplicates,return=minimal'));
+  }
   if (photo && !state.media[newId]) {
     state.media[newId] = photo;
     sent(api('POST', '/rest/v1/item_media?on_conflict=item_id', { item_id: n, photo: photo }, 'resolution=merge-duplicates,return=minimal'));
@@ -3735,16 +3851,16 @@ function paintOfferRows() {
   var el = $('#offer-groups');
   if (!el) return;
   var q = state.offers.length > 8 ? normalize(state.offerQuery).split(' ').filter(Boolean) : [];
-  el.innerHTML = supplierNames().map(function (sup) {
+  el.innerHTML = (state.offers.some(function (o) { return o.own; }) ? [OWN] : []).concat(supplierNames()).map(function (sup) {
     var all = supplierList(sup), list = all.filter(function (o) {
       var hay = normalize(o.name + ' ' + o.note + ' ' + o.supplier);
       return q.every(function (tok) { return hay.indexOf(tok) !== -1; });
     });
     if (!list.length) return '';
-    return '<section class="panel"><div class="row"><h3 class="h small grow" dir="auto">' + esc(sup) + ' <span class="sub">' + t('offers_n', { n: all.length }) + '</span></h3>' +
+    return '<section class="panel"><div class="row"><h3 class="h small grow" dir="auto">' + esc(sup === OWN ? t('own_goods') : sup) + ' <span class="sub">' + t('offers_n', { n: all.length }) + '</span></h3>' +
       (state.shopOk ? '<button class="btn sm" data-action="oshow" data-sup="' + esc(sup) + '" aria-pressed="' + all.some(function (o) { return o.listed; }) + '">' + t(all.some(function (o) { return o.listed; }) ? 'shop_on' : 'shop_off') + '</button>' : '') +
       '<button class="btn sm" data-action="oclist" data-sup="' + esc(sup) + '">' + icon('list', 16) + t('copy_list') + '</button>' +
-      '<button class="btn sm ghost" data-action="osupedit" data-sup="' + esc(sup) + '">' + icon('sliders', 16) + t('sup_edit') + '</button>' +
+      (sup === OWN ? '' : '<button class="btn sm ghost" data-action="osupedit" data-sup="' + esc(sup) + '">' + icon('sliders', 16) + t('sup_edit') + '</button>') +
       '<button class="btn sm ghost danger" data-action="osupdel" data-sup="' + esc(sup) + '">' + t('del_all') + '</button></div>' +
       (state.supEdit === sup ? supplierForm(sup, state.suppliers[sup] || '')
         : (state.suppliers[sup] ? '<a class="sub walink" target="_blank" rel="noopener" href="' + esc(waTo(state.suppliers[sup])) + '">' + icon('chat', 15) +
@@ -3793,7 +3909,9 @@ function viewOverview() {
     if (stockState(it) === 'low') alerts++;
   });
   var feed = state.events.map(eventRow).join(''), days = backupDays();
-  return photosNote() + (days < 0 || days > 14 ? '<section class="panel row"><span class="grow warn strong">' + (days < 0 ? t('bk_due_never') : t('bk_due', { n: days })) + '</span>' +
+  var hid = hiddenCount();
+  return photosNote() + (hid ? '<section class="panel row"><span class="grow">' + t('hidden_count', { n: hid }) + '</span><button class="btn sm" data-action="showhidden">' + t('hidden_show') + '</button></section>' : '') +
+    (days < 0 || days > 14 ? '<section class="panel row"><span class="grow warn strong">' + (days < 0 ? t('bk_due_never') : t('bk_due', { n: days })) + '</span>' +
     '<button class="btn sm" data-action="gobackup">' + t('bk_make') + '</button></section>' : '') + '<div class="kpis">' + kpi(usd(cost), t('kpi_cost'), sypOf(cost)) + kpi(usd(sell), t('kpi_sell'), sypOf(sell)) +
     kpi(usd(sell - cost), t('kpi_profit'), num(sell > 0 ? (sell - cost) / sell * 100 : 0, 1) + '%') + kpi(String(alerts), t('kpi_alert'), '', 'golow') + '</div>' +
     '<section class="panel"><div><h2 class="h">' + t('activity') + '</h2><p class="sub">' + t('activity_sub2') + '</p></div>' +
@@ -5250,7 +5368,7 @@ function toast(msg) {
 function goTab(tab) { flushLater(); state.tab = tab; render(); window.scrollTo(0, 0); }
 function setLang(l) { state.lang = l; state.langSet = true; save(); closeSheet(); state.items.forEach(describe); render(); }
 window.addEventListener('pagehide', stopScan);
-function resetStore() { state.cat = 'all'; state.query = ''; state.brand = ''; state.cpu = ''; state.ram = ''; state.need = ''; state.lowOnly = false; state.limit = 60; }
+function resetStore() { state.cat = 'all'; state.query = ''; state.brand = ''; state.cpu = ''; state.ram = ''; state.need = ''; state.lowOnly = false; state.onlyHidden = false; state.limit = 60; }
 function toggle(key, v) { state[key] = state[key] === v ? '' : v; state.limit = 60; paintItems(); }
 function person(id) { for (var i = 0; i < state.people.length; i++) if (state.people[i].id === id) return state.people[i]; return null; }
 
@@ -5277,6 +5395,9 @@ document.addEventListener('click', function (e) {
   else if (a === 'cat') { state.cat = el.getAttribute('data-cat'); state.brand = ''; state.cpu = ''; state.ram = ''; state.limit = 60; paintItems(); window.scrollTo(0, 0); }
   else if (a === 'low') { state.lowOnly = !state.lowOnly; state.limit = 60; paintItems(); }
   else if (a === 'instock') { state.inStockOnly = !state.inStockOnly; state.limit = 60; paintItems(); }
+  else if (a === 'onlyhidden') { state.onlyHidden = !state.onlyHidden; state.limit = 60; paintItems(); }
+  else if (a === 'showhidden') { resetStore(); state.onlyHidden = true; goTab('items'); }
+  else if (a === 'hideitem') { p = byId(id); if (p) toggleHidden(p); }
   else if (a === 'brand' || a === 'cpu' || a === 'ram' || a === 'need') toggle(a, el.getAttribute('data-v'));
   else if (a === 'scan') openScan();
   else if (a === 'bkmake') makeBackup();
@@ -5364,17 +5485,18 @@ document.addEventListener('click', function (e) {
   else if (a === 'dcond') { state.draftCond = el.getAttribute('data-cond'); paintTab(); }
   else if (a === 'oshow') {   // show or hide all of one supplier's offers in the store
     p = el.getAttribute('data-sup');
-    n = !state.offers.some(function (o) { return o.supplier === p && o.listed; });
-    state.offers.forEach(function (o) { if (o.supplier === p) o.listed = n; });
-    sent(api('PATCH', '/rest/v1/offers?supplier=eq.' + encodeURIComponent(p), { listed: n }, 'return=minimal'));
+    n = !state.offers.some(function (o) { return inBlock(o, p) && o.listed; });
+    state.offers.forEach(function (o) { if (inBlock(o, p)) o.listed = n; });
+    sent(api('PATCH', '/rest/v1/offers?' + (p === OWN ? 'own=is.true'
+      : 'supplier=eq.' + encodeURIComponent(p) + (state.offers.some(function (o) { return o.own; }) ? '&own=is.false' : '')), { listed: n }, 'return=minimal'));
     paintOfferRows();
   }
   else if (a === 'listcopy') copyList();
   else if (a === 'listshare') { p = $('#list-text'); if (p && navigator.share) navigator.share({ text: p.value }).catch(function () { /* closed without sharing */ }); }
   else if (a === 'osupdel') {
     p = el.getAttribute('data-sup');
-    n = state.offers.filter(function (o) { return o.supplier === p; }).map(function (o) { return o.id; });
-    if (n.length && window.confirm(t('del_supplier_q', { name: p, n: n.length }))) { removeOffers(n); paintOffers(); paintDraftFoot(); }
+    n = state.offers.filter(function (o) { return inBlock(o, p); }).map(function (o) { return o.id; });
+    if (n.length && window.confirm(t('del_supplier_q', { name: p === OWN ? t('own_goods') : p, n: n.length }))) { removeOffers(n); paintOffers(); paintDraftFoot(); }
   }
   else if (a === 'ratesrc') {
     state.rateSrc = el.getAttribute('data-src');
@@ -5423,6 +5545,9 @@ document.addEventListener('input', function (e) {
   else if (k === 'guestsyp') { state.guestSyp = el.checked; saveSetting('guest'); }
   else if (k === 'paste') { state.pasteText = el.value; setDraft(parseOfferText(el.value, state.draftCur)); paintDraft(); }
   else if (k === 'supplier') { state.supplier = el.value; paintDraftFoot(); }
+  else if (k === 'downown') { state.draftOwn = el.checked; d = $('#supplier'); if (d) d.parentNode.hidden = el.checked; paintDraftFoot(); }
+  else if (k === 'dcat') state.draftCat = el.value;
+  else if (k === 'dcatname') state.draftCatName = el.value;
   else if (k === 'replold') { state.replaceOld = el.checked; state.replaceTouched = true; }
   else if (k === 'omargin') {   // profit % for supplier offers; empty goes back to the general one
     v = parseFloat(el.value);
