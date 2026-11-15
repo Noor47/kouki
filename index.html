@@ -12,8 +12,15 @@ var RAFF_CLOUD_KEY = 'sb_publishable_LWI-49Y5BCYEV6kHIuA5Og_ymPaIhN1';
 <title>Kouki Technology</title>
 <meta name="description" content="Kouki Technology - laptops, accessories, parts and software. Live prices and stock.">
 <meta property="og:title" content="Kouki Technology">
-<meta property="og:description" content="Laptops, accessories, parts and software. Live prices and stock.">
+<meta property="og:site_name" content="Kouki Technology">
+<meta property="og:description" content="لابتوبات جديدة ومستعملة، إكسسوارات، قطع، برامج وبلايستيشن. الأسعار والكميات مباشرة.">
 <meta property="og:type" content="website">
+<meta property="og:locale" content="ar_SY">
+<meta property="og:url" content="https://www.koukitechnology.com/">
+<meta property="og:image" content="https://www.koukitechnology.com/icon-512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta name="twitter:card" content="summary">
 <meta name="robots" content="noindex, nofollow">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
@@ -1003,6 +1010,15 @@ var LOCALES = {
     q_specs: 'Send the full specs and notes',
     q_photos: 'Add the photos to the printable copy',
     q_note: 'Note',
+    staff_only: 'Not shown to customers',
+    q_cost_unknown: 'The cost of {n} of the items is not known.',
+    q_below_cost: 'After the discount the price is below cost.',
+    staff_cost_allow: 'Show employees what each item cost',
+    staff_cost_hint: 'Employees then see the cost and profit of each item on its page and in quotes. Items hidden from them stay hidden, and customers never see it.',
+    share_on: 'Link previews are on: pages for {n} items, last updated {when}.',
+    share_off: 'Link previews are not on yet: shared links work, but without a photo. The guide has the steps to turn them on.',
+    og_desc: 'New and used laptops, accessories, parts, software and PlayStation. Live prices and stock.',
+    share_tail: 'Price and photos on the site',
     scan_start: 'Starting the camera...',
     scan_denied: 'Camera access was refused. Allow it in the browser settings, or type the number.',
     scan_nocam: 'No camera could be opened on this device. Type the number instead.',
@@ -1542,6 +1558,15 @@ var LOCALES = {
     q_specs: 'إرسال المواصفات الكاملة والملاحظات',
     q_photos: 'إضافة صور المواد إلى نسخة الطباعة',
     q_note: 'ملاحظة',
+    staff_only: 'لا يراها الزبائن',
+    q_cost_unknown: 'رأس مال {n} من المواد غير معروف.',
+    q_below_cost: 'السعر بعد الخصم صار أقل من رأس المال.',
+    staff_cost_allow: 'إظهار رأس المال للموظفين',
+    staff_cost_hint: 'يرى الموظفون عندها رأس مال كل مادة وربحها في صفحتها وفي عرض السعر. المواد المخفية عنهم تبقى مخفية، والزبائن لا يرونه أبداً.',
+    share_on: 'معاينة الروابط تعمل: صفحات {n} مادة، آخر تحديث {when}.',
+    share_off: 'معاينة الروابط غير مفعّلة بعد: الروابط المرسلة تعمل لكن بلا صورة. خطوات تفعيلها في الدليل.',
+    og_desc: 'لابتوبات جديدة ومستعملة، إكسسوارات، قطع، برامج وبلايستيشن. الأسعار والكميات مباشرة.',
+    share_tail: 'السعر والصور على الموقع',
     scan_start: 'جارٍ تشغيل الكاميرا...',
     scan_denied: 'تم رفض إذن الكاميرا. اسمح به من إعدادات المتصفح، أو اكتب الرقم.',
     scan_nocam: 'تعذّر فتح الكاميرا على هذا الجهاز. اكتب الرقم بدلاً من ذلك.',
@@ -1648,7 +1673,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.21';
+var APP_BUILD = '2.22';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -1682,6 +1707,8 @@ var state = {
   draftOwn: false, draftCat: '', draftCatName: '',   // a list being added: the shop's own goods, and its category
   qrFor: '', qrCart: false,                          // the QR code shown on an open item, or under the quote
   quoteSpecs: true, quotePhotos: true,               // what a quote for a customer carries besides names and prices
+  staffCostOn: false, offerCosts: {},                // employees see costs only when the manager allows it
+  shareOn: false, shareAt: '', shareCount: 0,        // the small pages that give shared links a photo (see share.json)
   photoAuto: true, photoCap: 900,
   offerQuery: '', replaceOld: false, replaceTouched: false, ocrMsg: '', ocrBusy: false,
   need: '',             // manager's list filter: '' | noprice | pending | nophoto
@@ -1868,6 +1895,7 @@ function applySettings(rows) {
   var shop = { name: 'Kouki Technology', phone: '', note: '', validDays: 3 }, auto = true;
   state.rateSrc = 'books'; state.rateManual = 0;
   state.guestOn = true; state.guestSyp = true; state.maxDiscount = 5; state.floorMode = 'peek'; state.codeWord = 'BLACKHORSE'; state.pricing.lowAt = 1; state.offerMargin = null; state.lastBackup = ''; state.photoAuto = true; state.photoCap = 900;
+  state.staffCostOn = false;
   (rows || []).forEach(function (r) {
     var v = r.value || {};
     if (r.key === 'shop') {
@@ -1881,6 +1909,7 @@ function applySettings(rows) {
     else if (r.key === 'offers') { if (v.margin >= 0 && v.margin !== null) state.offerMargin = Number(v.margin); }
     else if (r.key === 'backup') state.lastBackup = typeof v.at === 'string' ? v.at : '';
     else if (r.key === 'photos') { state.photoAuto = v.auto !== false; state.photoCap = v.cap >= 0 && v.cap !== null ? Number(v.cap) : 900; }
+    else if (r.key === 'staff_cost') state.staffCostOn = v.enabled === true;
     else if (r.key === 'floor') {
       if (v.maxDiscount >= 0 && v.maxDiscount <= 100) state.maxDiscount = Number(v.maxDiscount);
       if (v.lowAt >= 0) state.pricing.lowAt = Number(v.lowAt);
@@ -1934,6 +1963,11 @@ function applyCloud(d) {
     if (r.extra > 0) p.extra['m' + r.item_id] = Number(r.extra);
   });
   (d.costs || []).forEach(function (c) { costs[c.item_id] = c; });
+  state.offerCosts = {};
+  (d.staffCosts || []).forEach(function (c) {   // an employee's view: the cost alone, when the manager allows it
+    if (c.item_id !== null && c.item_id !== undefined) costs[c.item_id] = { cost: c.cost };
+    else if (c.offer_id) state.offerCosts[c.offer_id] = Number(c.cost) || 0;
+  });
   /* Photos live in the cloud's file store; a cloud that has not had its second update yet simply has none. */
   state.mediaOk = Array.isArray(d.media);
   if (d.finds !== undefined) applyFinds(d.finds, d.findItems);
@@ -2240,6 +2274,21 @@ function waDigits(v) {
 }
 function waTo(digits, text) { return 'https://wa.me/' + digits + (text ? '?text=' + encodeURIComponent(text) : ''); }
 function itemLink(it) { return location.origin + location.pathname + '#p' + idNum(it); }
+/* Who sees what an item cost: the manager always, employees only while the manager allows it. */
+function seesCost() { return isAdmin() || (!isGuest() && state.staffCostOn); }
+
+/* ---------- Links that show a photo when shared ----------
+   The site's build job (see the guide) writes a small page for every item customers can see, with share.json beside
+   them. While that file is there, shared links point at those pages, so WhatsApp and Telegram show the item's photo
+   and name, and the page then opens the item here. Without it, links stay the plain ones. */
+function siteBase() { return location.origin + location.pathname.replace(/[^/]*$/, ''); }
+function shareUrl(it) { return state.shareOn ? siteBase() + 'p/' + idNum(it) : itemLink(it); }
+function loadShareInfo() {
+  if (!window.fetch || location.protocol === 'file:') return;
+  fetch(siteBase() + 'share.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+    if (j && j.count > 0) { state.shareOn = true; state.shareAt = String(j.at || ''); state.shareCount = Number(j.count) || 0; }
+  }, function () { /* no pages for sharing yet: plain links */ });
+}
 
 /* ---------- Links to one item: "#p123" opens it, and the phone's back button closes it ---------- */
 var hashByApp = false;
@@ -2494,7 +2543,7 @@ function shopItems(list, used) {
     if (isAdmin()) {
       for (i = 0; i < state.offers.length && !own; i++) if (state.offers[i].id === o.id) own = state.offers[i];
       it.raw = { cost: own ? offerUsd(own) : 0 }; it.cost = it.raw.cost; it.pending = false; it.extra = 0; it.buy = null; it.sale = null;
-    }
+    } else if (state.offerCosts[o.id] > 0) it.cost = state.offerCosts[o.id];   // an employee, while the manager allows it
     used[cat] = true;
     state.items.push(it);
   });
@@ -2687,24 +2736,31 @@ function fetchData() {
   var jobs = [pages('/rest/v1/items?select=id,group_id,code,barcode,name,qty,qty_by,sell,manual&gone=is.false&order=id'),
     pages('/rest/v1/item_groups?select=*&order=id'), pages('/rest/v1/currencies?select=*&order=id'), pages('/rest/v1/warehouses?select=*&order=id'),
     pages('/rest/v1/app_settings?select=key,value&order=key'), api('GET', '/rest/v1/sync_status?select=*').then(need),
-    pagesSoft('/rest/v1/item_media?select=item_id,photo&order=item_id')];
+    pagesSoft('/rest/v1/item_media?select=item_id,photo&order=item_id')], at = {};
+  function add(name, job) { at[name] = jobs.length; jobs.push(job); }   // each list keeps its own name, whoever loads
   if (isAdmin()) {
-    jobs.push(pages('/rest/v1/item_costs?select=*&order=item_id'), pages('/rest/v1/item_pricing?select=*&order=item_id'),
-      pages('/rest/v1/group_pricing?select=*&order=group_id'), api('GET', '/rest/v1/pricing_rules?select=*').then(need),
-      pages('/rest/v1/offers?select=*&order=created_at.desc,id'), pages('/rest/v1/profiles?select=*&order=created_at,id'),
-      api('GET', '/rest/v1/stock_events?select=*&order=id.desc&limit=40').then(need),
-      pagesSoft('/rest/v1/photo_finds?select=query,label,kind,status,results,note,photo&status=in.(queued,asked,done,none,failed)&order=query'),
-      pagesSoft('/rest/v1/photo_find_items?select=item_id,query&order=item_id'), pagesSoft('/rest/v1/photo_jobs?select=id&order=id'));
-  }
+    add('costs', pages('/rest/v1/item_costs?select=*&order=item_id'));
+    add('itemPricing', pages('/rest/v1/item_pricing?select=*&order=item_id'));
+    add('groupPricing', pages('/rest/v1/group_pricing?select=*&order=group_id'));
+    add('rules', api('GET', '/rest/v1/pricing_rules?select=*').then(need));
+    add('offers', pages('/rest/v1/offers?select=*&order=created_at.desc,id'));
+    add('people', pages('/rest/v1/profiles?select=*&order=created_at,id'));
+    add('events', api('GET', '/rest/v1/stock_events?select=*&order=id.desc&limit=40').then(need));
+    add('finds', pagesSoft('/rest/v1/photo_finds?select=query,label,kind,status,results,note,photo&status=in.(queued,asked,done,none,failed)&order=query'));
+    add('findItems', pagesSoft('/rest/v1/photo_find_items?select=item_id,query&order=item_id'));
+    add('jobs', pagesSoft('/rest/v1/photo_jobs?select=id&order=id'));
+  } else add('staffCosts', pagesSoft('/rest/v1/rpc/staff_costs?order=item_id,offer_id'));   // empty unless the manager allows it
   /* items hidden from customers (some from employees too), suppliers' numbers, and what staff asked them in the last 30 days */
-  jobs.push(pagesSoft('/rest/v1/item_hidden?select=*&order=item_id'), pagesSoft('/rest/v1/suppliers?select=name,whatsapp&order=name'),
-    pagesSoft('/rest/v1/supplier_requests?select=id,offer_id,supplier,item,kind,sent_by,sent_by_name,sent_at&order=sent_at.desc&sent_at=gte.' +
-      encodeURIComponent(new Date(Date.now() - 30 * 864e5).toISOString())));
-  jobs.push(pagesSoft('/rest/v1/rpc/catalog_offers?order=name,id'), pagesSoft('/rest/v1/item_notes?select=item_id,note&order=item_id'));
+  add('hidden', pagesSoft('/rest/v1/item_hidden?select=*&order=item_id'));
+  add('suppliers', pagesSoft('/rest/v1/suppliers?select=name,whatsapp&order=name'));
+  add('requests', pagesSoft('/rest/v1/supplier_requests?select=id,offer_id,supplier,item,kind,sent_by,sent_by_name,sent_at&order=sent_at.desc&sent_at=gte.' +
+    encodeURIComponent(new Date(Date.now() - 30 * 864e5).toISOString())));
+  add('shop', pagesSoft('/rest/v1/rpc/catalog_offers?order=name,id'));
+  add('notes', pagesSoft('/rest/v1/item_notes?select=item_id,note&order=item_id'));
   return Promise.all(jobs).then(function (a) {
-    return { notes: a[a.length - 1], shop: a[a.length - 2], requests: a[a.length - 3], suppliers: a[a.length - 4], hidden: a[a.length - 5], items: a[0], groups: a[1], currencies: a[2], warehouses: a[3], settings: a[4], status: (a[5] || [])[0] || null, media: a[6],
-      costs: a[7], itemPricing: a[8], groupPricing: a[9], rules: a[10], offers: a[11], people: a[12], events: a[13],
-      finds: isAdmin() ? a[14] : undefined, findItems: isAdmin() ? a[15] : undefined, jobs: isAdmin() ? a[16] : undefined };
+    var d = { items: a[0], groups: a[1], currencies: a[2], warehouses: a[3], settings: a[4], status: (a[5] || [])[0] || null, media: a[6] };
+    Object.keys(at).forEach(function (k) { d[k] = a[at[k]]; });
+    return d;
   });
 }
 var reloading = null;
@@ -2882,7 +2938,7 @@ function saveRules() {
   later('rules', function () { sent(api('PATCH', '/rest/v1/pricing_rules?id=eq.1', { default_margin: state.pricing.defMargin }, 'return=minimal')); });
 }
 function saveSetting(key) {
-  var scope = key === 'floor' ? 'staff' : (key === 'offers' || key === 'backup' || key === 'photos' ? 'admin' : 'public');
+  var scope = key === 'floor' || key === 'staff_cost' ? 'staff' : (key === 'offers' || key === 'backup' || key === 'photos' ? 'admin' : 'public');
   later('set-' + key, function () {
     var value = key === 'shop' ? { name: state.shop.name, phone: state.shop.phone, note: state.shop.note, validDays: state.shop.validDays }
       : key === 'guest' ? { enabled: state.guestOn, sypOnly: state.guestSyp }
@@ -2890,6 +2946,7 @@ function saveSetting(key) {
       : key === 'offers' ? { margin: state.offerMargin }
       : key === 'backup' ? { at: state.lastBackup }
       : key === 'photos' ? { auto: state.photoAuto, cap: state.photoCap }
+      : key === 'staff_cost' ? { enabled: state.staffCostOn }
       : { maxDiscount: state.maxDiscount, lowAt: state.pricing.lowAt, mode: state.floorMode, codeWord: state.codeWord };
     sent(api('POST', '/rest/v1/app_settings?on_conflict=key', [{ key: key, scope: scope, value: value }], 'resolution=merge-duplicates,return=minimal'));
   });
@@ -3295,7 +3352,7 @@ function chipsHtml(it, all) {
   return list.length ? '<span class="specs">' + list.map(function (c) { return '<i>' + esc(c) + '</i>'; }).join('') + '</span>' : '';
 }
 function itemCard(it) {
-  var extra = isAdmin()
+  var extra = isAdmin() || (seesCost() && it.cost > 0)
     ? '<div class="secret">' + icon('lock', 13) + t('cost') + ' <b>' + usd(it.cost) + '</b>' + (hasPrice(it) ? ' · <b>' + num(marginPct(it), 1) + '%</b>' : '') +
       (it.pending ? ' <span class="pill low">' + t('pending') + '</span>' : '') + '</div>'
     : '';
@@ -3387,13 +3444,14 @@ function orderBox(it) {
     (last ? '<p class="sub" dir="auto">' + esc(t('sreq_last', { kind: t(last.kind === 'ask' ? 'sreq_kind_ask' : 'sreq_kind_order'), who: last.sent_by_name || t('sreq_someone'),
       when: whenText(last.sent_at) })) + '</p>' : '') +
     (it.offer.from || []).map(function (r, i) {
-      var wa = state.suppliers[r.supplier] || '', own = isAdmin() ? offerById(r.id) : null;
+      var wa = state.suppliers[r.supplier] || '', own = isAdmin() ? offerById(r.id) : null, paid = !isAdmin() && seesCost() ? state.offerCosts[r.id] : 0;
       function link(kind) {
         return '<a class="btn sm' + (kind === 'order' ? ' primary' : '') + '" target="_blank" rel="noopener" data-action="sreq" data-kind="' + kind + '" data-id="' + it.id +
           '" data-sup="' + esc(r.supplier) + '" data-offer="' + esc(r.id) + '" href="' + esc(waTo(wa, orderText(kind, it, r))) + '">' + t(kind === 'ask' ? 'sreq_ask' : 'sreq_order') + '</a>';
       }
       return '<div class="orow"><div class="grow ocol"><span class="nm" dir="auto">' + esc(r.supplier) + '</span>' +
-        (own ? '<span class="meta"><span class="secret">' + icon('lock', 13) + t('offer_buy') + ' <b>' + listPrice(own) + '</b></span></span>' : '') + '</div>' +
+        (own ? '<span class="meta"><span class="secret">' + icon('lock', 13) + t('offer_buy') + ' <b>' + listPrice(own) + '</b></span></span>' : '') +
+        (paid > 0 ? '<span class="meta"><span class="secret">' + icon('lock', 13) + t('offer_buy') + ' <b>' + usd(paid) + '</b></span></span>' : '') + '</div>' +
         (wa ? link('ask') + link('order')
           : '<form class="wa-add" data-form="supwa" data-sup="' + esc(r.supplier) + '"><input class="input mini" id="wa-' + i + '" type="tel" inputmode="tel" dir="ltr" autocomplete="off" placeholder="0933 123 456" aria-label="' +
             esc(t('sup_wa')) + '"><button class="btn sm" type="submit">' + t('sreq_addnum') + '</button></form>') + '</div>';
@@ -3464,6 +3522,13 @@ function setOwnQty(it, total) {
   }
   openItem(it.id);
 }
+/* An employee's view of what the item cost and what it earns, while the manager allows it. */
+function staffCostBox(it) {
+  if (isAdmin() || !seesCost() || !(it.cost > 0)) return '';
+  return '<div class="private-box staff-cost"><div class="row priv-title">' + icon('lock', 15) + t('staff_only') + '</div><dl class="facts">' +
+    fact(t(it.offer ? 'offer_buy' : 'cost'), usd(it.cost) + ' · ' + sypOf(it.cost)) +
+    (hasPrice(it) ? fact(t('profit_unit'), usd(it.sell - it.cost)) + fact(t('margin'), num(marginPct(it), 1) + '%') : '') + '</dl></div>';
+}
 function soldControl(it) {
   if (isGuest() || isAdmin() || !it.offer || !it.offer.own || !(it.offer.ownQty > 0)) return '';
   return '<div class="row"><span class="sub grow">' + t('own_sold_hint') + '</span><button class="btn sm" data-action="ownsold" data-id="' + it.id + '">' + t('own_sold') + '</button></div>';
@@ -3528,7 +3593,7 @@ function openItem(id) {
     coverHtml(it, true) +
     '<div class="row">' + priceHtml(it, true) + '<span class="pill ' + stockState(it) + '">' + stockLabel(it) + '</span></div>' +
     (hiddenBadge(it) ? '<p>' + hiddenBadge(it) + '</p>' : '') +
-    '<dl class="facts">' + facts + '</dl>' + noteHtml(it) + (it.offer && !it.offer.own && !isGuest() ? orderBox(it) : '') + soldControl(it);
+    '<dl class="facts">' + facts + '</dl>' + noteHtml(it) + staffCostBox(it) + (it.offer && !it.offer.own && !isGuest() ? orderBox(it) : '') + soldControl(it);
   if (isAdmin() && it.offer) {
     html += '<div class="private-box"><div class="row priv-title">' + icon('lock', 15) + t('admin_only') + '</div><dl class="facts">' +
       fact(t('offer_buy'), usd(it.cost)) + fact(t('profit_unit'), usd(it.sell - it.cost)) + '</dl>' + ownQtyControl(it) + priceInputs(it) + noteInput(it) + photoControls(it) + hideControl(it) + '</div>';
@@ -3545,8 +3610,8 @@ function openItem(id) {
   if (state.qrFor === it.id) html += qrItemBox(it);
   html += '<div class="row"><button class="btn primary grow" data-action="add" data-id="' + it.id + '" data-close="1"' + (priced ? '' : ' disabled') + '>' + icon('plus', 18) + addLabel() + '</button>' +
     (isGuest()
-      ? (state.shop.phone ? '<a class="btn grow" target="_blank" rel="noopener" href="' + esc(shopWa(t('ask_item', { name: it.name, code: it.code }) + '\n' + itemLink(it))) + '">' + icon('chat', 18) + t('ask_whatsapp') + '</a>' : '')
-      : '<a class="btn grow" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(line + '\n' + state.shop.name + '\n' + itemLink(it)) + '">' + icon('send', 18) + t('share_price') + '</a>') +
+      ? (state.shop.phone ? '<a class="btn grow" target="_blank" rel="noopener" href="' + esc(shopWa(t('ask_item', { name: it.name, code: it.code }) + '\n' + shareUrl(it))) + '">' + icon('chat', 18) + t('ask_whatsapp') + '</a>' : '')
+      : '<a class="btn grow" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(line + '\n' + state.shop.name + '\n' + shareUrl(it)) + '">' + icon('send', 18) + t('share_price') + '</a>') +
     '<button class="btn" data-action="cmp" data-id="' + it.id + '" aria-pressed="' + inCompare(it.id) + '">' + icon('compare', 18) + t('cmp_add') + '</button>' +
     '<button class="btn" data-action="qr" data-id="' + it.id + '" aria-pressed="' + (state.qrFor === it.id) + '">' + icon('qr', 18) + t('qr_btn') + '</button>' +
     (navigator.share ? '<button class="btn" data-action="share" data-id="' + it.id + '">' + icon('send', 18) + t('share') + '</button>'
@@ -3614,13 +3679,18 @@ function sumHtml(q) {
       '<div class="sumline"><span>' + t('discount') + ' ' + num(q.pct, 1) + '%</span><span class="code">-' + px(q.disc) + '</span></div>'
     : '') +
     '<div class="total"><span>' + t('total') + '</span><span class="price"><span class="tag big">' + px(q.total) + '</span><span class="syp big">' + px2(q.total) + '</span></span></div>' +
-    (isAdmin() ? quoteCostHtml(q) : '');
+    (seesCost() ? quoteCostHtml(q) : '');
 }
-/* The manager's own view of a quote: what the goods cost, and the profit left after the discount. */
+/* What the goods of a quote cost and the profit left after the discount: the manager's view, and employees' while
+   the manager allows it. A discount that goes below cost is called out. */
 function quoteCostHtml(q) {
-  var cost = q.lines.reduce(function (s, l) { return s + (l.it.cost || 0) * l.n; }, 0), profit = q.total - cost;
-  return '<div class="private-box"><div class="row priv-title">' + icon('lock', 15) + t('admin_only') + '</div><p class="code">' +
-    t('q_cost', { c: usd(cost), p: usd(profit), m: num(q.total > 0 ? profit / q.total * 100 : 0, 1) }) + '</p></div>';
+  var cost = 0, unknown = 0, profit;
+  q.lines.forEach(function (l) { if (l.it.cost > 0) cost += l.it.cost * l.n; else unknown++; });
+  profit = q.total - cost;
+  return '<div class="private-box"><div class="row priv-title">' + icon('lock', 15) + t(isAdmin() ? 'admin_only' : 'staff_only') + '</div><p class="code">' +
+    t('q_cost', { c: usd(cost), p: usd(profit), m: num(q.total > 0 ? profit / q.total * 100 : 0, 1) }) + '</p>' +
+    (unknown ? '<p class="sub">' + t('q_cost_unknown', { n: unknown }) + '</p>' : '') +
+    (profit < 0 && !unknown ? '<p class="warn strong">' + t('q_below_cost') + '</p>' : '') + '</div>';
 }
 function viewQuote() {
   var q = quoteCalc(), guest = isGuest(), title = t(guest ? 'request_title' : 'quote_title');
@@ -4281,10 +4351,13 @@ function viewSettings() {
       (state.floorMode === 'code'
         ? inputField('code-word', 'codeword', 'code_word', state.codeWord, ' dir="ltr" maxlength="10" autocomplete="off" autocapitalize="characters" spellcheck="false"') +
           '<p class="sub" id="code-ex">' + esc(codeExample()) + '</p>'
-        : '') + '</section>' +
+        : '') +
+      '<label class="check" for="staff-cost"><input id="staff-cost" type="checkbox" data-input="staffcost"' + (state.staffCostOn ? ' checked' : '') + '><span>' + t('staff_cost_allow') + '</span></label>' +
+      '<p class="sub">' + t('staff_cost_hint') + '</p></section>' +
       '<section class="panel"><h2 class="h">' + t('set_guest') + '</h2><label class="check" for="guest-on"><input id="guest-on" type="checkbox" data-input="gueston"' +
       (state.guestOn ? ' checked' : '') + '><span>' + t('guest_allow') + '</span></label>' +
-      '<label class="check" for="guest-syp"><input id="guest-syp" type="checkbox" data-input="guestsyp"' + (state.guestSyp ? ' checked' : '') + '><span>' + t('guest_syp') + '</span></label></section>';
+      '<label class="check" for="guest-syp"><input id="guest-syp" type="checkbox" data-input="guestsyp"' + (state.guestSyp ? ' checked' : '') + '><span>' + t('guest_syp') + '</span></label>' +
+      '<p class="sub" id="share-state">' + (state.shareOn ? t('share_on', { n: num(state.shareCount, 0), when: whenText(state.shareAt) }) : t('share_off')) + '</p></section>';
   }
   h += securityPanel();
   if (isAdmin()) h += peoplePanel() + photosPanel() + backupPanel();
@@ -4674,7 +4747,7 @@ function listQrBox() {
 }
 /* A code or link read here: "#p" opens one item, "#q" a whole list. Anything else is left to the barcode search. */
 function openLink(text) {
-  var m = /(?:^|#)p(\d{1,16})$/.exec(text), list = LIST_RE.exec(text);
+  var m = /(?:^|#)p(\d{1,16})$/.exec(text) || /\/p\/(\d{1,16})(?:\.html)?\/?$/.exec(text), list = LIST_RE.exec(text);   // also a shared link
   if (list) { openSharedList(list[1]); return true; }
   if (!m) return false;
   if (byId('m' + m[1])) openItem('m' + m[1]); else toast(t('scan_item_gone'));
@@ -5806,11 +5879,11 @@ document.addEventListener('click', function (e) {
   else if (a === 'zstep') { if (state.zoom) { state.zoom.i += Number(el.getAttribute('data-d')); state.zoom.big = false; paintZoom(); } }
   else if (a === 'share') {
     p = byId(id);
-    if (p && navigator.share) navigator.share({ title: p.name, text: p.name + (hasPrice(p) ? ' - ' + px(p.sell) : ''), url: itemLink(p) }).catch(function () { /* closed without sharing */ });
+    if (p && navigator.share) navigator.share({ title: p.name, text: p.name + (hasPrice(p) ? ' - ' + px(p.sell) : ''), url: shareUrl(p) }).catch(function () { /* closed without sharing */ });
   }
   else if (a === 'copylink') {
     p = byId(id);
-    if (p && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(itemLink(p)).then(function () { toast(t('link_copied')); }, function () { toast(t('copy_fail')); });
+    if (p && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(shareUrl(p)).then(function () { toast(t('link_copied')); }, function () { toast(t('copy_fail')); });
     else toast(t('copy_fail'));
   }
   else if (a === 'more') { state.limit += 60; paintItems(); }
@@ -5934,6 +6007,7 @@ document.addEventListener('input', function (e) {
   else if (k === 'downown') { state.draftOwn = el.checked; d = $('#supplier'); if (d) d.parentNode.hidden = el.checked; paintDraft(); }
   else if (k === 'qspecs') { state.quoteSpecs = el.checked; save(); paintQuoteSum(); }
   else if (k === 'qphotos') { state.quotePhotos = el.checked; save(); }
+  else if (k === 'staffcost') { state.staffCostOn = el.checked; saveSetting('staff_cost'); }
   else if (k === 'dqty') {   // how many of my own goods: empty keeps the usual (one, or what is there already)
     d = state.draft[Number(el.getAttribute('data-i'))];
     v = parseInt(el.value, 10);
@@ -6077,6 +6151,7 @@ window.addEventListener('online', poll);
 load();
 render();
 bioCheck();
+loadShareInfo();
 if (!state.session) enterGuest();                      // the store opens at once, no sign-in asked
 else if (bioId()) { state.screen = 'locked'; render(); }
 else startSession();
