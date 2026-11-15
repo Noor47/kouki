@@ -1,0 +1,41 @@
+# Publishes the shop's site with GitHub Pages: the files of this repository as they are, plus a small page for every
+# item customers can see, so that a shared link shows the item's photo and name. It runs after every upload, every
+# three hours to keep those pages up to date, and whenever "Run workflow" is pressed in the Actions tab.
+# It needs: Settings > Pages > Build and deployment > Source: GitHub Actions.
+name: Site
+
+on:
+  push:
+  schedule:
+    - cron: '23 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - id: pages
+        uses: actions/configure-pages@v5
+      - name: Build the site and the item pages
+        run: node tools/share-pages.mjs . _site
+        env:
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
