@@ -768,6 +768,7 @@ var LOCALES = {
     ask_whatsapp: 'Ask on WhatsApp',
     copy_link: 'Copy link',
     link_copied: 'Link copied',
+    link_copied_wait: 'Link copied. Paste it in the chat and wait a moment for the item\'s photo before you send it.',
     similar: 'Similar items',
     ask_item: 'Hello, I am asking about: {name} ({code})',
     continue_shop: 'Continue browsing',
@@ -1316,6 +1317,7 @@ var LOCALES = {
     ask_whatsapp: 'اسأل على واتساب',
     copy_link: 'نسخ الرابط',
     link_copied: 'تم نسخ الرابط',
+    link_copied_wait: 'تم نسخ الرابط. ألصقه في المحادثة وانتظر لحظة حتى تظهر صورة المادة، ثم أرسله.',
     similar: 'مواد مشابهة',
     ask_item: 'مرحباً، أستفسر عن: {name} ({code})',
     continue_shop: 'متابعة التصفّح',
@@ -1673,7 +1675,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.22';
+var APP_BUILD = '2.23';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -2282,6 +2284,9 @@ function seesCost() { return isAdmin() || (!isGuest() && state.staffCostOn); }
    them. While that file is there, shared links point at those pages, so WhatsApp and Telegram show the item's photo
    and name, and the page then opens the item here. Without it, links stay the plain ones. */
 function siteBase() { return location.origin + location.pathname.replace(/[^/]*$/, ''); }
+/* WhatsApp on a computer sends what the system share window hands it at once, before the link's photo is ready, so a
+   computer also gets "copy link": a link pasted in the chat waits for its photo. Phones share with the photo as is. */
+function onComputer() { try { return !window.matchMedia('(pointer: coarse)').matches; } catch (e) { return false; } }
 function shareUrl(it) { return state.shareOn ? siteBase() + 'p/' + idNum(it) : itemLink(it); }
 function loadShareInfo() {
   if (!window.fetch || location.protocol === 'file:') return;
@@ -3614,8 +3619,8 @@ function openItem(id) {
       : '<a class="btn grow" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(line + '\n' + state.shop.name + '\n' + shareUrl(it)) + '">' + icon('send', 18) + t('share_price') + '</a>') +
     '<button class="btn" data-action="cmp" data-id="' + it.id + '" aria-pressed="' + inCompare(it.id) + '">' + icon('compare', 18) + t('cmp_add') + '</button>' +
     '<button class="btn" data-action="qr" data-id="' + it.id + '" aria-pressed="' + (state.qrFor === it.id) + '">' + icon('qr', 18) + t('qr_btn') + '</button>' +
-    (navigator.share ? '<button class="btn" data-action="share" data-id="' + it.id + '">' + icon('send', 18) + t('share') + '</button>'
-      : '<button class="btn" data-action="copylink" data-id="' + it.id + '">' + icon('copy', 18) + t('copy_link') + '</button>') + '</div>';
+    (navigator.share ? '<button class="btn" data-action="share" data-id="' + it.id + '">' + icon('send', 18) + t('share') + '</button>' : '') +
+    (!navigator.share || onComputer() ? '<button class="btn" data-action="copylink" data-id="' + it.id + '">' + icon('copy', 18) + t('copy_link') + '</button>' : '') + '</div>';
   if (like.length) html += '<section class="shelf"><h3 class="h small">' + t('similar') + '</h3><div class="shelf-row">' + like.map(function (o) { return itemCard(o); }).join('') + '</div></section>';
   html += '</div>';
   var sh = $('#sheet');
@@ -5883,7 +5888,7 @@ document.addEventListener('click', function (e) {
   }
   else if (a === 'copylink') {
     p = byId(id);
-    if (p && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(shareUrl(p)).then(function () { toast(t('link_copied')); }, function () { toast(t('copy_fail')); });
+    if (p && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(shareUrl(p)).then(function () { toast(t(state.shareOn ? 'link_copied_wait' : 'link_copied')); }, function () { toast(t('copy_fail')); });
     else toast(t('copy_fail'));
   }
   else if (a === 'more') { state.limit += 60; paintItems(); }
