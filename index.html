@@ -823,6 +823,13 @@ var LOCALES = {
     pf_end: 'That was the last one for now.',
     pf_nothing: 'No photos are waiting for your choice yet.',
     ps_web: 'Find a photo online',
+    ps_sug: 'Site suggestions ({n})',
+    ps_sug_wait: 'Looking for photos…',
+    ps_sug_find: 'Find photos for me',
+    ps_sug_again: 'Look again for me',
+    ps_sug_none: 'The site found no photos for this model.',
+    ps_sug_count: '{n} of the models ahead have suggested photos ready.',
+    pf_cannot: 'No photo search is possible for this name.',
     ps_web_hint: 'Opens an image search for this model. Pick a clear photo of the same model, copy or save it, then come back and paste it or choose it from the gallery.',
     ps_start: 'Photograph items quickly',
     ps_title: 'Quick photos',
@@ -1372,6 +1379,13 @@ var LOCALES = {
     pf_end: 'انتهت الصور المقترحة حالياً.',
     pf_nothing: 'لا توجد صور تنتظر اختيارك بعد.',
     ps_web: 'ابحث عن صورة بالإنترنت',
+    ps_sug: 'مقترحات الموقع ({n})',
+    ps_sug_wait: 'جارٍ البحث عن صور…',
+    ps_sug_find: 'ابحث لي عن صور',
+    ps_sug_again: 'ابحث لي من جديد',
+    ps_sug_none: 'لم يجد الموقع صوراً لهذا الموديل.',
+    ps_sug_count: 'لـ {n} من الموديلات الباقية صور مقترحة جاهزة.',
+    pf_cannot: 'لا يمكن البحث عن صور بهذا الاسم.',
     ps_web_hint: 'يفتح بحث صور عن هذا الموديل. اختر صورة واضحة للموديل نفسه، انسخها أو احفظها، ثم ارجع والصقها هنا أو اخترها من المعرض.',
     ps_start: 'تصوير المواد بسرعة',
     ps_title: 'تصوير سريع',
@@ -1675,7 +1689,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.24';
+var APP_BUILD = '2.25';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -4999,9 +5013,9 @@ function modelOf(it) {
 }
 /* An image search for the model in a new tab: the manager picks a photo there (so nothing wrong is chosen for
    him), copies or saves it, and pastes it here or picks it from the gallery. */
-function webSearchLink(text) {
-  return '<a class="btn ghost grow" href="https://www.google.com/search?tbm=isch&amp;q=' + encodeURIComponent(text) + '" target="_blank" rel="noopener noreferrer" data-web="1">' +
-    icon('search', 18) + t('ps_web') + '</a>';
+function webSearchLink(text, small) {
+  return '<a class="btn ghost ' + (small ? 'sm' : 'grow') + '" href="https://www.google.com/search?tbm=isch&amp;q=' + encodeURIComponent(text) + '" target="_blank" rel="noopener noreferrer" data-web="1">' +
+    icon('search', small ? 16 : 18) + t('ps_web') + '</a>';
 }
 /* A photo may be shared by several items: its files go only when no item names it any more. */
 function photoInUse(base, exceptId) {
@@ -5021,12 +5035,15 @@ function startShoot() {
   groups.sort(function (a, b) { return b.ids.length - a.ids.length || (a.label < b.label ? -1 : (a.label > b.label ? 1 : 0)); });   // the photos that cover most first
   if (shoot && (shoot.jobs.length || shoot.busy || shoot.failed.length)) { shoot.groups = groups; shoot.at = 0; }   // uploads of the last round carry on
   else shoot = { groups: groups, at: 0, jobs: [], busy: false, sent: 0, failed: [] };
+  shoot.sug = false;
+  finds.picks = [];
   var sh = $('#sheet');
   closeSheet();
   sh.innerHTML = '<div class="sheet shoot" role="dialog" aria-modal="true" aria-label="' + t('ps_title') + '" id="shoot"></div>';
   sh.hidden = false;
   document.body.classList.add('lock');
   paintShoot();
+  shootFreshFinds();   // the suggestions the site found, as they are now
 }
 function shootStatus() {
   var s = shoot, pend = s.jobs.length + (s.busy ? 1 : 0), out = [];
@@ -5050,15 +5067,16 @@ function paintShoot() {
   g = s.groups[s.at];
   var head = '<div class="row"><h2 class="h grow">' + t('ps_title') + '</h2>' + (g ? '<span class="sub code">' + (s.at + 1) + ' / ' + s.groups.length + '</span>' : '') +
     '<button class="x" id="sheet-close" data-action="close" aria-label="' + t('close') + '">' + icon('x') + '</button></div>';
-  var foot = '<p class="sub" id="ps-status" role="status"></p><button class="btn sm" id="ps-retry" data-action="psretry" hidden>' + t('ps_retry') + '</button>';
+  var foot = '<p class="sub" id="ps-status" role="status"></p><p class="sub" id="pf-bg" role="status"></p><button class="btn sm" id="ps-retry" data-action="psretry" hidden>' + t('ps_retry') + '</button>';
   if (!g) {
     box.innerHTML = head + '<p class="strong">' + t('ps_end') + '</p>' + foot + '<button class="btn primary" data-action="close">' + t('ps_close') + '</button>';
     paintShootStatus();
+    paintJobs();
     return;
   }
   first = byId(g.ids[0]);
-  box.innerHTML = head +
-    '<div class="row pshead">' + (first ? coverHtml(first) : '') + '<div class="grow"><p class="h small" dir="auto">' + esc(g.label) + '</p>' +
+  box.innerHTML = head + shootSugCount() +
+    '<div class="row pshead" data-ids="' + g.ids.join(',') + '">' + (first ? coverHtml(first) : '') + '<div class="grow"><p class="h small" dir="auto">' + esc(g.label) + '</p>' +
     '<p class="sub">' + t(g.ids.length > 1 ? 'ps_many' : 'ps_one', { n: g.ids.length }) + '</p></div></div>' +
     (g.ids.length > 1 ? '<div class="pslist">' + g.ids.map(function (id) {
       var it = byId(id);
@@ -5068,11 +5086,15 @@ function paintShoot() {
     '<input type="file" id="ps-cam" class="ps-in" accept="image/*" capture="environment" hidden>' +
     '<label class="btn grow ps-btn" for="ps-pick">' + icon('plus', 18) + t('ps_pick') + '</label>' +
     '<input type="file" id="ps-pick" class="ps-in" accept="image/*" multiple hidden></div>' +
-    '<div class="row">' + webSearchLink(g.label) + '</div><p class="sub">' + t('ps_web_hint') + '</p>' +
+    '<div class="row ps-find">' + shootSugButton(g) + webSearchLink(g.label, shootFindsOn()) + '</div>' +
+    (shoot.sug ? shootSugGrid(g) : '<p class="sub">' + t('ps_web_hint') + '</p>') +
     '<div class="row"><button class="btn ghost grow" data-action="psskip">' + t('ps_skip') + '</button>' +
     (s.at > 0 ? '<button class="btn ghost grow" data-action="psback">' + t('ps_back') + '</button>' : '') + '</div>' +
     (canHover ? '<p class="sub">' + t('ps_paste') + '</p>' : '') + foot;
   paintShootStatus();
+  if (shoot.sug) paintPicks();
+  paintJobs();
+  watchShootFinds();
 }
 function shootFiles(files) {
   var s = shoot, g = s && s.groups[s.at], ids;
@@ -5082,8 +5104,7 @@ function shootFiles(files) {
   ids = g.ids.filter(function (id) { return !g.off[id]; });
   if (!ids.length) { toast(t('ps_noneticked')); return; }
   s.jobs.push({ ids: ids, files: files });
-  s.at++;
-  paintShoot();
+  shootNext();
   pumpShoot();
 }
 /* Uploads one waiting photo set at a time, then names it on every item it was taken for. */
@@ -5450,7 +5471,7 @@ function candidates(r) {
 /* Pressing a picture adds it to the choice and pressing it again takes it out. The order of pressing is the order of
    the photos on the item: the first one is the main photo. */
 function shownPicks() {
-  return Array.prototype.map.call(document.querySelectorAll('#review .pfc:not([hidden])'), function (b) { return Number(b.getAttribute('data-i')); }).slice(0, MAX_PHOTOS);
+  return Array.prototype.map.call(document.querySelectorAll('#review .pfc:not([hidden]), #shoot .pfc:not([hidden])'), function (b) { return Number(b.getAttribute('data-i')); }).slice(0, MAX_PHOTOS);
 }
 function allPicked() {
   var shown = shownPicks();
@@ -5469,7 +5490,7 @@ function pickAllFinds() {
 }
 /* Only the marks and the buttons change, so words typed below stay and the pictures do not load again. */
 function paintPicks() {
-  var box = $('#review'), use, all;
+  var box = $('#review') || $('#shoot'), use, all;   // the review, or the suggestions opened on the quick photo screen
   if (!box) return;
   Array.prototype.forEach.call(box.querySelectorAll('.pfc'), function (b) {
     var at = finds.picks.indexOf(Number(b.getAttribute('data-i'))), n = b.querySelector('.pfn');
@@ -5477,7 +5498,7 @@ function paintPicks() {
     n.textContent = at >= 0 ? String(at + 1) : '';
     n.hidden = at < 0;
   });
-  use = box.querySelector('[data-action="pfuse"]');
+  use = box.querySelector('[data-action="pfuse"], [data-action="psuse"]');
   if (use) { use.textContent = t('pf_use', { n: finds.picks.length }); use.disabled = !finds.picks.length; }
   all = box.querySelector('[data-action="pfall"]');
   if (all) all.textContent = t(allPicked() ? 'pf_clear' : 'pf_all');
@@ -5688,6 +5709,127 @@ function decideFind(action, words) {
   });
 }
 
+/* ---------- The site's suggestions on the quick photo screen ----------
+   Each model there gets a button beside the internet search: the pictures the site found for it, chosen the same way
+   as in the review, or a search started for it on the spot. */
+function shootFindsOn() { return isAdmin() && state.findsOk && state.photoAuto; }
+/* The site's search for this model: the one any of its items is on. */
+function shootFind(g) {
+  var q = '', i;
+  for (i = 0; i < g.ids.length && !q; i++) q = state.findItems[g.ids[i]] || '';
+  if (!q) return null;
+  for (i = 0; i < state.finds.length; i++) if (state.finds[i].query === q) return state.finds[i];
+  return null;
+}
+function shootReady(f) { return !!f && f.status === 'done' && candidates({ f: f }).length > 0; }
+function shootSugButton(g) {
+  var f = shootFind(g), n;
+  if (!shootFindsOn()) return '';
+  if (shootReady(f)) {
+    n = candidates({ f: f }).length;
+    return '<button class="btn sm' + (shoot.sug ? '' : ' primary') + '" data-action="pssug" aria-pressed="' + !!shoot.sug + '">' + icon('camera', 16) + t('ps_sug', { n: n }) + '</button>';
+  }
+  if (f && (f.status === 'queued' || f.status === 'asked' || f.status === 'saving')) return '<button class="btn sm" disabled>' + t('ps_sug_wait') + '</button>';
+  if (finds.state && !finds.state.hasKey) return '';   // no search key saved: nothing could search for it
+  return '<button class="btn sm" data-action="psfind">' + icon('search', 16) + t(f ? 'ps_sug_again' : 'ps_sug_find') + '</button>' +
+    (f && f.status === 'none' ? '<span class="sub">' + t('ps_sug_none') + '</span>' : '');
+}
+function shootSugGrid(g) {
+  var f = shootFind(g), cands = shootReady(f) ? candidates({ f: f }) : [];
+  if (!cands.length) return '';
+  return '<p class="sub">' + t('pf_hint') + '</p><div class="pfgrid">' + cands.map(function (c, i) {
+    return '<button class="pfc" data-action="pfpick" data-i="' + i + '" aria-pressed="false">' +
+      '<img src="' + esc(c.own ? photoUrl(c.own, true) : c.thumb) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.hidden=true">' +
+      '<b class="pfn" hidden></b><span dir="auto">' + esc(c.own ? t('pf_before') : (c.host || '')) + '</span></button>';
+  }).join('') + '</div>' +
+    '<div class="row"><button class="btn ghost" data-action="pfall"></button><button class="btn primary grow" data-action="psuse" disabled></button></div>' +
+    '<button class="btn ghost sm" data-action="psnone">' + t('pf_reject') + '</button>';
+}
+/* How many of the models still ahead have pictures waiting: they go fastest. */
+function shootSugCount() {
+  var n = 0, i;
+  if (!shootFindsOn()) return '';
+  for (i = shoot.at; i < shoot.groups.length; i++) if (shootReady(shootFind(shoot.groups[i]))) n++;
+  return n ? '<p class="sub">' + t('ps_sug_count', { n: n }) + '</p>' : '';
+}
+/* On to the next model, with nothing chosen and the suggestions folded. */
+function shootNext() {
+  var box = $('#shoot');
+  shoot.at++;
+  shoot.sug = false;
+  finds.picks = [];
+  paintShoot();
+  if (box) box.scrollTop = 0;
+}
+function useShootFind() {
+  var s = shoot, g = s && s.groups[s.at], f = g && shootFind(g), cands = shootReady(f) ? candidates({ f: f }) : [], ids,
+    picked = finds.picks.map(function (i) { return cands[i]; }).filter(Boolean);
+  if (!picked.length) return;
+  if (!state.jobsOk) { toast(t('pf_oldcloud')); return; }
+  ids = g.ids.filter(function (id) { return !g.off[id]; });
+  if (!ids.length) { toast(t('ps_noneticked')); return; }
+  f.status = 'saving';
+  photoWork.adding++;
+  shootNext();
+  /* the same as a choice in the review: kept in the cloud and copied in the background */
+  api('POST', '/rest/v1/rpc/photo_job_add', {
+    p_query: f.query,
+    p_items: ids.map(function (id) { return Number(id.slice(1)); }),
+    p_pics: picked.map(function (c) { return c.own ? { own: c.own } : { url: c.url || '', thumb: c.thumb }; })
+  }, null, true).then(function (res) {
+    photoWork.adding--;
+    if (!res.ok) throw res;
+    state.photoJobs = state.photoJobs.concat([res.json]);
+    paintJobs();
+    startPhotoWork();
+  }, function (e) { photoWork.adding--; throw e; }).catch(function (e) {
+    if (e && e.gone) { sessionLost(); return; }
+    f.status = 'done';
+    toast(t('save_fail'));
+    paintJobs();
+  });
+}
+/* "None fits": that search is closed, and the camera, the gallery and the internet search stay. */
+function shootNoneFits() {
+  var g = shoot && shoot.groups[shoot.at], f = g && shootFind(g);
+  if (!f) return;
+  sent(api('POST', '/rest/v1/rpc/photo_decide', { p_query: f.query, p_action: 'reject' })).then(function (res) {
+    if (!res) return;
+    f.status = 'rejected';
+    shoot.sug = false;
+    finds.picks = [];
+    paintShoot();
+  });
+}
+/* A search for this model right now: its items join the site's list, or its closed search starts again. */
+function shootSearch() {
+  var g = shoot && shoot.groups[shoot.at], f = g && shootFind(g), ids = g ? g.ids.filter(function (id) { return !g.off[id]; }) : [];
+  if (!ids.length) { toast(t('ps_noneticked')); return; }
+  sent(f ? api('POST', '/rest/v1/rpc/photo_decide', { p_query: f.query, p_action: 'again', p_label: g.label })
+    : api('POST', '/rest/v1/rpc/photo_want', { p_items: ids.map(function (id) { return { item_id: Number(id.slice(1)), label: g.label }; }) })).then(function (res) {
+    if (!res) return;
+    return refreshFinds().then(function () {
+      toast(t(shootFind(g) ? 'pf_queued' : 'pf_cannot'));
+      if ($('#shoot')) paintShoot();
+    });
+  });
+}
+function shootFreshFinds() {
+  if (!shootFindsOn()) return;
+  refreshFinds().then(function () { if ($('#shoot')) paintShoot(); }, function () { /* offline: the buttons wait */ });
+  api('POST', '/rest/v1/rpc/photo_state', {}).then(function (r) { if (r.ok) { finds.state = r.json; if ($('#shoot')) paintShoot(); } }, function () { /* no news */ });
+}
+/* While the model on screen is being searched, the screen asks every 20 seconds whether its pictures are in. */
+var shootWatch = null;
+function watchShootFinds() {
+  clearTimeout(shootWatch);
+  var g = shoot && shoot.groups[shoot.at], f = g && shootFind(g);
+  if (!$('#shoot') || !f || (f.status !== 'queued' && f.status !== 'asked')) return;
+  shootWatch = setTimeout(function () {
+    refreshFinds().then(function () { if ($('#shoot')) paintShoot(); }, function () { watchShootFinds(); });
+  }, 20000);
+}
+
 /* ---------- The settings panel ---------- */
 function photosPanel() {
   return '<section class="panel" id="photos-panel"><div><h2 class="h">' + t('pf_set') + '</h2><p class="sub">' + t('pf_sub') + '</p></div><div id="pf-body"></div></section>';
@@ -5878,8 +6020,12 @@ document.addEventListener('click', function (e) {
   else if (a === 'pfskip') nextReview();
   else if (a === 'pfkeyedit') { finds.editKey = true; paintPhotos(); p = $('#pf-key'); if (p) p.focus(); }
   else if (a === 'pfkeydel') savePhotoKey('');
-  else if (a === 'psskip') { shoot.at++; paintShoot(); }
-  else if (a === 'psback') { shoot.at = Math.max(0, shoot.at - 1); paintShoot(); }
+  else if (a === 'psskip') shootNext();
+  else if (a === 'psback') { shoot.at = Math.max(0, shoot.at - 1); shoot.sug = false; finds.picks = []; paintShoot(); }
+  else if (a === 'pssug') { shoot.sug = !shoot.sug; finds.picks = []; paintShoot(); }
+  else if (a === 'psuse') useShootFind();
+  else if (a === 'psnone') shootNoneFits();
+  else if (a === 'psfind') shootSearch();
   else if (a === 'psretry') { shoot.jobs = shoot.jobs.concat(shoot.failed); shoot.failed = []; pumpShoot(); paintShootStatus(); }
   else if (a === 'bkgo') runRestore();
   else if (a === 'bkcancel') { backup.file = null; backupSay(''); paintBackup(); }
