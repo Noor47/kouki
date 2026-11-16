@@ -836,6 +836,9 @@ var LOCALES = {
     spec_ram: 'Memory',
     spec_storage: 'Storage',
     spec_gpu: 'Graphics',
+    spec_vram: 'Graphics memory',
+    gpu_own: 'Dedicated graphics card',
+    vram_shared: 'Built in, uses the memory',
     spec_screen: 'Screen',
     spec_brand: 'Brand',
     spec_touch: 'Touch',
@@ -1437,6 +1440,9 @@ var LOCALES = {
     spec_ram: 'الرام',
     spec_storage: 'التخزين',
     spec_gpu: 'كرت الشاشة',
+    spec_vram: 'ذاكرة كرت الشاشة',
+    gpu_own: 'كرت شاشة منفصل',
+    vram_shared: 'مدمج، يأخذ من الرام',
     spec_screen: 'الشاشة',
     spec_brand: 'الماركة',
     spec_touch: 'لمس',
@@ -1826,7 +1832,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.31';
+var APP_BUILD = '2.32';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -2375,6 +2381,7 @@ var GROUP_ICONS = LEXICON.groupIcons.map(function (k) { return { icon: k[0], re:
 var TINTS = { laptop: 'a', gamepad: 'a', monitor: 'a', mouse: 'b', keyboard: 'b', bag: 'b', headset: 'b', speaker: 'b', watch: 'b',
   plug: 'c', chip: 'c', drive: 'c', battery: 'c', fan: 'c', cable: 'c', print: 'c', wifi: 'c', scan: 'd', shield: 'd', wrench: 'e', box: 'e' };
 var RAM_SIZES = [4, 6, 8, 12, 16, 20, 24, 32, 40, 48, 64], DISK_SIZES = [120, 128, 240, 250, 256, 480, 500, 512, 750, 1000, 1024, 2000];
+var VRAM_SIZES = [1, 2, 3, 4, 6, 8, 10, 12, 16, 24];
 var RE_INCH = new RegExp('[^0-9.](1[0-8](?:\\.\\d)?) ?(?:' + LEXICON.inch + ')'), RE_TOUCH = new RegExp(LEXICON.touch);
 
 function genOf(model) {   // "10885h" -> 10, "8250u" -> 8, "1135g7" -> 11, "11" -> 11
@@ -2389,8 +2396,43 @@ function tailLetters(model) { return (/[a-z]+\d?$/.exec(model || '') || [''])[0]
 var APPLE = BRANDS.filter(function (b) { return b.id === 'apple'; })[0];
 /* The processor is read with its full number when the name gives it ("Core i5-1135G7", "Ryzen 7 7445HS"), its
    generation (Intel Core), series (Core Ultra) or M number (Apple), and the letters at the end that tell its kind. */
-function specsOf(name) {
-  var s = ' ' + toLatinDigits(name).toLowerCase().replace(/[\\\/|,()]+/g, ' ').replace(/\s+/g, ' ') + ' ', sp = {}, m, at = -1;
+function specText(name) { return ' ' + toLatinDigits(name).toLowerCase().replace(/[\\\/|,()]+/g, ' ').replace(/\s+/g, ' ') + ' '; }
+var RE_GPU_WORD = /[^a-z0-9](nvidia|geforce|quadro|rtx|gtx|mx(?= ?-?\d{3}(?!\d))|radeon|amd|arc|intel|iris|uhd|vga|gpu|graphics?|dedicated)(?=[^a-z])/;
+/* The graphics card in a name's text (from specText): which card, whether it is a card of its own (own: false when it is
+   part of the processor, null when the name does not say), and its own memory (VRAM), written right after the card
+   ("RTX 3050 4GB", "MX350 2G", "QUADRO P600 4GB") or right before it ("2GB VGA"). before: the text in front, with the
+   memory and storage already read blanked out; needRam: the memory is not read yet, so "RTX 3060 16GB 1TB" is not 16GB VRAM. */
+function readGpu(t, before, needRam) {
+  var m, r = null, sub, next;
+  function hit(label, own) { r = { gpu: label, own: own, vram: 0, at: m.index, end: m.index + m[0].length }; }
+  if ((m = /(rtx|gtx) ?-?(\d{3,4})( ?ti)?(?![0-9])/.exec(t))) hit(m[1].toUpperCase() + ' ' + m[2] + (m[3] ? ' Ti' : ''), true);
+  else if ((m = /rtx ?-?a ?(\d{3,4})(?![0-9])/.exec(t))) hit('RTX A' + m[1], true);
+  else if ((m = /mx ?-?(\d{3})(?![0-9])/.exec(t))) hit('MX' + m[1], true);
+  else if ((m = /(nvidia|geforce|quadro|rtx|gtx)((?: (?:geforce|quadro))*)(?: ?-?([a-z]{1,2}\d{3,4}[a-z]?|\d{3,4}[a-z]?)(?![a-z0-9]))?/.exec(t)))
+    hit(/tx$/.test(m[1]) ? m[1].toUpperCase() : 'NVIDIA' + (m[3] ? ' ' + m[3].toUpperCase() : /quadro/.test(m[0]) ? ' Quadro' : ''), true);
+  else if ((m = /(?:amd ?)?radeon(?: ?(rx ?-?\d{3,4}[a-z]{0,2}|r[5-9](?![0-9])|vega(?: ?\d{1,2})?|\d{3,4}[a-z]{0,2}))?(?![a-z0-9])/.exec(t)) ||
+      (m = /amd(?: ?(rx ?-?\d{3,4}[a-z]{0,2}|r[5-9](?![0-9])))?(?![a-z0-9])/.exec(t))) {
+    sub = m[1] || '';   // "RX 6500M" is a card of its own; "610M" and "Vega 8" are part of the processor
+    hit('Radeon' + (sub ? ' ' + (/^vega/.test(sub) ? capWord(sub) : sub.replace(/^rx ?-?/, 'rx ').toUpperCase()) : ''), /^rx/.test(sub) ? true : /^vega|^\d{3}m$/.test(sub) ? false : null);
+  }
+  else if ((m = /arc ?-?(a\d{3}m?)(?![a-z0-9])/.exec(t))) hit('Intel Arc ' + m[1].toUpperCase(), true);
+  else if ((m = /intel arc|arc(?= graphics)/.exec(t))) hit('Intel Arc', false);
+  else if ((m = /iris/.exec(t))) hit('Intel Iris Xe', false);
+  else if ((m = /uhd|intel/.exec(t))) hit('Intel UHD', false);
+  else if ((m = /vga|gpu|graphics?|dedicated/.exec(t))) hit('', true);   // a card of its own, its maker not written
+  if (!r) return null;
+  if (r.own !== false) {
+    m = /^(?:[ -]+(?:ti|super|max-?q|mobile|laptop|gddr\d*x?|ddr\d+x?|vram|graphics?|card|dedicated|memory))*[ -]*(\d{1,2}) ?gb?(?![a-z0-9])/.exec(t.slice(r.end));
+    next = m && /^[ -]*(\d+(?:\.\d+)?) ?(tb|gb?)?(?![a-z0-9.])/.exec(t.slice(r.end + m[0].length));
+    if (m && VRAM_SIZES.indexOf(Number(m[1])) !== -1 && !(needRam && next && (next[2] === 'tb' || DISK_SIZES.indexOf(Number(next[1])) !== -1))) {
+      r.vram = Number(m[1]); r.end += m[0].length;
+    } else if ((m = /(?:^|[^0-9.])(\d{1,2}) ?gb?[ -]*$/.exec((before || '') + t.slice(0, r.at))) && VRAM_SIZES.indexOf(Number(m[1])) !== -1) r.vram = Number(m[1]);
+  }
+  if (r.vram && r.own === null) r.own = true;
+  return r.gpu || r.vram ? r : null;
+}
+function specsOf(name, sizesAfterCard) {   // sizesAfterCard: a supplier's spec lines follow the model, so read sizes there too
+  var s = specText(name), sp = {}, m, at = -1;
   /* "i7-11800h", "i7 11800h", "i7-11", "i7 11th"; a bare "i5 8 256" keeps 8 for the memory */
   if ((m = /[^a-z0-9](i[3579])(?:[ -]?(\d{4,5}[a-z]{0,2}\d?)|-(\d{1,2})|[ -]?(\d{1,2})(?:th|rd|nd|st))?(?=[^a-z0-9])/.exec(s))) {
     sp.cpu = m[1]; sp.cpuLabel = 'Core ' + m[1]; sp.gen = genOf(m[2] || m[3] || m[4]); at = m.index + m[0].length;
@@ -2415,22 +2457,30 @@ function specsOf(name) {
     if (m[3]) { sp.cpuName = sp.cpuLabel + (m[2] ? ' ' + capWord(m[2]) : '') + ' ' + m[3].toUpperCase(); sp.suffix = /^\d/.test(m[3]) ? tailLetters(m[3]) : ''; }
   }
   if (at < 0) return null;   // no processor in the name: not read as a computer
-  var g = /[^a-z0-9](nvidia|rtx|gtx|quadro|radeon|intel|iris|uhd|amd)(?=[^a-z])/.exec(s.slice(at)), tail = g ? s.slice(at + g.index) : '';
-  var mid = (g ? s.slice(at, at + g.index) : s.slice(at)) + ' ', re = /(\d+(?:\.\d+)?) ?(tb|gb|g)?(?=[^a-z0-9.])/g, n, disk;
+  var g = RE_GPU_WORD.exec(s.slice(at)), tail = g ? s.slice(at + g.index) : '';
+  var mid = (g ? s.slice(at, at + g.index) : s.slice(at)) + ' ', re = /(\d+(?:\.\d+)?) ?(tb|gb|g)?(?=[^a-z0-9.])/g, n, disk, card, rest;
   mid = mid.replace(/[^a-z0-9]i[3579][ -]?[a-z0-9]*/g, ' ');   // a second processor option is not a size
   while ((m = re.exec(mid))) {
     n = Number(m[1]);
     if (!sp.ram && m[2] !== 'tb' && RAM_SIZES.indexOf(n) !== -1) sp.ram = n;
     else if (!disk && (m[2] === 'tb' || DISK_SIZES.indexOf(n) !== -1)) disk = m[2] === 'tb' ? n * 1000 : n;
+    else continue;
+    mid = mid.slice(0, m.index) + m[0].replace(/./g, 'x') + mid.slice(m.index + m[0].length);   // read: not the card's memory
+  }
+  if (tail && (card = readGpu(tail, mid, !sp.ram))) {
+    if (card.gpu) sp.gpu = card.gpu;
+    if (card.vram) sp.vram = card.vram;
+    if (card.own !== null) sp.gpuOwn = card.own;
+    rest = sizesAfterCard ? tail.slice(card.end) : '';   // in a shop name, sizes after the card are notes ("needs a 256GB drive")
+    re = /(?:^|[^0-9.])(\d+(?:\.\d+)?) ?(tb|gb|g)(?![a-z0-9])/g;
+    while ((!sp.ram || !disk) && (m = re.exec(rest))) {
+      n = Number(m[1]);
+      if (!sp.ram && m[2] !== 'tb' && RAM_SIZES.indexOf(n) !== -1) sp.ram = n;
+      else if (!disk && (m[2] === 'tb' || DISK_SIZES.indexOf(n) !== -1)) disk = m[2] === 'tb' ? n * 1000 : n;
+    }
   }
   if (disk) sp.disk = disk >= 1000 ? (Math.round(disk / 100) / 10) + 'TB' : disk + 'GB';
   if (/[^a-z](nvme|ssd)(?=[^a-z])/.test(s)) sp.diskKind = 'SSD'; else if (/[^a-z]hdd(?=[^a-z])/.test(s)) sp.diskKind = 'HDD';
-  if ((m = /(rtx|gtx) ?-?(\d{3,4})( ?ti)?/.exec(tail))) sp.gpu = m[1].toUpperCase() + ' ' + m[2] + (m[3] ? ' Ti' : '');
-  else if ((m = /(?:nvidia|quadro)[^0-9]*?([a-z]?\d{3,4}[a-z]?)?[^0-9]*?(\d{1,2}) ?gb?(?=[^a-z0-9])/.exec(tail))) sp.gpu = 'NVIDIA ' + (m[1] ? m[1].toUpperCase() + ' ' : '') + m[2] + 'GB';
-  else if (/nvidia|quadro/.test(tail)) sp.gpu = 'NVIDIA';
-  else if (/iris/.test(tail)) sp.gpu = 'Intel Iris Xe';
-  else if (/radeon/.test(tail)) sp.gpu = 'Radeon';
-  else if (/uhd|intel/.test(tail)) sp.gpu = 'Intel UHD';
   if ((m = /scr ?(1[0-8](?:\.\d)?)(?=[^0-9])/.exec(s)) || (m = RE_INCH.exec(s))) sp.screen = m[1] + '"';
   if (RE_TOUCH.test(s)) sp.touch = true;
   return sp;
@@ -2473,7 +2523,7 @@ function specChips(sp) {
   c.push(sp.cpuLabel.replace('Core ', '') + (sp.gen ? ' · ' + t('spec_gen', { n: sp.gen }) : ''));
   if (sp.ram) c.push(sp.ram + 'GB');
   if (sp.disk) c.push(sp.disk + (sp.diskKind ? ' ' + sp.diskKind : ''));
-  if (sp.gpu && !/^Intel/.test(sp.gpu)) c.push(sp.gpu);
+  if (sp.gpu && sp.gpuOwn !== false) c.push(sp.gpu + (sp.vram ? ' ' + sp.vram + 'GB' : ''));
   if (sp.touch) c.push(t('spec_touch'));
   return c;
 }
@@ -2980,8 +3030,13 @@ function ownStockOf(n, told) {
   return n > 0 ? (n <= state.pricing.lowAt ? 'low' : 'ok') : 'out';
 }
 function describeOffer(it) {
-  var sp = it.offer.sp, chips = offerChips(sp);
-  it.sp = specsOf([it.name, sp.cpu, sp.ram, sp.disk, sp.gpu].join(' ')) || it.sp;
+  var sp = it.offer.sp, chips = offerChips(sp), card;
+  it.sp = specsOf([it.name, sp.cpu, sp.ram, sp.disk, sp.gpu].join(' '), true) || it.sp;
+  if (it.sp && sp.gpu && (card = readGpu(specText(sp.gpu)))) {   // the supplier's own graphics line says it best
+    if (card.gpu) it.sp.gpu = card.gpu;
+    it.sp.vram = card.vram || undefined;
+    if (card.own !== null) it.sp.gpuOwn = card.own; else delete it.sp.gpuOwn;
+  }
   if (chips.length) it.chips = chips;
   if (it.kind === 'box' && sp.cpu) { it.kind = 'laptop'; it.tint = TINTS.laptop; }
   it.chips.unshift(t(it.offer.cond === 'used' ? 'cond_used' : 'cond_new'));
@@ -3854,7 +3909,8 @@ function specFacts(it) {
   if (cpuKind(sp)) h += fact(t('spec_cpu_kind'), esc(cpuKind(sp)));
   if (sp.ram) h += fact(t('spec_ram'), ltr(sp.ram + 'GB'));
   if (sp.disk) h += fact(t('spec_storage'), ltr(sp.disk + (sp.diskKind ? ' ' + sp.diskKind : '')));
-  if (sp.gpu) h += fact(t('spec_gpu'), ltr(sp.gpu));
+  if (sp.gpu || sp.vram) h += fact(t('spec_gpu'), sp.gpu ? ltr(sp.gpu) : esc(t('gpu_own')));
+  if (sp.vram) h += fact(t('spec_vram'), ltr(sp.vram + 'GB'));
   if (sp.screen) h += fact(t('spec_screen'), ltr(sp.screen) + (sp.touch ? ' · ' + t('spec_touch') : ''));
   return h;
 }
@@ -3876,7 +3932,8 @@ function specList(it) {
   r.push([t('spec_cpu'), cpuText(sp)]);
   if (sp.ram) r.push([t('spec_ram'), sp.ram + 'GB']);
   if (sp.disk) r.push([t('spec_storage'), sp.disk + (sp.diskKind ? ' ' + sp.diskKind : '')]);
-  if (sp.gpu) r.push([t('spec_gpu'), sp.gpu]);
+  if (sp.gpu || sp.vram) r.push([t('spec_gpu'), sp.gpu || t('gpu_own')]);
+  if (sp.vram) r.push([t('spec_vram'), sp.vram + 'GB']);
   if (sp.screen) r.push([t('spec_screen'), sp.screen + (sp.touch ? ' · ' + t('spec_touch') : '')]);
   cond = it.cat && it.cat === state.lapUsed ? 'cond_used' : (it.cat && it.cat === state.lapNew ? 'cond_new' : '');   // the laptop groups say new or used
   if (cond) r.push([t('cond'), t(cond)]);
@@ -5506,7 +5563,8 @@ function paintCompareBar() {
 function specRows(it) {
   var sp = it.sp || {};
   return { spec_brand: it.brandName || '', spec_cpu: sp.cpuLabel ? cpuText(sp) : '', spec_cpu_kind: cpuKind(sp), spec_ram: sp.ram ? sp.ram + 'GB' : '',
-    spec_storage: sp.disk ? sp.disk + (sp.diskKind ? ' ' + sp.diskKind : '') : '', spec_gpu: sp.gpu || '', spec_screen: sp.screen ? sp.screen + (sp.touch ? DOT + t('spec_touch') : '') : '',
+    spec_storage: sp.disk ? sp.disk + (sp.diskKind ? ' ' + sp.diskKind : '') : '', spec_gpu: sp.gpu || (sp.vram ? t('gpu_own') : ''),
+    spec_vram: sp.vram ? sp.vram + 'GB' : (sp.gpuOwn === false ? t('vram_shared') : ''), spec_screen: sp.screen ? sp.screen + (sp.touch ? DOT + t('spec_touch') : '') : '',
     category: catName(catOf(it)), cmp_note: it.note || '' };
 }
 function gbOf(d) { var m = /^([\d.]+)(TB|GB)$/.exec(d || ''); return m ? Number(m[1]) * (m[2] === 'TB' ? 1000 : 1) : 0; }
@@ -5523,6 +5581,7 @@ function cmpAhead(a, b) {
   function mark(key, va, vb, label) { if (va > 0 && vb > 0 && va !== vb) out[key] = [va > vb ? label : '', vb > va ? label : '']; }
   mark('spec_ram', sa.ram || 0, sb.ram || 0, t('cmp_more'));
   mark('spec_storage', gbOf(sa.disk), gbOf(sb.disk), t('cmp_more'));
+  mark('spec_vram', sa.vram || 0, sb.vram || 0, t('cmp_more'));
   if (x && y && x.line === y.line) mark('spec_cpu', x.n, y.n, t('cmp_newer'));
   return out;
 }
