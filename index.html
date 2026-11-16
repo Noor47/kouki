@@ -448,6 +448,15 @@ body.no-nav #cmpbar { bottom:calc(84px + env(safe-area-inset-bottom,0px)) }
 .pcard .src { padding:0 10px 6px }
 .src.ext { color:var(--private); font-weight:600 }
 .btn[data-action="oshow"][aria-pressed="true"] { border-color:var(--brand); color:var(--brand) }
+/* A supplier's list on the offers screen folds under its name; the arrow points along the line when folded, down when open */
+.fold-h { flex:1 1 12em; min-width:0 }
+.fold { display:flex; align-items:center; gap:8px; width:100%; min-height:36px; padding:0; border:0; background:none; color:inherit; font:inherit; text-align:start; cursor:pointer }
+.fold .chev { display:inline-grid; place-items:center; color:var(--muted); transition:transform .15s }
+[dir="rtl"] .fold .chev { transform:scaleX(-1) }
+.fold[aria-expanded="true"] .chev { transform:rotate(90deg) }
+@media (prefers-reduced-motion: reduce) { .fold .chev { transition:none } }
+/* A holder that adds no box of its own: its contents sit in the row or the column around it */
+.slot { display:contents }
 
 .strong { font-weight:700 }
 .pfgrid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px }
@@ -830,6 +839,10 @@ var LOCALES = {
     ps_sug_none: 'The site found no photos for this model.',
     ps_sug_count: '{n} of the models ahead have suggested photos ready.',
     pf_cannot: 'No photo search is possible for this name.',
+    ps_sug_saving: 'Copying the chosen photos…',
+    ps_sug_ready: 'The site already has pictures for this model: choose from them.',
+    ph_sug_also: 'The same photos also go on these items of the same model. Untick any that does not fit:',
+    ph_sug_sent: 'The photos are being copied; they show on the item in a moment.',
     ps_web_hint: 'Opens an image search for this model. Pick a clear photo of the same model, copy or save it, then come back and paste it or choose it from the gallery.',
     ps_start: 'Photograph items quickly',
     ps_title: 'Quick photos',
@@ -893,6 +906,10 @@ var LOCALES = {
     sup_edit: 'Edit',
     sup_name: 'Supplier name',
     sup_wa: 'WhatsApp number',
+    sup_margin: 'This supplier\'s own profit % (empty = the offers %)',
+    sup_margin_bad: 'The profit % must be a number from 0 to 1000.',
+    sup_margin_pill: 'Profit {n}%',
+    sup_margin_setup: 'A profit % for each supplier needs the latest cloud file (edition 11).',
     edit_save: 'Save',
     edit_cancel: 'Cancel',
     wa_bad: 'That WhatsApp number does not look right. Write it with the country code, or starting with 09.',
@@ -976,6 +993,7 @@ var LOCALES = {
     next: 'Next',
     lang_short: 'EN',
     offer_margin: 'Profit % added to offer prices',
+    offer_margin_hint: 'For every supplier. Any supplier can have its own from "Edit" beside its name.',
     offer_sell: 'Sell {p}',
     offer_profit: 'profit {p}',
     offer_buy: 'Buy',
@@ -1386,6 +1404,10 @@ var LOCALES = {
     ps_sug_none: 'لم يجد الموقع صوراً لهذا الموديل.',
     ps_sug_count: 'لـ {n} من الموديلات الباقية صور مقترحة جاهزة.',
     pf_cannot: 'لا يمكن البحث عن صور بهذا الاسم.',
+    ps_sug_saving: 'جارٍ نسخ الصور المختارة…',
+    ps_sug_ready: 'لدى الموقع صور لهذا الموديل، اختر منها.',
+    ph_sug_also: 'توضع الصور نفسها أيضاً على هذه المواد من الموديل نفسه. أزل العلامة عن أي مادة لا تناسبها:',
+    ph_sug_sent: 'يجري نسخ الصور، وستظهر على المادة بعد قليل.',
     ps_web_hint: 'يفتح بحث صور عن هذا الموديل. اختر صورة واضحة للموديل نفسه، انسخها أو احفظها، ثم ارجع والصقها هنا أو اخترها من المعرض.',
     ps_start: 'تصوير المواد بسرعة',
     ps_title: 'تصوير سريع',
@@ -1449,6 +1471,10 @@ var LOCALES = {
     sup_edit: 'تعديل',
     sup_name: 'اسم الشركة',
     sup_wa: 'رقم واتساب',
+    sup_margin: 'نسبة ربح خاصة بهذه الشركة (%) (فارغ = نسبة العروض)',
+    sup_margin_bad: 'نسبة الربح يجب أن تكون رقماً من 0 إلى 1000.',
+    sup_margin_pill: 'ربح {n}%',
+    sup_margin_setup: 'نسبة الربح لكل شركة تحتاج ملف السحابة الأخير (الإصدار 11).',
     edit_save: 'حفظ',
     edit_cancel: 'إلغاء',
     wa_bad: 'رقم الواتساب غير صحيح. اكتبه مع رمز الدولة، أو ابدأه بـ 09.',
@@ -1532,6 +1558,7 @@ var LOCALES = {
     next: 'التالية',
     lang_short: 'ع',
     offer_margin: 'نسبة الربح على أسعار العروض (%)',
+    offer_margin_hint: 'لكل الشركات، ويمكن إعطاء أي شركة نسبة خاصة بها من زر «تعديل» بجانب اسمها.',
     offer_sell: 'بيع {p}',
     offer_profit: 'ربح {p}',
     offer_buy: 'شراء',
@@ -1689,7 +1716,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.25';
+var APP_BUILD = '2.26';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -1717,7 +1744,9 @@ var state = {
   photoJobs: [], jobsOk: false,               // chosen photos kept in the cloud until a device has copied them
   lapNew: '', lapUsed: '',                    // the accounting program's new and used laptop groups, found by name
   suppliers: {}, requests: [],                // suppliers' WhatsApp numbers, and what staff asked them lately
+  supMargins: {}, supMarginsOk: false,        // a supplier's own profit %, set by the manager (cloud edition 11)
   supEdit: null, offerEdit: null,             // the supplier or the offer being edited on the offers screen
+  supOpen: {}, supFoldQ: {},                  // suppliers unfolded on the offers screen, and those folded during a search
   hidden: {}, onlyHidden: false,              // items the manager hid from customers, and the list showing only those
   groupNames: {},                             // the accounting program's groups by number
   draftOwn: false, draftCat: '', draftCatName: '',   // a list being added: the shop's own goods, and its category
@@ -1887,7 +1916,7 @@ function marginOf(cat) {
   if (cat === 'offer-new' || cat === 'offer-used') return offerMarginPct();   // supplier goods have their own profit %
   var m = state.pricing.margins[cat]; return m >= 0 ? Number(m) : state.pricing.defMargin;
 }
-function autoPrice(it) { return it.cost > 0 ? roundUp(it.cost * (1 + (it.offer ? offerMarginPct() : marginOf(it.cat)) / 100)) : null; }
+function autoPrice(it) { return it.cost > 0 ? roundUp(it.cost * (1 + (it.offer ? offerMarginPct(offerSupplier(it)) : marginOf(it.cat)) / 100)) : null; }
 function resolveItem(it) {
   if (!it.raw) return;
   var base = it.raw.cost, b = it.buy;
@@ -1989,6 +2018,11 @@ function applyCloud(d) {
   if (d.finds !== undefined) applyFinds(d.finds, d.findItems);
   if (d.jobs !== undefined) { state.jobsOk = Array.isArray(d.jobs); state.photoJobs = (d.jobs || []).map(function (j) { return j.id; }); }
   if (d.suppliers !== undefined) { state.suppliers = {}; (d.suppliers || []).forEach(function (s) { state.suppliers[s.name] = s.whatsapp || ''; }); }
+  if (d.supMargins !== undefined) {   // a cloud without edition 11 has none
+    state.supMarginsOk = Array.isArray(d.supMargins);
+    state.supMargins = {};
+    (d.supMargins || []).forEach(function (r) { if (r.margin !== null && r.margin >= 0) state.supMargins[r.supplier] = Number(r.margin); });
+  }
   if (d.requests !== undefined) state.requests = d.requests || [];
   state.notesOk = Array.isArray(d.notes);
   state.notes = {};
@@ -2526,9 +2560,9 @@ function offerNum(key) {
 }
 function offerKey(o) { var sp = readNote(o.note); return normalize([o.cond === 'used' ? 'used' : 'new', o.name, sp.cpu, sp.ram, sp.disk, sp.screen, sp.gpu].join('|')); }
 /* The manager's own price for an offer (typed, or through an extra cost), or null when the usual rule applies. */
-function offerOwnSell(id, usdCost) {
+function offerOwnSell(id, usdCost, sup) {
   var manual = Number(state.pricing.manual[id]) || 0, extra = Number(state.pricing.extra[id]) || 0;
-  return manual > 0 ? manual : (extra > 0 && usdCost > 0 ? roundUp((usdCost + extra) * (1 + offerMarginPct() / 100)) : null);
+  return manual > 0 ? manual : (extra > 0 && usdCost > 0 ? roundUp((usdCost + extra) * (1 + offerMarginPct(sup) / 100)) : null);
 }
 function shopItems(list, used) {
   var best = {};
@@ -2640,11 +2674,24 @@ function offerText(o) {
   var sp = readNote(o.note);
   return [o.name, sp.cpu, sp.ram, sp.disk, sp.gpu].join(' ');
 }
-function offerMarginPct() { return state.offerMargin !== null && state.offerMargin >= 0 ? state.offerMargin : state.pricing.defMargin; }
-/* Suggested selling price of an offer: its price in dollars plus the offers profit percent, rounded like stock prices. */
-function offerSell(o) { var u = offerUsd(o); return u > 0 ? roundUp(u * (1 + offerMarginPct() / 100)) : 0; }
-function offerLine(o) {   // "sell $1,003.00 . profit $108.00"
-  var u = offerUsd(o), s = offerSell(o);
+/* The profit % on a supplier's offers: its own when the manager gave it one, else the offers one, else the general
+   one. The shop's own goods (no supplier here) take the offers one. */
+function offerMarginPct(sup) {
+  var m = sup ? state.supMargins[sup] : undefined;
+  if (m >= 0) return m;
+  return state.offerMargin !== null && state.offerMargin >= 0 ? state.offerMargin : state.pricing.defMargin;
+}
+function supMarginOf(sup) { var m = state.supMargins[sup]; return m >= 0 ? m : null; }
+function offerSupplier(it) { return it.offer && !it.offer.own ? it.offer.supplier || '' : ''; }
+/* Suggested selling price of an offer: its price in dollars plus its profit percent, rounded like stock prices.
+   sup: whose offer it is, for a row not saved yet (otherwise the row's own supplier). */
+function offerSell(o, sup) {
+  var u = offerUsd(o);
+  if (sup === undefined) sup = o.own ? '' : o.supplier || '';
+  return u > 0 ? roundUp(u * (1 + offerMarginPct(sup) / 100)) : 0;
+}
+function offerLine(o, sup) {   // "sell $1,003.00 . profit $108.00"
+  var u = offerUsd(o), s = offerSell(o, sup);
   return t('offer_sell', { p: usd(s) }) + DOT + t('offer_profit', { p: usd(s - u) });
 }
 /* A supplier's saved offers as text for customers: specs and selling prices, never the purchase price. */
@@ -2767,9 +2814,10 @@ function fetchData() {
     add('groupPricing', pages('/rest/v1/group_pricing?select=*&order=group_id'));
     add('rules', api('GET', '/rest/v1/pricing_rules?select=*').then(need));
     add('offers', pages('/rest/v1/offers?select=*&order=created_at.desc,id'));
+    add('supMargins', pagesSoft('/rest/v1/supplier_pricing?select=supplier,margin&order=supplier'));
     add('people', pages('/rest/v1/profiles?select=*&order=created_at,id'));
     add('events', api('GET', '/rest/v1/stock_events?select=*&order=id.desc&limit=40').then(need));
-    add('finds', pagesSoft('/rest/v1/photo_finds?select=query,label,kind,status,results,note,photo&status=in.(queued,asked,done,none,failed)&order=query'));
+    add('finds', pagesSoft('/rest/v1/photo_finds?select=query,label,kind,status,results,note,photo&status=in.(' + FIND_STATES + ')&order=query'));
     add('findItems', pagesSoft('/rest/v1/photo_find_items?select=item_id,query&order=item_id'));
     add('jobs', pagesSoft('/rest/v1/photo_jobs?select=id&order=id'));
   } else add('staffCosts', pagesSoft('/rest/v1/rpc/staff_costs?order=item_id,offer_id'));   // empty unless the manager allows it
@@ -2832,6 +2880,7 @@ function clearAccount() {
   finds.state = null; finds.sent = {}; finds.editKey = false; state.finds = []; state.findItems = {}; state.findsOk = false;
   state.photoJobs = []; state.jobsOk = false; photoWork.done = 0; photoWork.skipped = 0; photoWork.based = false;
   state.suppliers = {}; state.requests = []; state.supEdit = null; state.offerEdit = null; state.hidden = {}; state.onlyHidden = false;
+  state.supMargins = {}; state.supMarginsOk = false; state.supOpen = {}; state.supFoldQ = {};
   state.session = null; state.me = null; state.role = null; state.busy = false; state.peekId = null;
   state.items = []; state.offers = []; state.people = []; state.events = []; state.cats = [];
   state.draft = []; state.pasteText = ''; state.supplier = ''; state.skipped = 0; state.ocrMsg = ''; state.offerQuery = ''; state.need = '';
@@ -3009,6 +3058,7 @@ var ICONS = {
   dots: 'M5 11a1 1 0 1 0 0 2a1 1 0 0 0 0-2z M12 11a1 1 0 1 0 0 2a1 1 0 0 0 0-2z M19 11a1 1 0 1 0 0 2a1 1 0 0 0 0-2z',
   finger: 'M12 10v5 M8.5 15.5c0-3.5.2-7.5 3.5-7.5s3.5 4 3.5 7.5 M5.5 13.5C5.5 8.5 7.5 5 12 5s6.5 3.5 6.5 8.5 M9.5 19.5c.8-1 1.2-2.4 1.2-4 M14.3 19.8c.4-1 .7-2.2.8-3.5',
   back: 'M15 6l-6 6 6 6',
+  chev: 'M9 6l6 6-6 6',
   file: 'M7 3h7l4 4v14H7z M14 3v4h4 M10 13h5 M10 17h5',
   send: 'M4 12l16-8-6 16-3-7z',
   print: 'M7 9V4h10v5 M7 17H4v-7h16v7h-3 M7 14h10v6H7z',
@@ -3234,6 +3284,7 @@ function softRepaint() {
   if (state.sheetId) {   // an open item is redrawn only when something shown in it changed
     var it = byId(state.sheetId);
     if (!it) closeSheet(); else if (!typing && sheetSig(it) !== state.sheetSig) openItem(state.sheetId);
+    else if (isAdmin()) paintSheetSug();   // the site's suggestions alone may have changed
   }
 }
 function sheetSig(it) { return [it.name, it.sell, it.qty, it.cost, it.pending, it.stock, it.photos.join(','), it.note, state.photoBusy, state.rate, state.sypMode, state.lang].join('|'); }
@@ -3605,7 +3656,7 @@ function openItem(id) {
   var it = byId(id);
   if (!it) return;
   stopScan();
-  if (state.sheetId !== id) state.shot = 0;
+  if (state.sheetId !== id) { state.shot = 0; sheetSugReset(id); }
   var priced = hasPrice(it), like = similarTo(it);
   var facts = specFacts(it) + (it.offer ? '' : (isGuest() ? '' : fact(t('source'), t('src_own'))) + fact(t('code'), '<span class="code">' + esc(it.code) + '</span>')) +
     (isGuest() || !it.barcode ? '' : fact(t('barcode'), '<span class="code">' + esc(it.barcode) + '</span>')) +
@@ -3649,6 +3700,7 @@ function openItem(id) {
   state.sheetSig = sheetSig(it);
   document.body.classList.add('lock');
   setItemHash(it);
+  if (isAdmin()) sheetSugAfter(it);
   if (fresh) {
     sh.firstChild.scrollTop = 0;
     var c = $('#sheet-close');
@@ -4007,6 +4059,7 @@ function viewOffers() {
     (state.shopOk ? '' : '<p class="sub">' + t('shop_setup') + '</p>') +
     '<div class="row"><label class="sub grow" for="o-margin">' + t('offer_margin') + '</label><input class="input mini" id="o-margin" data-input="omargin" type="number" inputmode="decimal" min="0" step="any" placeholder="' +
     state.pricing.defMargin + '" value="' + (state.offerMargin === null ? '' : state.offerMargin) + '"></div>' +
+    (state.supMarginsOk ? '<p class="sub">' + t('offer_margin_hint') + '</p>' : '') +
     '<div id="draft" class="stack"></div></section><div id="offer-list" class="stack"></div>';
 }
 function specsHtml(chips) {
@@ -4018,7 +4071,8 @@ function offerHead(o) {
   return '<span class="nm" dir="auto">' + (info.no ? '<span class="num code">#' + info.no + '</span> ' : '') + esc(o.name) + (o.cond === 'used' ? ' <span class="pill low">' + t('cond_used') + '</span>' : '') + '</span>' + specsHtml(info.chips) +
     (info.notes.length ? '<span class="onote" dir="auto">' + esc(info.notes.join(DOT)) + '</span>' : '');
 }
-function draftCalc(d) { return d.price > 0 ? offerLine(d) : ''; }
+function draftSupplier() { return state.draftOwn ? '' : state.supplier.trim(); }   // whose profit % the rows being added take
+function draftCalc(d) { return d.price > 0 ? offerLine(d, draftSupplier()) : ''; }
 function sameSupplier() { var sup = state.supplier.trim(); return sup ? state.offers.filter(function (o) { return o.supplier === sup && !o.own; }) : []; }
 function paintDraft() {
   var el = $('#draft');
@@ -4086,7 +4140,7 @@ function saveDraft() {
   var rows = [], updates = [], seen = firstSeen();
   state.draft.filter(function (d) { return d.price > 0; }).forEach(function (d) {
     var r = { supplier: sup, name: d.name, price: d.price, cur: d.cur, note: d.note || '' }, same = own ? ownSame(d) : null, patch, lvl, first;
-    if (state.shopOk) { r.cond = state.draftCond; r.sell = offerOwnSell('m' + offerNum(offerKey(r)), offerUsd(d)); }   // a price the manager set for this device before stays
+    if (state.shopOk) { r.cond = state.draftCond; r.sell = offerOwnSell('m' + offerNum(offerKey(r)), offerUsd(d), own ? '' : sup); }   // a price the manager set for this device before stays
     if (same) {   // one of my own goods saved before: brought up to date instead of added twice
       patch = { price: r.price, cur: r.cur, note: r.note };
       if (state.shopOk) patch.sell = r.sell;
@@ -4114,6 +4168,7 @@ function saveDraft() {
   (rows.length ? addOffers(rows) : Promise.resolve(0)).then(function (n) {
     if (rows.length && !n) { paintDraftFoot(); return; }   // not saved: the list stays so nothing typed is lost
     if (old.length) removeOffers(old);      // the earlier list goes only after the new one is safely in
+    state.supOpen[own ? OWN : sup] = true;  // the list just saved shows unfolded, the others stay as they were
     state.draft = [];
     state.skipped = 0;
     state.pasteText = '';
@@ -4213,29 +4268,51 @@ function carryOfferExtras(oldId, newId) {
     sent(api('POST', '/rest/v1/item_notes?on_conflict=item_id', { item_id: n, note: note }, 'resolution=merge-duplicates,return=minimal'));
   }
 }
-/* A supplier's name and WhatsApp number, changed after its offers were saved. */
+/* A supplier's name, WhatsApp number and own profit %, changed after its offers were saved. */
 function supplierForm(sup, wa) {
+  var m = supMarginOf(sup);
   return '<form class="manual" data-form="supedit" data-sup="' + esc(sup) + '"><div class="qform even">' +
     '<div class="field"><label for="se-name">' + t('sup_name') + '</label><input class="input" id="se-name" dir="auto" required value="' + esc(sup) + '"></div>' +
     '<div class="field"><label for="se-wa">' + t('sup_wa') + '</label><input class="input" id="se-wa" type="tel" inputmode="tel" dir="ltr" autocomplete="off" placeholder="0933 123 456" value="' +
-    (wa ? '+' + esc(wa) : '') + '"></div></div>' +
+    (wa ? '+' + esc(wa) : '') + '"></div>' +
+    (state.supMarginsOk ? '<div class="field"><label for="se-margin">' + t('sup_margin') + '</label><input class="input" id="se-margin" type="number" inputmode="decimal" min="0" max="1000" step="any" placeholder="' +
+      offerMarginPct('') + '" value="' + (m === null ? '' : m) + '"></div>' : '') + '</div>' +
+    (state.supMarginsOk ? '' : '<p class="sub">' + t('sup_margin_setup') + '</p>') +
     '<div class="row"><button class="btn primary" type="submit">' + t('edit_save') + '</button><button class="btn ghost" type="button" data-action="osupcancel">' + t('edit_cancel') + '</button></div></form>';
 }
 function saveSupplier(old) {
-  var name = (($('#se-name') || {}).value || '').trim(), raw = ($('#se-wa') || {}).value || '', wa = waDigits(raw), moved;
+  var name = (($('#se-name') || {}).value || '').trim(), raw = ($('#se-wa') || {}).value || '', wa = waDigits(raw), moved, newWa, newM,
+    mRaw = (($('#se-margin') || {}).value || '').trim(), m = mRaw === '' ? null : Number(mRaw);
   if (!name) { toast(t('need_supplier')); return; }
   if (raw.trim() && !wa) { toast(t('wa_bad')); return; }
+  if (m !== null && !(m >= 0 && m <= 1000)) { toast(t('sup_margin_bad')); return; }
   state.supEdit = null;
   moved = name === old ? Promise.resolve(true) : sent(api('POST', '/rest/v1/rpc/supplier_rename', { p_old: old, p_new: name }));
-  if (name !== old) {
+  if (name !== old) {   // here as in the cloud: what the supplier joined already has stays
     state.offers.forEach(function (o) { if (o.supplier === old) o.supplier = name; });
     if (state.suppliers[old] && !state.suppliers[name]) state.suppliers[name] = state.suppliers[old];
     delete state.suppliers[old];
+    if (supMarginOf(old) !== null && supMarginOf(name) === null) state.supMargins[name] = state.supMargins[old];
+    delete state.supMargins[old];
+    if (old in state.supOpen) { state.supOpen[name] = state.supOpen[old]; delete state.supOpen[old]; }
     if (state.supplier === old) state.supplier = name;
   }
-  moved.then(function (ok) { if (ok && (state.suppliers[name] || '') !== wa) setSupplierWa(name, wa); });
+  newWa = (state.suppliers[name] || '') !== wa;
+  newM = state.supMarginsOk && supMarginOf(name) !== m;
+  if (newM) { if (m === null) delete state.supMargins[name]; else state.supMargins[name] = m; }   // the prices on screen follow at once
+  moved.then(function (ok) {
+    if (!ok) return;
+    if (newWa) setSupplierWa(name, wa);
+    if (newM) setSupplierMargin(name, m);
+  });
   paintOffers();
-  paintDraftFoot();
+  if (newM) paintDraft(); else paintDraftFoot();
+}
+/* The store's prices of the supplier's offers follow on every device once the cloud has it. */
+function setSupplierMargin(name, m) {
+  return sent(m === null
+    ? api('DELETE', '/rest/v1/supplier_pricing?supplier=eq.' + encodeURIComponent(name), undefined, 'return=minimal')
+    : api('POST', '/rest/v1/supplier_pricing?on_conflict=supplier', { supplier: name, margin: m }, 'resolution=merge-duplicates,return=minimal'));
 }
 function setSupplierWa(name, wa) {
   state.suppliers[name] = wa;
@@ -4252,14 +4329,18 @@ function paintOffers() {
 function paintOfferRows() {
   var el = $('#offer-groups');
   if (!el) return;
-  var q = state.offers.length > 8 ? normalize(state.offerQuery).split(' ').filter(Boolean) : [];
+  var q = offerWords();
   el.innerHTML = (state.offers.some(function (o) { return o.own; }) ? [OWN] : []).concat(supplierNames()).map(function (sup) {
     var all = supplierList(sup), list = all.filter(function (o) {
       var hay = normalize(o.name + ' ' + o.note + ' ' + o.supplier);
       return q.every(function (tok) { return hay.indexOf(tok) !== -1; });
     });
     if (!list.length) return '';
-    return '<section class="panel"><div class="row"><h3 class="h small grow" dir="auto">' + esc(sup === OWN ? t('own_goods') : sup) + ' <span class="sub">' + t('offers_n', { n: all.length }) + '</span></h3>' +
+    var open = supOpenNow(sup, q.length > 0), m = sup === OWN ? null : supMarginOf(sup);
+    return '<section class="panel"><div class="row"><h3 class="h small fold-h"><button class="fold" data-action="ofold" data-sup="' + esc(sup) + '" aria-expanded="' + open + '">' +
+      '<span class="chev">' + icon('chev', 18) + '</span><span class="grow" dir="auto">' + esc(sup === OWN ? t('own_goods') : sup) + ' <span class="sub">' +
+      t('offers_n', { n: q.length ? list.length + ' / ' + all.length : all.length }) + '</span></span>' +
+      (m === null ? '' : '<span class="pill new">' + t('sup_margin_pill', { n: num(m, m % 1 ? 1 : 0) }) + '</span>') + '</button></h3>' +
       (state.shopOk ? '<button class="btn sm" data-action="oshow" data-sup="' + esc(sup) + '" aria-pressed="' + all.some(function (o) { return o.listed; }) + '">' + t(all.some(function (o) { return o.listed; }) ? 'shop_on' : 'shop_off') + '</button>' : '') +
       '<button class="btn sm" data-action="oclist" data-sup="' + esc(sup) + '">' + icon('list', 16) + t('copy_list') + '</button>' +
       (sup === OWN ? '' : '<button class="btn sm ghost" data-action="osupedit" data-sup="' + esc(sup) + '">' + icon('sliders', 16) + t('sup_edit') + '</button>') +
@@ -4267,8 +4348,19 @@ function paintOfferRows() {
       (state.supEdit === sup ? supplierForm(sup, state.suppliers[sup] || '')
         : (state.suppliers[sup] ? '<a class="sub walink" target="_blank" rel="noopener" href="' + esc(waTo(state.suppliers[sup])) + '">' + icon('chat', 15) +
           '<span class="code" dir="ltr">+' + esc(state.suppliers[sup]) + '</span></a>' : '')) +
-      '<div>' + list.map(offerRowHtml).join('') + '</div></section>';
+      (open ? '<div>' + list.map(offerRowHtml).join('') + '</div>' : '') + '</section>';
   }).join('') || '<p class="empty">' + t('no_items') + '</p>';
+}
+/* Each supplier's list starts folded, so a long screen shows the suppliers first. A search unfolds the lists with
+   matches; the arrow still folds one of them, until the search changes. */
+function supOpenNow(sup, searching) { return searching ? !state.supFoldQ[sup] : !!state.supOpen[sup]; }
+function offerWords() { return state.offers.length > 8 ? normalize(state.offerQuery).split(' ').filter(Boolean) : []; }   // the search box shows from 9 offers
+function toggleSupplier(sup) {
+  var searching = offerWords().length > 0, o = state.offerEdit && offerById(state.offerEdit);
+  if (searching) state.supFoldQ[sup] = !state.supFoldQ[sup];
+  else state.supOpen[sup] = !state.supOpen[sup];
+  if (o && inBlock(o, sup) && !supOpenNow(sup, searching)) state.offerEdit = null;   // an offer being corrected folds away unsaved
+  paintOfferRows();
 }
 /* The customer price list of one supplier's offers, shown as text that can be edited, copied or shared. */
 function openList(sup) {
@@ -4568,7 +4660,8 @@ function photoControls(it) {
       '<button class="x" data-action="phdel" data-id="' + it.id + '" data-b="' + b + '" aria-label="' + t('photo_del') + '"' + off + '>' + icon('x', 16) + '</button></span>';
   }).join('') + '</div>' : '') +
     '<div class="row"><label class="btn' + (state.photoBusy ? ' off' : '') + '" for="ph-file">' + icon('camera', 18) + t(state.photoBusy ? 'photo_up' : 'photo_add') + '</label>' +
-    '<input type="file" id="ph-file" accept="image/*" multiple data-id="' + it.id + '"' + off + ' hidden>' + webSearchLink(modelOf(it).label) + '</div>' +
+    '<input type="file" id="ph-file" accept="image/*" multiple data-id="' + it.id + '"' + off + ' hidden><span class="slot" id="ph-sug">' + sheetSugBar(it) + '</span></div>' +
+    '<div class="slot" id="ph-sug-grid">' + sheetSugGrid(it) + '</div>' +
     '<p class="sub">' + t('photo_hint', { n: MAX_PHOTOS }) + (canHover ? ' ' + t('ph_paste') : '') + '</p>';
 }
 
@@ -5187,7 +5280,7 @@ document.addEventListener('drop', function (e) { takePictures(e, e.dataTransfer)
    the settings. The list of accounts goes in for reference only: passwords cannot be copied out of the cloud.
    The cloud's free plan keeps no backups of its own. */
 var ZIP_URLS = ['https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'];
-/* name in the file, where it is read from, the column that tells rows apart */
+/* name in the file, where it is read from, the column that tells rows apart, and whether an older cloud may lack it */
 var BACKUP_TABLES = [
   ['app_settings', '/rest/v1/app_settings?select=*&order=key', 'key'],
   ['pricing_rules', '/rest/v1/pricing_rules?select=*', 'id'],
@@ -5195,7 +5288,9 @@ var BACKUP_TABLES = [
   ['item_pricing', '/rest/v1/item_pricing?select=*&order=item_id', 'item_id'],
   ['item_notes', '/rest/v1/item_notes?select=*&order=item_id', 'item_id'],
   ['offers', '/rest/v1/offers?select=*&order=created_at,id', 'id'],
-  ['item_media', '/rest/v1/item_media?select=*&order=item_id', 'item_id']
+  ['item_media', '/rest/v1/item_media?select=*&order=item_id', 'item_id'],
+  ['suppliers', '/rest/v1/suppliers?select=name,whatsapp&order=name', 'name', true],
+  ['supplier_pricing', '/rest/v1/supplier_pricing?select=supplier,margin&order=supplier', 'supplier', true]
 ];
 var backup = { busy: false, msg: '', file: null };   // file: a backup that was opened and waits for the manager's yes
 
@@ -5235,7 +5330,7 @@ function makeBackup() {
   paintBackup();
   backupSay(t('bk_reading'));
   loadZip().then(function () {
-    return Promise.all(BACKUP_TABLES.map(function (b) { return pages(b[1]); })
+    return Promise.all(BACKUP_TABLES.map(function (b) { return b[3] ? pagesSoft(b[1]).then(function (r) { return r || []; }) : pages(b[1]); })
       .concat([pages('/rest/v1/profiles?select=email,name,role,active&order=email'), pages('/rest/v1/sync_status?select=company,synced_at')]));
   }).then(function (a) {
     BACKUP_TABLES.forEach(function (b, i) { data[b[0]] = a[i]; });
@@ -5312,6 +5407,13 @@ function upsertRows(table, key, rows) {   // added, or replacing the row with th
     });
   }, Promise.resolve());
 }
+/* Suppliers' numbers and profit %: a cloud without the tables for them (an older edition) simply skips them. */
+function softRows(table, key, rows) {
+  return rows.length ? upsertRows(table, key, rows).catch(function (e) {
+    if (e && (e.gone || e.net)) throw e;
+    if (!(e && (e.status === 404 || /PGRST20[25]/.test(String(e.json && e.json.code))))) throw e;
+  }) : null;
+}
 function runRestore() {
   var f = backup.file, info, files, done = 0, failed = 0, steps;
   if (!f || backup.busy) return;
@@ -5332,6 +5434,8 @@ function runRestore() {
     function () { return upsertRows('item_pricing', 'item_id', cleanRows(rowsOf(info, 'item_pricing'))); },
     function () { return upsertRows('item_notes', 'item_id', cleanRows(rowsOf(info, 'item_notes'))); },
     function () { return upsertRows('offers', 'id', cleanRows(rowsOf(info, 'offers'))); },
+    function () { return softRows('suppliers', 'name', cleanRows(rowsOf(info, 'suppliers'))); },
+    function () { return softRows('supplier_pricing', 'supplier', cleanRows(rowsOf(info, 'supplier_pricing'))); },
     function () {   // the picture files go in before the rows that name them
       return eachLimit(files, 3, function (name) {
         return f.zip.file('photos/' + name).async('blob').then(function (b) {
@@ -5424,8 +5528,11 @@ function reviewList() {
     .sort(function (a, b) { return b.ids.length - a.ids.length || (a.f.label < b.f.label ? -1 : 1); });
 }
 function findsWaiting() { return state.finds.filter(function (f) { return f.status === 'queued' || f.status === 'asked'; }).length; }
+/* The searches the app keeps: still open, or with a choice being copied. Closed ones ("none fits", or every item given a
+   photo) stay in the cloud only. */
+var FIND_STATES = 'queued,asked,done,none,failed,saving';
 function refreshFinds() {
-  return Promise.all([pagesSoft('/rest/v1/photo_finds?select=query,label,kind,status,results,note,photo&status=in.(queued,asked,done,none,failed)&order=query'),
+  return Promise.all([pagesSoft('/rest/v1/photo_finds?select=query,label,kind,status,results,note,photo&status=in.(' + FIND_STATES + ')&order=query'),
     pagesSoft('/rest/v1/photo_find_items?select=item_id,query&order=item_id')]).then(function (a) { applyFinds(a[0], a[1]); });
 }
 function applyFinds(list, links) {
@@ -5468,10 +5575,18 @@ function candidates(r) {
     list = (r.f.results || []).filter(function (c) { return c && c.thumb; }).slice(0, 8);
   return own.concat(list);
 }
+/* The pictures to choose from: a picture its site will not show hides itself. */
+function candGrid(cands) {
+  return '<div class="pfgrid">' + cands.map(function (c, i) {
+    return '<button class="pfc" data-action="pfpick" data-i="' + i + '" aria-pressed="false">' +
+      '<img src="' + esc(c.own ? photoUrl(c.own, true) : c.thumb) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.hidden=true">' +
+      '<b class="pfn" hidden></b><span dir="auto">' + esc(c.own ? t('pf_before') : (c.host || '')) + '</span></button>';
+  }).join('') + '</div>';
+}
 /* Pressing a picture adds it to the choice and pressing it again takes it out. The order of pressing is the order of
    the photos on the item: the first one is the main photo. */
 function shownPicks() {
-  return Array.prototype.map.call(document.querySelectorAll('#review .pfc:not([hidden]), #shoot .pfc:not([hidden])'), function (b) { return Number(b.getAttribute('data-i')); }).slice(0, MAX_PHOTOS);
+  return Array.prototype.map.call(document.querySelectorAll('#review .pfc:not([hidden]), #shoot .pfc:not([hidden]), #sug-box .pfc:not([hidden])'), function (b) { return Number(b.getAttribute('data-i')); }).slice(0, MAX_PHOTOS);
 }
 function allPicked() {
   var shown = shownPicks();
@@ -5490,7 +5605,7 @@ function pickAllFinds() {
 }
 /* Only the marks and the buttons change, so words typed below stay and the pictures do not load again. */
 function paintPicks() {
-  var box = $('#review') || $('#shoot'), use, all;   // the review, or the suggestions opened on the quick photo screen
+  var box = $('#review') || $('#shoot') || $('#sug-box'), use, all;   // the review, or the suggestions on the quick photo screen or an item's page
   if (!box) return;
   Array.prototype.forEach.call(box.querySelectorAll('.pfc'), function (b) {
     var at = finds.picks.indexOf(Number(b.getAttribute('data-i'))), n = b.querySelector('.pfn');
@@ -5498,7 +5613,7 @@ function paintPicks() {
     n.textContent = at >= 0 ? String(at + 1) : '';
     n.hidden = at < 0;
   });
-  use = box.querySelector('[data-action="pfuse"], [data-action="psuse"]');
+  use = box.querySelector('[data-action="pfuse"], [data-action="psuse"], [data-action="phuse"]');
   if (use) { use.textContent = t('pf_use', { n: finds.picks.length }); use.disabled = !finds.picks.length; }
   all = box.querySelector('[data-action="pfall"]');
   if (all) all.textContent = t(allPicked() ? 'pf_clear' : 'pf_all');
@@ -5640,11 +5755,7 @@ function paintReview() {
       var it = byId(id);
       return it ? '<label class="check"><input type="checkbox" data-input="pfitem" data-id="' + id + '"' + (r.off[id] ? '' : ' checked') + '><span dir="auto">' + esc(it.name) + '</span></label>' : '';
     }).join('') + '</div>' : '') +
-    '<div class="pfgrid">' + cands.map(function (c, i) {
-      return '<button class="pfc" data-action="pfpick" data-i="' + i + '" aria-pressed="false">' +
-        '<img src="' + esc(c.own ? photoUrl(c.own, true) : c.thumb) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.hidden=true">' +
-        '<b class="pfn" hidden></b><span dir="auto">' + esc(c.own ? t('pf_before') : (c.host || '')) + '</span></button>';
-    }).join('') + '</div>' +
+    candGrid(cands) +
     '<button class="btn ghost" data-action="pfall"></button>' +
     '<button class="btn primary" data-action="pfuse" disabled></button>' +
     '<p class="sub" id="pf-bg" role="status"></p>' +
@@ -5664,19 +5775,13 @@ function nextReview() {
   paintReview();
   if (box) box.scrollTop = 0;
 }
-function useFind() {
-  var r = finds.list[finds.at], cands = r ? candidates(r) : [], ids,
-    picked = finds.picks.map(function (i) { return cands[i]; }).filter(Boolean);
-  if (!picked.length) return;
-  if (!state.jobsOk) { toast(t('pf_oldcloud')); return; }
-  ids = r.ids.filter(function (id) { return !r.off[id]; });
-  if (!ids.length) { toast(t('ps_noneticked')); return; }
-  r.f.status = 'saving';
+/* A choice goes to the cloud, which keeps it until it is copied (see above). undo: when the cloud did not take it. */
+function sendChoice(f, ids, picked, undo) {
+  f.status = 'saving';
   photoWork.adding++;
-  nextReview();
   /* kept alive by the browser, so the choice reaches the cloud even if the page is closed right away */
   api('POST', '/rest/v1/rpc/photo_job_add', {
-    p_query: r.f.query,
+    p_query: f.query,
     p_items: ids.map(function (id) { return Number(id.slice(1)); }),
     p_pics: picked.map(function (c) { return c.own ? { own: c.own } : { url: c.url || '', thumb: c.thumb }; })
   }, null, true).then(function (res) {
@@ -5687,11 +5792,21 @@ function useFind() {
     startPhotoWork();
   }, function (e) { photoWork.adding--; throw e; }).catch(function (e) {
     if (e && e.gone) { sessionLost(); return; }
-    r.f.status = 'done';
+    f.status = 'done';
     toast(t('save_fail'));
-    backToList(r);
+    undo();
     paintJobs();
   });
+}
+function useFind() {
+  var r = finds.list[finds.at], cands = r ? candidates(r) : [], ids,
+    picked = finds.picks.map(function (i) { return cands[i]; }).filter(Boolean);
+  if (!picked.length) return;
+  if (!state.jobsOk) { toast(t('pf_oldcloud')); return; }
+  ids = r.ids.filter(function (id) { return !r.off[id]; });
+  if (!ids.length) { toast(t('ps_noneticked')); return; }
+  sendChoice(r.f, ids, picked, function () { backToList(r); });
+  nextReview();
 }
 /* "None fits" and "search with other words" move on at once too; if the cloud does not take the decision (the reason
    is already shown), the model comes back at the end of the list as it was. */
@@ -5713,35 +5828,36 @@ function decideFind(action, words) {
    Each model there gets a button beside the internet search: the pictures the site found for it, chosen the same way
    as in the review, or a search started for it on the spot. */
 function shootFindsOn() { return isAdmin() && state.findsOk && state.photoAuto; }
-/* The site's search for this model: the one any of its items is on. */
-function shootFind(g) {
+/* The site's search for these items: the one any of them is on. An item on a search the manager closed ("none fits")
+   gets it as closed, so it can be searched again. */
+function findOf(ids) {
   var q = '', i;
-  for (i = 0; i < g.ids.length && !q; i++) q = state.findItems[g.ids[i]] || '';
+  for (i = 0; i < ids.length && !q; i++) q = state.findItems[ids[i]] || '';
   if (!q) return null;
   for (i = 0; i < state.finds.length; i++) if (state.finds[i].query === q) return state.finds[i];
-  return null;
+  return { query: q, label: '', status: 'closed', results: [], photo: '' };
 }
+function shootFind(g) { return findOf(g.ids); }
 function shootReady(f) { return !!f && f.status === 'done' && candidates({ f: f }).length > 0; }
-function shootSugButton(g) {
-  var f = shootFind(g), n;
+/* pre names the screen's actions: 'ps' on the quick photo screen, 'ph' on an item's page. */
+function sugButton(f, open, pre) {
+  var n;
   if (!shootFindsOn()) return '';
   if (shootReady(f)) {
     n = candidates({ f: f }).length;
-    return '<button class="btn sm' + (shoot.sug ? '' : ' primary') + '" data-action="pssug" aria-pressed="' + !!shoot.sug + '">' + icon('camera', 16) + t('ps_sug', { n: n }) + '</button>';
+    return '<button class="btn sm' + (open ? '' : ' primary') + '" data-action="' + pre + 'sug" aria-pressed="' + !!open + '">' + icon('camera', 16) + t('ps_sug', { n: n }) + '</button>';
   }
-  if (f && (f.status === 'queued' || f.status === 'asked' || f.status === 'saving')) return '<button class="btn sm" disabled>' + t('ps_sug_wait') + '</button>';
+  if (f && f.status === 'saving') return '<button class="btn sm" disabled>' + t('ps_sug_saving') + '</button>';
+  if (f && (f.status === 'queued' || f.status === 'asked')) return '<button class="btn sm" disabled>' + t('ps_sug_wait') + '</button>';
   if (finds.state && !finds.state.hasKey) return '';   // no search key saved: nothing could search for it
-  return '<button class="btn sm" data-action="psfind">' + icon('search', 16) + t(f ? 'ps_sug_again' : 'ps_sug_find') + '</button>' +
+  return '<button class="btn sm" data-action="' + pre + 'find">' + icon('search', 16) + t(f ? 'ps_sug_again' : 'ps_sug_find') + '</button>' +
     (f && f.status === 'none' ? '<span class="sub">' + t('ps_sug_none') + '</span>' : '');
 }
+function shootSugButton(g) { return sugButton(shootFind(g), shoot.sug, 'ps'); }
 function shootSugGrid(g) {
   var f = shootFind(g), cands = shootReady(f) ? candidates({ f: f }) : [];
   if (!cands.length) return '';
-  return '<p class="sub">' + t('pf_hint') + '</p><div class="pfgrid">' + cands.map(function (c, i) {
-    return '<button class="pfc" data-action="pfpick" data-i="' + i + '" aria-pressed="false">' +
-      '<img src="' + esc(c.own ? photoUrl(c.own, true) : c.thumb) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.hidden=true">' +
-      '<b class="pfn" hidden></b><span dir="auto">' + esc(c.own ? t('pf_before') : (c.host || '')) + '</span></button>';
-  }).join('') + '</div>' +
+  return '<p class="sub">' + t('pf_hint') + '</p>' + candGrid(cands) +
     '<div class="row"><button class="btn ghost" data-action="pfall"></button><button class="btn primary grow" data-action="psuse" disabled></button></div>' +
     '<button class="btn ghost sm" data-action="psnone">' + t('pf_reject') + '</button>';
 }
@@ -5768,26 +5884,8 @@ function useShootFind() {
   if (!state.jobsOk) { toast(t('pf_oldcloud')); return; }
   ids = g.ids.filter(function (id) { return !g.off[id]; });
   if (!ids.length) { toast(t('ps_noneticked')); return; }
-  f.status = 'saving';
-  photoWork.adding++;
+  sendChoice(f, ids, picked, function () { /* the model stays behind, as it was */ });   // the same as a choice in the review
   shootNext();
-  /* the same as a choice in the review: kept in the cloud and copied in the background */
-  api('POST', '/rest/v1/rpc/photo_job_add', {
-    p_query: f.query,
-    p_items: ids.map(function (id) { return Number(id.slice(1)); }),
-    p_pics: picked.map(function (c) { return c.own ? { own: c.own } : { url: c.url || '', thumb: c.thumb }; })
-  }, null, true).then(function (res) {
-    photoWork.adding--;
-    if (!res.ok) throw res;
-    state.photoJobs = state.photoJobs.concat([res.json]);
-    paintJobs();
-    startPhotoWork();
-  }, function (e) { photoWork.adding--; throw e; }).catch(function (e) {
-    if (e && e.gone) { sessionLost(); return; }
-    f.status = 'done';
-    toast(t('save_fail'));
-    paintJobs();
-  });
 }
 /* "None fits": that search is closed, and the camera, the gallery and the internet search stay. */
 function shootNoneFits() {
@@ -5801,18 +5899,28 @@ function shootNoneFits() {
     paintShoot();
   });
 }
-/* A search for this model right now: its items join the site's list, or its closed search starts again. */
-function shootSearch() {
-  var g = shoot && shoot.groups[shoot.at], f = g && shootFind(g), ids = g ? g.ids.filter(function (id) { return !g.off[id]; }) : [];
-  if (!ids.length) { toast(t('ps_noneticked')); return; }
-  sent(f ? api('POST', '/rest/v1/rpc/photo_decide', { p_query: f.query, p_action: 'again', p_label: g.label })
-    : api('POST', '/rest/v1/rpc/photo_want', { p_items: ids.map(function (id) { return { item_id: Number(id.slice(1)), label: g.label }; }) })).then(function (res) {
-    if (!res) return;
-    return refreshFinds().then(function () {
-      toast(t(shootFind(g) ? 'pf_queued' : 'pf_cannot'));
-      if ($('#shoot')) paintShoot();
+/* A search for these items right now: they join the site's list, or their model's closed search starts again. An
+   item that joins a model closed before is searched again too; one whose model has pictures already gets them. */
+function searchFor(ids, label, done) {
+  function again(f) { return sent(api('POST', '/rest/v1/rpc/photo_decide', { p_query: f.query, p_action: 'again', p_label: label })); }
+  function fresh(res) { return res ? refreshFinds().then(function () { return res; }) : null; }
+  var f = findOf(ids), step = f ? again(f).then(fresh)
+    : sent(api('POST', '/rest/v1/rpc/photo_want', { p_items: ids.map(function (id) { return { item_id: Number(id.slice(1)), label: label }; }) })).then(fresh).then(function (res) {
+      var g = res && findOf(ids);
+      return g && !shootReady(g) && g.status !== 'queued' && g.status !== 'asked' ? again(g).then(fresh) : res;
     });
-  });
+  step.then(function (res) {
+    var g;
+    if (!res) return;
+    g = findOf(ids);
+    toast(t(!g ? 'pf_cannot' : (shootReady(g) ? 'ps_sug_ready' : 'pf_queued')));
+    done();
+  }).catch(function (e) { if (e && e.gone) sessionLost(); });   // offline: the button stays as it was
+}
+function shootSearch() {
+  var g = shoot && shoot.groups[shoot.at], ids = g ? g.ids.filter(function (id) { return !g.off[id]; }) : [];
+  if (!ids.length) { toast(t('ps_noneticked')); return; }
+  searchFor(ids, g.label, function () { if ($('#shoot')) paintShoot(); });
 }
 function shootFreshFinds() {
   if (!shootFindsOn()) return;
@@ -5827,6 +5935,114 @@ function watchShootFinds() {
   if (!$('#shoot') || !f || (f.status !== 'queued' && f.status !== 'asked')) return;
   shootWatch = setTimeout(function () {
     refreshFinds().then(function () { if ($('#shoot')) paintShoot(); }, function () { watchShootFinds(); });
+  }, 20000);
+}
+
+/* ---------- The site's suggestions on an item's page ----------
+   The same button sits beside "add a photo" and the internet search on the page of an item without a photo: the
+   pictures the site found for its model, chosen the same way, for this item and the others of its model still
+   without a photo, or a search started for it on the spot. Only that part of the page is redrawn when it changes,
+   so a photo being picked from the gallery or words being typed are never lost. */
+var sheetSug = { id: '', open: false, off: {}, sig: '' };
+function sheetSugReset(id) { sheetSug = { id: id, open: false, off: {}, sig: '' }; finds.picks = []; }
+/* An item the site may search for: without a photo, and for the shop's own stock, in stock and shown in the store. */
+function sheetSugFits(it) { return !it.photo && (!!it.offer || (totalQty(it) > 0 && !state.pricing.hidden[it.cat])); }
+/* Where a choice made here goes: this item first, then the others of its model still without a photo. */
+function sheetSugItems(it, f) {
+  var ids = [it.id];
+  if (f) Object.keys(state.findItems).forEach(function (id) {
+    var o = byId(id);
+    if (id !== it.id && state.findItems[id] === f.query && o && !o.photo) ids.push(id);
+  });
+  return ids;
+}
+function sheetSugButton(it) {
+  var f;
+  if (!isAdmin() || !shootFindsOn() || it.photo) return '';
+  f = findOf([it.id]);
+  return f || sheetSugFits(it) ? sugButton(f, sheetSug.open, 'ph') : '';
+}
+/* The button and the internet search beside it, made smaller when there are two. */
+function sheetSugBar(it) { var b = sheetSugButton(it); return b + webSearchLink(modelOf(it).label, !!b); }
+function sheetSugGrid(it) {
+  var f = findOf([it.id]), others;
+  if (!sheetSug.open || !sheetSugButton(it) || !shootReady(f)) return '';
+  others = sheetSugItems(it, f).slice(1);
+  return '<div id="sug-box" class="stack">' + (others.length ? '<p class="sub">' + t('ph_sug_also') + '</p><div class="pslist">' + others.map(function (id) {
+    return '<label class="check"><input type="checkbox" data-input="phsugitem" data-id="' + id + '"' + (sheetSug.off[id] ? '' : ' checked') + '><span dir="auto">' + esc(byId(id).name) + '</span></label>';
+  }).join('') + '</div>' : '') +
+    '<p class="sub">' + t('pf_hint') + '</p>' + candGrid(candidates({ f: f })) +
+    '<div class="row"><button class="btn ghost" data-action="pfall"></button><button class="btn primary grow" data-action="phuse" disabled></button></div>' +
+    '<button class="btn ghost sm" data-action="phnone">' + t('pf_reject') + '</button></div>';
+}
+function sheetSugSig(it) {
+  var f = findOf([it.id]);
+  return [it.id, it.photo, sheetSug.open, f ? f.query + ':' + f.status + ':' + candidates({ f: f }).length : '', sheetSugItems(it, f).join(','),
+    finds.state ? finds.state.hasKey : '', shootFindsOn()].join('|');
+}
+/* After the item's page is drawn: the marks of a choice under way, the search state once a session, and a watch
+   while its model is being searched. */
+function sheetSugAfter(it) {
+  sheetSug.sig = sheetSugSig(it);
+  if (sheetSug.open) paintPicks();
+  if (shootFindsOn() && !it.photo && !finds.state && !finds.asking) {
+    finds.asking = true;
+    api('POST', '/rest/v1/rpc/photo_state', {}).then(function (r) { finds.asking = false; if (r.ok) { finds.state = r.json; paintSheetSug(); } }, function () { finds.asking = false; });
+  }
+  watchSheetFinds();
+}
+function paintSheetSug(force) {
+  var bar = $('#ph-sug'), grid = $('#ph-sug-grid'), it = bar && byId(state.sheetId), sig;
+  if (!it || !grid) return;
+  sig = sheetSugSig(it);
+  if (!force && sig === sheetSug.sig) return;
+  sheetSug.sig = sig;
+  bar.innerHTML = sheetSugBar(it);
+  grid.innerHTML = sheetSugGrid(it);
+  if (sheetSug.open) paintPicks();
+  watchSheetFinds();
+}
+function toggleSheetSug() {
+  sheetSug.open = !sheetSug.open;
+  finds.picks = [];
+  paintSheetSug(true);
+}
+function useSheetFind() {
+  var it = byId(state.sheetId), f = it && findOf([it.id]), cands = shootReady(f) ? candidates({ f: f }) : [], ids,
+    picked = finds.picks.map(function (i) { return cands[i]; }).filter(Boolean);
+  if (!picked.length) return;
+  if (!state.jobsOk) { toast(t('pf_oldcloud')); return; }
+  ids = sheetSugItems(it, f).filter(function (id) { return !sheetSug.off[id]; });
+  sendChoice(f, ids, picked, function () { paintSheetSug(); });
+  sheetSug.open = false;
+  finds.picks = [];
+  paintSheetSug(true);
+  toast(t('ph_sug_sent'));
+}
+function sheetNoneFits() {
+  var it = byId(state.sheetId), f = it && findOf([it.id]);
+  if (!f) return;
+  sent(api('POST', '/rest/v1/rpc/photo_decide', { p_query: f.query, p_action: 'reject' })).then(function (res) {
+    if (!res) return;
+    f.status = 'rejected';
+    sheetSug.open = false;
+    finds.picks = [];
+    paintSheetSug(true);
+  });
+}
+function sheetSearch() {
+  var it = byId(state.sheetId);
+  if (it) searchFor([it.id], modelOf(it).label, function () { paintSheetSug(true); });
+}
+/* While the item's model is being searched, the page asks every 20 seconds whether its pictures are in. */
+var sheetWatch = null;
+function watchSheetFinds() {
+  clearTimeout(sheetWatch);
+  var it = state.sheetId && byId(state.sheetId), f = it && $('#ph-sug') && findOf([it.id]);
+  if (!f || (f.status !== 'queued' && f.status !== 'asked')) return;
+  sheetWatch = setTimeout(function () {
+    if (!$('#ph-sug')) return;
+    refreshFinds().then(function () { paintSheetSug(); watchSheetFinds(); }, function () { watchSheetFinds(); });
   }, 20000);
 }
 
@@ -6026,6 +6242,10 @@ document.addEventListener('click', function (e) {
   else if (a === 'psuse') useShootFind();
   else if (a === 'psnone') shootNoneFits();
   else if (a === 'psfind') shootSearch();
+  else if (a === 'phsug') toggleSheetSug();   // the same on an item's page
+  else if (a === 'phuse') useSheetFind();
+  else if (a === 'phnone') sheetNoneFits();
+  else if (a === 'phfind') sheetSearch();
   else if (a === 'psretry') { shoot.jobs = shoot.jobs.concat(shoot.failed); shoot.failed = []; pumpShoot(); paintShootStatus(); }
   else if (a === 'bkgo') runRestore();
   else if (a === 'bkcancel') { backup.file = null; backupSay(''); paintBackup(); }
@@ -6101,6 +6321,7 @@ document.addEventListener('click', function (e) {
   else if (a === 'oclist') openList(el.getAttribute('data-sup'));
   else if (a === 'osupedit') { state.supEdit = el.getAttribute('data-sup'); state.offerEdit = null; paintOfferRows(); p = $('#se-name'); if (p) p.focus(); }
   else if (a === 'osupcancel') { state.supEdit = null; paintOfferRows(); }
+  else if (a === 'ofold') toggleSupplier(el.getAttribute('data-sup'));
   else if (a === 'oedit') { state.offerEdit = id; state.supEdit = null; paintOfferRows(); p = $('#oe-name'); if (p) p.focus(); }
   else if (a === 'oeditcancel') { state.offerEdit = null; paintOfferRows(); }
   else if (a === 'sreq') logRequest(el);   // the link itself opens WhatsApp
@@ -6166,7 +6387,11 @@ document.addEventListener('input', function (e) {
   else if (k === 'gueston') { state.guestOn = el.checked; saveSetting('guest'); }
   else if (k === 'guestsyp') { state.guestSyp = el.checked; saveSetting('guest'); }
   else if (k === 'paste') { state.pasteText = el.value; setDraft(parseOfferText(el.value, state.draftCur)); paintDraft(); }
-  else if (k === 'supplier') { state.supplier = el.value; paintDraftFoot(); }
+  else if (k === 'supplier') {   // a supplier with its own profit % changes the prices worked out below
+    v = offerMarginPct(draftSupplier());
+    state.supplier = el.value;
+    if (offerMarginPct(draftSupplier()) !== v) paintDraft(); else paintDraftFoot();
+  }
   else if (k === 'downown') { state.draftOwn = el.checked; d = $('#supplier'); if (d) d.parentNode.hidden = el.checked; paintDraft(); }
   else if (k === 'qspecs') { state.quoteSpecs = el.checked; save(); paintQuoteSum(); }
   else if (k === 'qphotos') { state.quotePhotos = el.checked; save(); }
@@ -6189,11 +6414,12 @@ document.addEventListener('input', function (e) {
   else if (k === 'photoauto') { state.photoAuto = el.checked; saveSetting('photos'); flushLater(); }
   else if (k === 'photocap') { v = parseInt(el.value, 10); if (v >= 0) { state.photoCap = v; saveSetting('photos'); } }
   else if (k === 'psitem') { d = shoot && shoot.groups[shoot.at]; if (d) d.off[el.getAttribute('data-id')] = !el.checked; }
+  else if (k === 'phsugitem') sheetSug.off[el.getAttribute('data-id')] = !el.checked;
   else if (k === 'ratemanual') {   // typed in the lira shown on screen
     v = parseFloat(el.value);
     if (v > 0) { state.rateManual = v / sypFactor(); useRate(); saveSetting('money'); paintHeader(); }
   }
-  else if (k === 'ofilter') { state.offerQuery = el.value; paintOfferRows(); }
+  else if (k === 'ofilter') { state.offerQuery = el.value; state.supFoldQ = {}; paintOfferRows(); }   // a new search unfolds every list with matches
   else if (k === 'dprice') {
     d = state.draft[Number(el.getAttribute('data-i'))];
     v = parseFloat(el.value);
@@ -6240,7 +6466,7 @@ document.addEventListener('change', function (e) {
     resolveItem(it);
     savePricing(id);
     if (it.offer) {   // the store reads an offer's price from its rows in the cloud
-      sent(api('PATCH', '/rest/v1/offers?id=in.(' + it.offer.rows.map(encodeURIComponent).join(',') + ')', { sell: offerOwnSell(id, it.raw.cost) }, 'return=minimal'));
+      sent(api('PATCH', '/rest/v1/offers?id=in.(' + it.offer.rows.map(encodeURIComponent).join(',') + ')', { sell: offerOwnSell(id, it.raw.cost, offerSupplier(it)) }, 'return=minimal'));
     }
     if (state.tab === 'items') paintItems();
     openItem(id);
