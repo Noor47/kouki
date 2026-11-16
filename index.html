@@ -186,6 +186,8 @@ input[type="checkbox"] { width:22px; height:22px; accent-color:var(--brand) }
 
 /* Panels, quote, offers, overview */
 .panel { background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:14px; display:flex; flex-direction:column; gap:12px; min-width:0 }
+/* A one-line panel (the reminders on the overview): its text and its button side by side, only as tall as the line */
+.panel.row { flex-direction:row; align-items:center; gap:10px; padding:10px 14px }
 .qline, .orow, .prow { display:flex; align-items:center; gap:10px; padding:10px 0; border-top:1px solid var(--line) }
 .qline { flex-wrap:wrap }
 .qsum { font:600 15px var(--font-display); font-variant-numeric:tabular-nums }
@@ -457,6 +459,30 @@ body.no-nav #cmpbar { bottom:calc(84px + env(safe-area-inset-bottom,0px)) }
 @media (prefers-reduced-motion: reduce) { .fold .chev { transition:none } }
 /* A holder that adds no box of its own: its contents sit in the row or the column around it */
 .slot { display:contents }
+/* Visitors on the overview: who is in the store now, the counts, 14 days of bars, the most viewed items */
+.vlive { display:inline-flex; align-items:center; gap:6px; font:600 13px var(--font-body); color:var(--muted) }
+.vlive.on { color:var(--ink) }
+.vlive.on .dot { animation:vpulse 1.6s ease-in-out infinite }
+@keyframes vpulse { 50% { opacity:.35 } }
+.vstats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px }
+@media (min-width:560px) { .vstats { grid-template-columns:repeat(4,minmax(0,1fr)) } }
+.vstat { display:flex; flex-direction:column; gap:1px; min-width:0; padding:8px 10px; border-radius:var(--r-sm); background:var(--surface-2) }
+.vstat b { font:700 18px var(--font-display); font-variant-numeric:tabular-nums }
+.vstat span, .vstat small { color:var(--muted); font-size:12px }
+.vbars { display:flex; align-items:flex-end; gap:2px; height:52px; border-bottom:1px solid var(--line) }
+.vbar { flex:1; height:100%; display:flex; align-items:flex-end; min-width:0 }
+.vbar i { display:block; width:100%; background:var(--brand); opacity:.45; border-radius:4px 4px 0 0 }
+.vbar.now i, .vbar:hover i { opacity:1 }
+.vaxis { display:flex; justify-content:space-between; gap:8px; margin-top:4px; color:var(--muted); font-size:11.5px; font-variant-numeric:tabular-nums }
+.vaxis .vtip { flex:1; text-align:center; color:var(--ink) }
+.vtop { margin:0; padding-inline-start:22px; display:flex; flex-direction:column; gap:6px }
+.vwatch { display:flex; flex-direction:column; gap:4px }
+.vwatch ul { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:4px }
+.vwatch li, .vtop li > span { display:flex; gap:8px; align-items:baseline }
+.vwatch li .linkbtn, .vtop li .linkbtn { flex:1; min-width:0 }
+.vwatch small, .vtop li small { color:var(--muted); white-space:nowrap }
+.linkbtn { border:0; background:none; padding:2px 0; color:var(--brand); font:inherit; text-align:start; cursor:pointer; text-decoration:underline; text-underline-offset:3px }
+@media (prefers-reduced-motion: reduce) { .vlive.on .dot { animation:none } }
 
 .strong { font-weight:700 }
 .pfgrid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px }
@@ -711,6 +737,25 @@ var LOCALES = {
     guest_d: 'Items and prices only. No sign-in needed.',
     or: 'or',
     loading: 'Loading...',
+    vis_title: 'Visitors',
+    vis_live: '{n} in the store now',
+    vis_live0: 'Nobody in the store now',
+    vis_watching: 'Looking at now:',
+    vis_today: 'Today',
+    vis_yday: 'Yesterday',
+    vis_week: 'Last 7 days',
+    vis_all: 'Since counting began',
+    vis_new: '{n} new',
+    vis_since: 'from {d}',
+    vis_line: 'Today: {v} visits · {p} item views · {l} from shared links',
+    vis_bars: 'Visitors in the last 14 days',
+    vis_bar: '{d}: {n} visitors',
+    vis_top: 'Most viewed in the last 7 days ({n})',
+    vis_views: '{n} views',
+    vis_sep: ', ',
+    vis_note: 'Staff devices are not counted.',
+    vis_more: 'and {n} more',
+    vis_setup: 'The visitor counter needs the latest cloud file (edition 12).',
     retry: 'Try again',
     wait_title: 'Waiting for the manager',
     wait_text: 'The account {email} exists. The manager has to approve it before the stock appears.',
@@ -1276,6 +1321,25 @@ var LOCALES = {
     guest_d: 'المواد والأسعار فقط، بدون تسجيل دخول.',
     or: 'أو',
     loading: 'جارٍ التحميل...',
+    vis_title: 'الزوار',
+    vis_live: '{n} في الموقع الآن',
+    vis_live0: 'لا أحد في الموقع الآن',
+    vis_watching: 'يشاهدون الآن:',
+    vis_today: 'اليوم',
+    vis_yday: 'أمس',
+    vis_week: 'آخر 7 أيام',
+    vis_all: 'منذ بدء العد',
+    vis_new: '{n} جديد',
+    vis_since: 'من {d}',
+    vis_line: 'اليوم: {v} زيارة · {p} مشاهدة منتج · {l} من روابط مشاركة',
+    vis_bars: 'الزوار في آخر 14 يوماً',
+    vis_bar: '{d}: {n} زائر',
+    vis_top: 'الأكثر مشاهدة في آخر 7 أيام ({n})',
+    vis_views: '{n} مشاهدة',
+    vis_sep: '، ',
+    vis_note: 'أجهزة الموظفين لا تُحسب.',
+    vis_more: 'و{n} غيرها',
+    vis_setup: 'عدّاد الزوار يحتاج ملف السحابة الأخير (الإصدار 12).',
     retry: 'حاول مجدداً',
     wait_title: 'بانتظار موافقة المدير',
     wait_text: 'الحساب {email} موجود. يجب أن يوافق عليه المدير قبل أن تظهر البضاعة.',
@@ -1716,7 +1780,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.26';
+var APP_BUILD = '2.27';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -1747,6 +1811,7 @@ var state = {
   supMargins: {}, supMarginsOk: false,        // a supplier's own profit %, set by the manager (cloud edition 11)
   supEdit: null, offerEdit: null,             // the supplier or the offer being edited on the offers screen
   supOpen: {}, supFoldQ: {},                  // suppliers unfolded on the offers screen, and those folded during a search
+  visits: null, visitsOk: null, visTop: false, // the visitor counter on the overview (cloud edition 12)
   hidden: {}, onlyHidden: false,              // items the manager hid from customers, and the list showing only those
   groupNames: {},                             // the accounting program's groups by number
   draftOwn: false, draftCat: '', draftCatName: '',   // a list being added: the shop's own goods, and its category
@@ -2346,6 +2411,66 @@ function loadShareInfo() {
   }, function () { /* no pages for sharing yet: plain links */ });
 }
 
+/* ---------- Visitors ----------
+   A browser that opens the store as a visitor reports to the cloud while the store is on its screen: about every 40
+   seconds, soon after an item is opened or closed, and once more when it leaves. It is known only by a random number
+   kept in the browser; nothing else about it is sent. A device that ever signed in as staff never reports. */
+var VISIT = { id: '', on: true, last: 0, soon: null, views: null, day: '', seen: {}, via: '' };
+function visitorId() {
+  var id = VISIT.id;
+  if (id) return id;
+  try { id = localStorage.getItem('raff.visitor') || ''; } catch (e) { id = ''; }
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) {
+    id = window.crypto && crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 3 | 8)).toString(16);
+    });
+    try { localStorage.setItem('raff.visitor', id); } catch (e) { /* a private window: one number for this visit */ }
+  }
+  VISIT.id = id;
+  return id;
+}
+function staffDevice() { try { return localStorage.getItem('raff.staffdev') === '1'; } catch (e) { return false; } }
+function markStaffDevice() { try { localStorage.setItem('raff.staffdev', '1'); } catch (e) { /* nothing to keep it in */ } }
+function counting() { return VISIT.on && isGuest() && state.screen === 'app' && !document.hidden && !staffDevice(); }
+/* Today's opened items, kept in the browser: those already counted, and those still to report. Kept across pages, so
+   an item opened just before the visitor follows a link or reloads is still reported, once. */
+function visitsKept() {
+  var day = new Date().toDateString(), kept;
+  if (VISIT.views && VISIT.day === day) return;
+  try { kept = JSON.parse(localStorage.getItem('raff.seen') || '{}') || {}; } catch (e) { kept = {}; }
+  VISIT.day = day;
+  VISIT.seen = kept.day === day && kept.ids ? kept.ids : {};
+  VISIT.views = kept.day === day && Array.isArray(kept.pend) ? kept.pend.slice(0, 40) : [];
+}
+function keepVisits() { try { localStorage.setItem('raff.seen', JSON.stringify({ day: VISIT.day, ids: VISIT.seen, pend: VISIT.views })); } catch (e) { /* this page remembers them */ } }
+/* gone: the store left the screen, so the visitor no longer counts as in it now (with any items still to report). */
+function sitePing(gone) {
+  var it, views, via;
+  if (gone ? !VISIT.last || !isGuest() : !counting()) return;
+  visitsKept();
+  it = !gone && state.sheetId ? byId(state.sheetId) : null;
+  views = VISIT.views.splice(0, 20);
+  keepVisits();   // taken off before sending: a page closing meanwhile cannot send them twice
+  via = gone ? '' : VISIT.via;
+  VISIT.last = gone ? 0 : Date.now();
+  if (!gone) VISIT.via = '';   // only the first report of a page says how it was opened
+  function back() { VISIT.views = views.concat(VISIT.views).slice(0, 40); keepVisits(); }   // not reported: the next report carries them
+  api('POST', '/rest/v1/rpc/site_ping', { p_visitor: visitorId(), p_item: it ? idNum(it) : null, p_views: views, p_via: via || null, p_gone: !!gone }, 'return=minimal', true).then(function (r) {
+    if (r.status === 404) VISIT.on = false;   // a cloud without the counter (before edition 12): no more reports
+    else if (!r.ok) back();
+  }, back);
+}
+function pingSoon() { clearTimeout(VISIT.soon); VISIT.soon = setTimeout(sitePing, 1500); }
+/* An item opened by a visitor: counted once a day for each visitor. */
+function noteView(it) {
+  var id = idNum(it);
+  if (!counting()) return;
+  visitsKept();
+  if (!VISIT.seen[id]) { VISIT.seen[id] = 1; VISIT.views.push(id); keepVisits(); }
+  pingSoon();
+}
+
 /* ---------- Links to one item: "#p123" opens it, and the phone's back button closes it ---------- */
 var hashByApp = false;
 function routeHash() {
@@ -2739,6 +2864,7 @@ function http(method, path, opt) {
 
 /* ---------- Session ---------- */
 function setSession(j) {
+  markStaffDevice();   // a device that signs in as staff is never counted as a visitor
   state.session = { at: j.access_token, rt: j.refresh_token, exp: Math.floor(Date.now() / 1000) + (Number(j.expires_in) || 3600),
     uid: j.user && j.user.id, email: (j.user && j.user.email) || '' };
   save();
@@ -2881,6 +3007,7 @@ function clearAccount() {
   state.photoJobs = []; state.jobsOk = false; photoWork.done = 0; photoWork.skipped = 0; photoWork.based = false;
   state.suppliers = {}; state.requests = []; state.supEdit = null; state.offerEdit = null; state.hidden = {}; state.onlyHidden = false;
   state.supMargins = {}; state.supMarginsOk = false; state.supOpen = {}; state.supFoldQ = {};
+  state.visits = null; state.visitsOk = null; state.visTop = false;
   state.session = null; state.me = null; state.role = null; state.busy = false; state.peekId = null;
   state.items = []; state.offers = []; state.people = []; state.events = []; state.cats = [];
   state.draft = []; state.pasteText = ''; state.supplier = ''; state.skipped = 0; state.ocrMsg = ''; state.offerQuery = ''; state.need = '';
@@ -2937,6 +3064,7 @@ function enterGuest() {
     if (!state.guestOn) { state.role = null; state.items = []; state.screen = 'login'; state.authMsg = ''; render(); return; }
     state.screen = 'app'; state.tab = 'items';
     render(); window.scrollTo(0, 0); routeHash();
+    sitePing();
   }, function () { state.busy = false; state.screen = 'offline'; render(); });
 }
 function signOut() {
@@ -3271,7 +3399,7 @@ function paintTab() {
   if (state.tab === 'items') paintItems();
   if (state.tab === 'offers') { paintDraft(); paintOffers(); }
   if (state.tab === 'settings') { paintBackup(); loadPhotoState(); }
-  if (state.tab === 'overview') freshFinds(function () { var n = $('#pf-note'); if (n) n.innerHTML = photosNoteInner(); });
+  if (state.tab === 'overview') { freshFinds(function () { var n = $('#pf-note'); if (n) n.innerHTML = photosNoteInner(); }); loadVisits(); watchVisits(); }
   paintHeader();
 }
 /* New data arrived while the app is open: refresh what is on screen without disturbing someone who is typing. */
@@ -3701,6 +3829,7 @@ function openItem(id) {
   document.body.classList.add('lock');
   setItemHash(it);
   if (isAdmin()) sheetSugAfter(it);
+  if (isGuest()) noteView(it);
   if (fresh) {
     sh.firstChild.scrollTop = 0;
     var c = $('#sheet-close');
@@ -3714,6 +3843,7 @@ function closeSheet(fromRoute) {
   stopScan();
   sh.hidden = true;
   sh.innerHTML = '';
+  if (state.sheetId && isGuest()) pingSoon();   // a visitor's screen no longer shows that item
   state.sheetId = null;
   state.qrFor = '';
   document.body.classList.remove('lock');
@@ -4406,10 +4536,72 @@ function viewOverview() {
   var hid = hiddenCount(), hid2 = hiddenCount(2);
   return photosNote() + (hid ? '<section class="panel row"><span class="grow">' + t(hid2 ? 'hidden_count2' : 'hidden_count', { n: hid, m: hid2 }) + '</span><button class="btn sm" data-action="showhidden">' + t('hidden_show') + '</button></section>' : '') +
     (days < 0 || days > 14 ? '<section class="panel row"><span class="grow warn strong">' + (days < 0 ? t('bk_due_never') : t('bk_due', { n: days })) + '</span>' +
-    '<button class="btn sm" data-action="gobackup">' + t('bk_make') + '</button></section>' : '') + '<div class="kpis">' + kpi(usd(cost), t('kpi_cost'), sypOf(cost)) + kpi(usd(sell), t('kpi_sell'), sypOf(sell)) +
+    '<button class="btn sm" data-action="gobackup">' + t('bk_make') + '</button></section>' : '') + visitsPanel() + '<div class="kpis">' + kpi(usd(cost), t('kpi_cost'), sypOf(cost)) + kpi(usd(sell), t('kpi_sell'), sypOf(sell)) +
     kpi(usd(sell - cost), t('kpi_profit'), num(sell > 0 ? (sell - cost) / sell * 100 : 0, 1) + '%') + kpi(String(alerts), t('kpi_alert'), '', 'golow') + '</div>' +
     '<section class="panel"><div><h2 class="h">' + t('activity') + '</h2><p class="sub">' + t('activity_sub2') + '</p></div>' +
     (feed ? '<ul class="feed">' + feed + '</ul>' : '<p class="empty">' + t('no_activity') + '</p>') + '</section>';
+}
+
+/* ---------- Visitors, on the overview ----------
+   Asked for when the overview shows and every 20 seconds while it stays on screen; only that panel is redrawn. */
+var visTimer = null, visAt = 0;
+function loadVisits(force) {
+  if (!isAdmin() || state.visitsOk === false || (!force && Date.now() - visAt < 4000)) return;
+  visAt = Date.now();
+  api('POST', '/rest/v1/rpc/site_stats', { p_days: 14 }).then(function (r) {
+    if (r.status === 404) { state.visitsOk = false; paintVisits(); return; }   // a cloud before edition 12
+    if (!r.ok || !r.json) return;
+    state.visits = r.json;
+    state.visitsOk = true;
+    paintVisits();
+  }, function () { /* offline: the next round asks again */ });
+}
+function watchVisits() {
+  clearInterval(visTimer);
+  visTimer = setInterval(function () {
+    if (state.screen !== 'app' || state.tab !== 'overview' || !$('#vis')) { clearInterval(visTimer); visTimer = null; return; }
+    if (!document.hidden) loadVisits(true);
+  }, 20000);
+}
+function paintVisits() { var el = $('#vis'); if (el) el.innerHTML = visitsInner(); }
+function visitsPanel() { return isAdmin() ? '<section class="panel" id="vis">' + visitsInner() + '</section>' : ''; }
+function dayLabel(s) { s = String(s || ''); return s.length >= 10 ? Number(s.slice(8, 10)) + '/' + Number(s.slice(5, 7)) : ''; }
+function visTip(d) { return t('vis_bar', { d: dayLabel(d.day), n: num(d.visitors, 0) }) + (d.newcomers ? ' · ' + t('vis_new', { n: num(d.newcomers, 0) }) : ''); }
+function vstat(n, label, sub) { return '<div class="vstat"><b>' + num(Number(n) || 0, 0) + '</b><span>' + label + '</span>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>'; }
+/* One bar a day, oldest first along the line, today in full colour; touching a bar names its day below. */
+function visBars(days) {
+  var last = days.length - 1, max = Math.max.apply(null, days.map(function (d) { return d.visitors; }).concat([1]));
+  return '<div><div class="vbars" role="img" aria-label="' + esc(t('vis_bars') + ': ' + days.map(visTip).join(t('vis_sep'))) + '">' + days.map(function (d, i) {
+    var h = d.visitors ? Math.max(6, Math.round(d.visitors / max * 100)) : 0;
+    return '<span class="vbar' + (i === last ? ' now' : '') + '" data-tip="' + esc(visTip(d)) + '" title="' + esc(visTip(d)) + '"><i style="height:' + h + '%"></i></span>';
+  }).join('') + '</div><div class="vaxis"><span>' + esc(dayLabel(days[0].day)) + '</span><span class="vtip" id="vis-tip">' + esc(visTip(days[last])) + '</span><span>' + t('vis_today') + '</span></div></div>';
+}
+function visItemLink(w) {
+  var it = byId('m' + w.id);
+  return '<button class="linkbtn" data-action="open" data-id="' + it.id + '" dir="auto">' + esc(it.name) + '</button>';
+}
+function visitsInner() {
+  var v = state.visits, days, today, yday, live, watching, top;
+  if (state.visitsOk === false) return '<h2 class="h">' + t('vis_title') + '</h2><p class="sub">' + t('vis_setup') + '</p>';
+  if (!v) return '<h2 class="h">' + t('vis_title') + '</h2><p class="sub">' + t('loading') + '</p>';
+  days = v.days && v.days.length ? v.days : [{ day: v.today, visitors: 0 }];
+  today = days[days.length - 1];
+  yday = days[days.length - 2] || {};
+  live = Number(v.live) || 0;
+  watching = (v.watching || []).filter(function (w) { return byId('m' + w.id); });   // items the app knows of (not removed since)
+  top = (v.top || []).filter(function (w) { return byId('m' + w.id); }).slice(0, 5);
+  return '<div class="row"><h2 class="h grow">' + t('vis_title') + '</h2><span class="vlive' + (live ? ' on' : '') + '"><i class="dot' + (live ? '' : ' off') + '"></i>' +
+    t(live ? 'vis_live' : 'vis_live0', { n: num(live, 0) }) + '</span></div>' +
+    (watching.length ? '<div class="vwatch"><span class="sub">' + t('vis_watching') + '</span><ul>' + watching.slice(0, 3).map(function (w) {
+      return '<li>' + visItemLink(w) + (w.n > 1 ? '<small>×' + num(w.n, 0) + '</small>' : '') + '</li>';
+    }).join('') + '</ul>' + (watching.length > 3 ? '<span class="sub">' + t('vis_more', { n: num(watching.length - 3, 0) }) + '</span>' : '') + '</div>' : '') +
+    '<div class="vstats">' + vstat(today.visitors, t('vis_today'), today.newcomers ? t('vis_new', { n: num(today.newcomers, 0) }) : '') + vstat(yday.visitors, t('vis_yday'), '') +
+    vstat(v.week, t('vis_week'), '') + vstat(v.total, t('vis_all'), v.since ? t('vis_since', { d: dayLabel(v.since) }) : '') + '</div>' +
+    visBars(days) +
+    '<p class="sub">' + t('vis_line', { v: num(today.visits || 0, 0), p: num(today.views || 0, 0), l: num(today.via || 0, 0) }) + '</p>' +
+    (top.length ? '<button class="linkbtn" data-action="vistop" aria-expanded="' + !!state.visTop + '">' + t('vis_top', { n: top.length }) + '</button>' +
+      (state.visTop ? '<ol class="vtop">' + top.map(function (w) { return '<li><span>' + visItemLink(w) + '<small>' + t('vis_views', { n: num(w.n, 0) }) + '</small></span></li>'; }).join('') + '</ol>' : '') : '') +
+    '<p class="sub">' + t('vis_note') + '</p>';
 }
 
 /* ---------- Settings ---------- */
@@ -6322,6 +6514,7 @@ document.addEventListener('click', function (e) {
   else if (a === 'osupedit') { state.supEdit = el.getAttribute('data-sup'); state.offerEdit = null; paintOfferRows(); p = $('#se-name'); if (p) p.focus(); }
   else if (a === 'osupcancel') { state.supEdit = null; paintOfferRows(); }
   else if (a === 'ofold') toggleSupplier(el.getAttribute('data-sup'));
+  else if (a === 'vistop') { state.visTop = !state.visTop; paintVisits(); }
   else if (a === 'oedit') { state.offerEdit = id; state.supEdit = null; paintOfferRows(); p = $('#oe-name'); if (p) p.focus(); }
   else if (a === 'oeditcancel') { state.offerEdit = null; paintOfferRows(); }
   else if (a === 'sreq') logRequest(el);   // the link itself opens WhatsApp
@@ -6518,6 +6711,13 @@ document.addEventListener('keydown', function (e) {
   }
 });
 window.addEventListener('afterprint', function () { $('#print-area').innerHTML = ''; });
+/* a day's bar on the visitor chart, pointed at or touched: its day and count show under the bars */
+['pointerover', 'click'].forEach(function (ev) {
+  document.addEventListener(ev, function (e) {
+    var b = e.target.closest && e.target.closest('.vbar'), tip = $('#vis-tip');
+    if (b && tip) tip.textContent = b.getAttribute('data-tip');
+  });
+});
 window.addEventListener('hashchange', routeHash);
 
 /* ---------- Lock after no activity (only when fingerprint or face unlock is on) ---------- */
@@ -6532,11 +6732,15 @@ setInterval(function () {
 /* ---------- Keeping in step with the cloud ---------- */
 setInterval(poll, CLOUD.pollMs);
 document.addEventListener('visibilitychange', function () {
-  if (document.hidden) flushLater(); else poll();
+  if (document.hidden) { flushLater(); sitePing(true); } else { poll(); sitePing(); }
 });
+/* a visitor's report while the store stays on its screen */
+setInterval(function () { if (Date.now() - VISIT.last > 35000) sitePing(); }, 40000);
+window.addEventListener('pagehide', function () { sitePing(true); });
 window.addEventListener('online', poll);
 
 /* ---------- Start ---------- */
+VISIT.via = /^#p\d+$/.test(location.hash) ? 'item' : (LIST_RE.test(location.hash) ? 'list' : '');   // opened from a shared link
 load();
 render();
 bioCheck();
