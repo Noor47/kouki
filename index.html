@@ -1675,7 +1675,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.23';
+var APP_BUILD = '2.24';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -1983,7 +1983,8 @@ function applyCloud(d) {
   (d.media || []).forEach(function (m) { if (m.photo) state.media['m' + m.item_id] = String(m.photo); });
   state.items = (d.items || []).map(function (r) {
     var it = { id: 'm' + r.id, code: r.code || '', barcode: r.barcode || '', cat: String(r.group_id), name: String(r.name),
-      sell: r.sell === null || r.sell === undefined ? null : Number(r.sell), auto: !r.manual, min: p.lowAt, qty: 0, other: [] };
+      sell: r.sell === null || r.sell === undefined ? null : Number(r.sell), auto: !r.manual, min: p.lowAt, qty: 0, other: [],
+      at: String(r.added_at || '') };   // when it reached the store, for "newest"
     it.note = state.notes[it.id] || '';
     it.photos = (state.media[it.id] || '').split(',').filter(Boolean);
     it.photo = it.photos[0] || '';
@@ -2248,7 +2249,9 @@ function sorted(list) {
   if (s === 'low') a.sort(function (x, y) { return price(x) - price(y) || idNum(y) - idNum(x); });
   else if (s === 'high') a.sort(function (x, y) { return (hasPrice(y) ? y.sell : -1) - (hasPrice(x) ? x.sell : -1) || idNum(y) - idNum(x); });
   else if (s === 'name') a.sort(function (x, y) { return x.name.localeCompare(y.name, state.lang); });
-  else a.sort(function (x, y) { return (x.offer ? 1 : 0) - (y.offer ? 1 : 0) || idNum(y) - idNum(x); });   // the shop's own goods first; highest number = entered last = newest
+  else a.sort(function (x, y) {   // newest: the latest to reach the store first, from wherever it came; then the shop's stock, highest number first
+    return (y.at || '').localeCompare(x.at || '') || (x.offer ? 1 : 0) - (y.offer ? 1 : 0) || idNum(y) - idNum(x);
+  });
   return a;
 }
 /* Values of one property among the listed items, most common first; shown as filter chips. */
@@ -2520,8 +2523,9 @@ function shopItems(list, used) {
     var sp = readNote(o.note), sell = Number(o.sell), key, b, q, st;
     if (!(sell > 0)) return;
     key = offerKey(o);
-    b = best[key] = best[key] || { o: null, sp: sp, sell: 0, rows: [], from: [], own: null, ownSp: null, ownSell: 0, ownQty: 0, ownStock: 'out' };
+    b = best[key] = best[key] || { o: null, sp: sp, sell: 0, rows: [], from: [], own: null, ownSp: null, ownSell: 0, ownQty: 0, ownStock: 'out', at: '' };
     b.rows.push(o.id);
+    if (o.added_at && (!b.at || String(o.added_at) < b.at)) b.at = String(o.added_at);   // the device's first day in the store
     if (o.own) {   // the shop's own goods outside the accounting program: what counts is how many are left
       q = Math.max(0, Number(o.qty) || 0);
       st = o.stock || (q > 0 ? 'ok' : 'out');   // what guests are told: none, few or enough
@@ -2540,7 +2544,7 @@ function shopItems(list, used) {
       cat = offerCat(o, sp, kinds), own = null, i;
     var id = 'm' + offerNum(k), mine = (state.media[id] || '').split(',').filter(Boolean);
     var it = { id: id, code: '', barcode: '', cat: cat, name: String(o.name), sell: mineOwn ? b.ownSell : b.sell, auto: true, min: 0,
-      qty: mineOwn ? b.ownQty : 1, other: [], stock: mineOwn ? ownStockOf(b.ownQty, b.ownStock) : 'low',
+      qty: mineOwn ? b.ownQty : 1, other: [], stock: mineOwn ? ownStockOf(b.ownQty, b.ownStock) : 'low', at: b.at,
       note: state.notes[id] || sp.notes.join('\n'), photos: mine, photo: mine[0] || '',
       offer: { rows: b.rows, from: b.from.sort(function (x, y) { return x.sell - y.sell; }), supplier: mineOwn ? '' : (o.supplier || ''), own: mineOwn,
         ownRow: b.own ? b.own.id : '', ownQty: b.ownQty,
@@ -2738,7 +2742,7 @@ function fetchData() {
       pagesSoft('/rest/v1/rpc/catalog_media?order=item_id'), pagesSoft('/rest/v1/rpc/catalog_notes?order=item_id'), pagesSoft('/rest/v1/rpc/catalog_offers?order=name,id')])
       .then(function (a) { var info = a[2] || {}; return { items: a[0], groups: a[1], currencies: info.currencies, settings: a[3], status: info, media: a[4], notes: a[5], shop: a[6] }; });
   }
-  var jobs = [pages('/rest/v1/items?select=id,group_id,code,barcode,name,qty,qty_by,sell,manual&gone=is.false&order=id'),
+  var jobs = [pages('/rest/v1/items?select=*&gone=is.false&order=id'),   // every column, so a cloud without the newest ones still answers
     pages('/rest/v1/item_groups?select=*&order=id'), pages('/rest/v1/currencies?select=*&order=id'), pages('/rest/v1/warehouses?select=*&order=id'),
     pages('/rest/v1/app_settings?select=key,value&order=key'), api('GET', '/rest/v1/sync_status?select=*').then(need),
     pagesSoft('/rest/v1/item_media?select=item_id,photo&order=item_id')], at = {};
@@ -4065,9 +4069,9 @@ function saveDraft() {
     if (f) f.focus();
     return;
   }
-  var rows = [], updates = [];
+  var rows = [], updates = [], seen = firstSeen();
   state.draft.filter(function (d) { return d.price > 0; }).forEach(function (d) {
-    var r = { supplier: sup, name: d.name, price: d.price, cur: d.cur, note: d.note || '' }, same = own ? ownSame(d) : null, patch, lvl;
+    var r = { supplier: sup, name: d.name, price: d.price, cur: d.cur, note: d.note || '' }, same = own ? ownSame(d) : null, patch, lvl, first;
     if (state.shopOk) { r.cond = state.draftCond; r.sell = offerOwnSell('m' + offerNum(offerKey(r)), offerUsd(d)); }   // a price the manager set for this device before stays
     if (same) {   // one of my own goods saved before: brought up to date instead of added twice
       patch = { price: r.price, cur: r.cur, note: r.note };
@@ -4079,6 +4083,8 @@ function saveDraft() {
     }
     if (own) { r.own = true; r.qty = typeof d.qty === 'number' ? d.qty : 1; }
     if (cat) r.cat = cat;
+    first = seen[offerKey(r)];
+    if (first) r.created_at = first;   // a device already in the store keeps its first day, so a list saved again is not all "newest"
     lvl = hideLevel('m' + offerNum(offerKey(r)));
     if (lvl) r.hidden = true;               // a device hidden from customers stays hidden
     if (lvl === 2) r.staff_hidden = true;   // and so does one hidden from employees too
@@ -4102,6 +4108,12 @@ function saveDraft() {
     toast(updates.length ? t('saved_nm', { n: n, m: updates.length }) : t('saved_n', { n: n }));
     paintTab();
   });
+}
+/* The first day each device was in the store, from any supplier's list or the shop's own goods saved before. */
+function firstSeen() {
+  var at = {};
+  state.offers.forEach(function (o) { var k = offerKey(o); if (o.at && (!at[k] || o.at < at[k])) at[k] = o.at; });
+  return at;
 }
 /* One of my own goods saved before that a row being added is the same device as (name, specs and condition). */
 function ownSame(d) {
