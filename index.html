@@ -442,6 +442,8 @@ body.no-nav #cmpbar { bottom:calc(84px + env(safe-area-inset-bottom,0px)) }
 .cmptable th { text-align:start; font:500 12px var(--font-body); color:var(--muted); padding:10px 8px 2px; border-top:1px solid var(--line) }
 .cmptable td { padding:2px 8px 10px; font:600 14px var(--font-body); overflow-wrap:anywhere; vertical-align:top }
 .cmptable tr.diff td { color:var(--brand) }
+.cmptable .cmpwin { margin-inline-start:4px; vertical-align:1px; font-size:11.5px }
+.cmptable .linkbtn { display:inline-flex; align-items:center; gap:4px; font-size:13px }
 .inote { display:flex; gap:8px; align-items:flex-start; margin:0; padding:10px 12px; border-radius:10px; background:var(--tint-c, var(--surface-2)); color:var(--ink); font-size:14px; white-space:pre-line; overflow-wrap:anywhere }
 .inote svg { flex:none; margin-top:2px }
 .cnote { font-size:12px; color:var(--brand); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100% }
@@ -470,11 +472,12 @@ body.no-nav #cmpbar { bottom:calc(84px + env(safe-area-inset-bottom,0px)) }
 .vstat b { font:700 18px var(--font-display); font-variant-numeric:tabular-nums }
 .vstat span, .vstat small { color:var(--muted); font-size:12px }
 .vbars { display:flex; align-items:flex-end; gap:2px; height:52px; border-bottom:1px solid var(--line) }
-.vbar { flex:1; height:100%; display:flex; align-items:flex-end; min-width:0 }
-.vbar i { display:block; width:100%; background:var(--brand); opacity:.45; border-radius:4px 4px 0 0 }
-.vbar.now i, .vbar:hover i { opacity:1 }
-.vaxis { display:flex; justify-content:space-between; gap:8px; margin-top:4px; color:var(--muted); font-size:11.5px; font-variant-numeric:tabular-nums }
-.vaxis .vtip { flex:1; text-align:center; color:var(--ink) }
+.vchart { display:flex; flex-direction:column; gap:6px }
+.vbar { flex:1; height:100%; display:flex; align-items:flex-end; justify-content:center; min-width:0; border-radius:4px 4px 0 0; cursor:pointer }
+.vbar i { display:block; width:100%; max-width:36px; background:var(--brand); opacity:.45; border-radius:4px 4px 0 0 }
+.vbar.sel { background:var(--surface-2) }
+.vbar.sel i, .vbar:hover i { opacity:1 }
+.vtip { margin:0; text-align:center; font:600 13px var(--font-body); font-variant-numeric:tabular-nums }
 .vtop { margin:0; padding-inline-start:22px; display:flex; flex-direction:column; gap:6px }
 .vwatch { display:flex; flex-direction:column; gap:4px }
 .vwatch ul { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:4px }
@@ -749,6 +752,9 @@ var LOCALES = {
     vis_since: 'from {d}',
     vis_line: 'Today: {v} visits · {p} item views · {l} from shared links',
     vis_bars: 'Visitors in the last 14 days',
+    vis_bars_hint: 'Visitors day by day. Touch a day to see its count.',
+    vis_bars_soon: 'The day-by-day chart shows from tomorrow, once there are two days to compare.',
+    vis_wd: 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday',
     vis_bar: '{d}: {n} visitors',
     vis_top: 'Most viewed in the last 7 days ({n})',
     vis_views: '{n} views',
@@ -812,6 +818,20 @@ var LOCALES = {
     sort_name: 'Name',
     results_n: '{n} items',
     spec_gen: 'Gen {n}',
+    spec_series: 'Series {n}',
+    spec_cpu_kind: 'Processor type',
+    cpu_u: 'Power-saving, longer battery',
+    cpu_p: 'Balanced between performance and battery',
+    cpu_h: 'High performance',
+    cpu_hx: 'Very high performance, for games and heavy software',
+    cpu_y: 'Very low power, for light work',
+    cpu_k: 'Desktop processor that can be overclocked',
+    cpu_f: 'Desktop processor that needs a graphics card',
+    cpu_t: 'Power-saving desktop processor',
+    cmp_more: 'More',
+    cmp_newer: 'Newer',
+    cmp_cheaper: '{d} cheaper',
+    cmp_cpu_web: 'Compare the two processors online',
     spec_cpu: 'Processor',
     spec_ram: 'Memory',
     spec_storage: 'Storage',
@@ -1333,6 +1353,9 @@ var LOCALES = {
     vis_since: 'من {d}',
     vis_line: 'اليوم: {v} زيارة · {p} مشاهدة منتج · {l} من روابط مشاركة',
     vis_bars: 'الزوار في آخر 14 يوماً',
+    vis_bars_hint: 'الزوار يوماً بيوم. اضغط على أي يوم لترى عدده.',
+    vis_bars_soon: 'يظهر رسم الأيام بدءاً من الغد، حين يصبح هناك يومان للمقارنة.',
+    vis_wd: 'الأحد,الاثنين,الثلاثاء,الأربعاء,الخميس,الجمعة,السبت',
     vis_bar: '{d}: {n} زائر',
     vis_top: 'الأكثر مشاهدة في آخر 7 أيام ({n})',
     vis_views: '{n} مشاهدة',
@@ -1396,6 +1419,20 @@ var LOCALES = {
     sort_name: 'الاسم',
     results_n: '{n} مادة',
     spec_gen: 'جيل {n}',
+    spec_series: 'سلسلة {n}',
+    spec_cpu_kind: 'نوع المعالج',
+    cpu_u: 'موفّر للطاقة، بطارية أطول',
+    cpu_p: 'متوازن بين الأداء والبطارية',
+    cpu_h: 'أداء عالٍ',
+    cpu_hx: 'أداء عالٍ جداً، للألعاب والبرامج الثقيلة',
+    cpu_y: 'موفّر جداً للطاقة، للأعمال الخفيفة',
+    cpu_k: 'معالج مكتبي يمكن رفع سرعته',
+    cpu_f: 'معالج مكتبي يحتاج كرت شاشة',
+    cpu_t: 'معالج مكتبي موفّر للطاقة',
+    cmp_more: 'أكبر',
+    cmp_newer: 'أحدث',
+    cmp_cheaper: 'أرخص بـ {d}',
+    cmp_cpu_web: 'قارن المعالجين على الإنترنت',
     spec_cpu: 'المعالج',
     spec_ram: 'الرام',
     spec_storage: 'التخزين',
@@ -1746,8 +1783,8 @@ var LEXICON = {
     ['kaspersky', 'Kaspersky', ['kaspersky']], ['eset', 'ESET', ['eset']], ['hunter', 'Hunter', ['hunter']],
     ['tplink', 'TP-Link', ['tp link', 'تيبي لينك', 'تي بي لينك']], ['dlink', 'D-Link', ['d link', 'دي لينك']]
   ],
-  usd: '\\$|usd|دولار(?:ات)?',
-  syp: 'syp|s\\.p\\.?|ل\\s*\\.?\\s*س\\.?|لير[ةه](?:\\s*سوري[ةه])?',
+  usd: 'us\\$|usd|dollars?|\\$|دولار(?:ات|اً|ا)?(?:\\s*[أا]مي?ري?كي)?',
+  syp: 'syp|s\\.p\\.?|ل\\s*\\.?\\s*س\\.?|لير(?:[ةه]|ات)(?:\\s*سوري[ةه])?',
   /* How the Syrian pound is named in the accounting data (normalised text). */
   sypName: 'ليره|سوري|syp|ل\\.س',
   /* Column titles in a supplier's sheet, matched against normalised text: the price column, and columns left out of the name. */
@@ -1757,18 +1794,27 @@ var LEXICON = {
      price, and a word in front of a note. */
   blockHead: 'رقم|الرقم|no\\.?|num(?:ber)?|item|#',
   priceWord: 'السعر|سعر|price',
+  /* Around a price: words that say a number is the old price (always, or only when it has a currency), words in
+     front of the new price, and words after a price that add nothing to the name. */
+  oldStrong: 'بدلاً من|بدلا من|بدل من|بدل|عوضاً عن|عوضا عن|instead of|old price|السعر القديم|السعر السابق',
+  oldWeak: 'كانت|كان|قبل|was|before',
+  priceLead: 'بسعر|صار|أصبح|اصبح|الآن|الان|now',
+  priceTail: 'فقط|only|نهائي|نهائى|كاش|cash|نقداً|نقدا|net|each|pcs|pc|piece|للقطعة|القطعة|للحبة|الحبة',
+  /* "250 ألف", "1.5 مليون": prices in words, which are pounds unless a currency says otherwise. */
+  thousand: 'آلاف|الاف|ألف|الف',
+  million: 'ملايين|مليون',
   sizeUnits: 'غ|غرام|واط|متر|ملم|ملغ',
   availWord: 'متوفر|متوفره|متوفرة|متاح|available|in stock',
   noteWord: 'ملاحظات|ملاحظة|ملاحظه|notes?',
   /* A number followed by one of these is a spec, not a price. */
-  units: ['w', 'kw', 'v', 'a', 'ah', 'mah', 'wh', 'hz', 'mm', 'cm', 'inch', 'kg', 'g', 'gb', 'tb', 'mb',
+  units: ['w', 'kw', 'v', 'a', 'ah', 'mah', 'wh', 'hz', 'ghz', 'mhz', 'mm', 'cm', 'inch', 'kg', 'g', 'gb', 'tb', 'mb',
     'ssd', 'hdd', 'nvme', 'ram', 'emmc', 'fhd', 'hd', 'uhd', 'qhd', 'oled', 'ips', 'touch', 'gen', 'core', 'cores',
     'cell', 'cells', 'year', 'years', 'month', 'months', 'day', 'days', 'pcs', 'pc', 'th', 'nd', 'rd', 'st',
     'واط', 'وات', 'فولت', 'أمبير', 'هرتز', 'ملم', 'سم', 'إنش', 'بوصة', 'جيجا', 'غيغا', 'تيرا', 'رام',
     'سنة', 'سنوات', 'شهر', 'أشهر', 'يوم', 'أيام', 'قطعة', 'قطع'],
   /* A number right after one of these is part of a model name. */
   leads: ['gen', 'core', 'ryzen', 'rtx', 'gtx', 'ps', 'playstation', 'xbox', 'ddr', 'win', 'windows',
-    'slim', 'pro', 'max', 'air', 'جيل', 'بلايستيشن', 'ويندوز', 'موديل', 'سليم'],
+    'slim', 'pro', 'max', 'air', 'month', 'جيل', 'بلايستيشن', 'ويندوز', 'موديل', 'سليم', 'شهر'],
   /* Words ignored when two item names are compared. */
   filler: ['gb', 'tb', 'ssd', 'hdd', 'nvme', 'ram', 'laptop', 'notebook', 'inch', 'fhd', 'hd', 'with', 'and', 'the',
     'لابتوب', 'جيجا', 'واط', 'إنش', 'مع']
@@ -1780,7 +1826,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.27';
+var APP_BUILD = '2.31';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -1811,7 +1857,7 @@ var state = {
   supMargins: {}, supMarginsOk: false,        // a supplier's own profit %, set by the manager (cloud edition 11)
   supEdit: null, offerEdit: null,             // the supplier or the offer being edited on the offers screen
   supOpen: {}, supFoldQ: {},                  // suppliers unfolded on the offers screen, and those folded during a search
-  visits: null, visitsOk: null, visTop: false, // the visitor counter on the overview (cloud edition 12)
+  visits: null, visitsOk: null, visTop: false, visDay: '',   // the visitor counter on the overview (cloud edition 12)
   hidden: {}, onlyHidden: false,              // items the manager hid from customers, and the list showing only those
   groupNames: {},                             // the accounting program's groups by number
   draftOwn: false, draftCat: '', draftCatName: '',   // a list being added: the shop's own goods, and its category
@@ -2164,18 +2210,57 @@ function quoteNo() {
 /* ---------- Supplier offer parser ----------
    Turns one line such as "HP EliteBook 840 G8 i5 16GB 512GB - 285$" into { name, price, cur }.
    Numbers glued to letters (16GB, i5-1135G7, G8) are specs and never count as the price. */
-var EDGE = '(?=$|[\\s\\d.,:;)\\-|\\u060C\\u061B])';
+var EDGE = '(?=$|[\\s\\d.,:;)\\-|/\\u060C\\u061B])';
 var RE_USD = new RegExp('(^|[\\s\\d|])(?:' + LEXICON.usd + ')' + EDGE, 'gi');
 var RE_SYP = new RegExp('(^|[\\s\\d|])(?:' + LEXICON.syp + ')' + EDGE, 'gi');
+
+/* ---------- Pasted text made plain ----------
+   What chat apps and other programs add around a price list comes off before it is read: invisible direction and
+   joining marks, emoji and other symbols (a money emoji counts as the dollar sign), bold and italic marks, numbers
+   in other digit shapes or wide forms, and phone numbers. A struck-out price, or one after "instead of", is the old
+   price and goes. "1 250" written with a no-break space is one number, and a word glued to a number comes apart. */
+var RE_INVISIBLE = /[\u00AD\u034F\u061C\u115F\u1160\u17B4\u17B5\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFE00-\uFE0F\uFEFF]|\uD83C[\uDFFB-\uDFFF]|\uDB40[\uDC20-\uDC7F]/g;
+var RE_SYMBOLS = /[\u00A9\u00AE\u2022\u2023\u2043\u2122\u2139\u2190-\u21FF\u2219\u2300-\u23FF\u2460-\u24FF\u2500-\u27BF\u2900-\u297F\u2B00-\u2BFF\u3030\u303D\u3297\u3299]|[\uD83C-\uD83E][\uDC00-\uDFFF]/g;
+var CUR_ANY = '(?:' + LEXICON.usd + '|' + LEXICON.syp + ')', NUM_TXT = '\\d+(?:[.,]\\d+)*', OLD_LEAD = '(^|[\\s(\\-\u2013\u2014:\u060C,])';
+var RE_STRUCK = new RegExp('(?:(?:' + LEXICON.oldStrong + '|' + LEXICON.oldWeak + ')\\s*[:\\-]?\\s*)?~(?=\\S)[^~\\n]*?\\S~', 'gi');
+var RE_OLD_STRONG = new RegExp(OLD_LEAD + '(?:' + LEXICON.oldStrong + ')\\s*[:\\-]?\\s*(?:' + CUR_ANY + '\\s*)?' + NUM_TXT + '(?:\\s*' + CUR_ANY + ')?' + EDGE, 'gi');
+var RE_OLD_WEAK = new RegExp(OLD_LEAD + '(?:' + LEXICON.oldWeak + ')\\s*[:\\-]?\\s*(?:' + CUR_ANY + '\\s*' + NUM_TXT + '|' + NUM_TXT + '\\s*' + CUR_ANY + ')' + EDGE, 'gi');
+var RE_PHONE = /(^|[^\d])(?:(?:\+|00)\s?963[\s-]?9\d{2}|0?9\d{2})[\s-]?\d{3}[\s-]?\d{3}(?!\d)/g;
+var AR_LETTER = '[\\u0621-\\u064A\\u0671-\\u06D3]', RE_AR_NUM = new RegExp('(' + AR_LETTER + ')(\\d)', 'g'), RE_NUM_AR = new RegExp('(\\d)(' + AR_LETTER + ')', 'g');
+var RE_IN_WORDS = new RegExp('(\\d+(?:[.,]\\d+)?)\\s*(' + LEXICON.million + '|' + LEXICON.thousand + '|k(?=\\s*' + CUR_ANY + '))(?![a-z' + LEXICON.letters + '])', 'gi');
+var RE_CUR_NEXT = new RegExp('^\\s*' + CUR_ANY, 'i'), RE_MILLION = new RegExp('^(?:' + LEXICON.million + ')$', 'i');
+/* "250 ألف" -> "250000 SYP", "1.5 مليون" -> "1500000 SYP", "2.1k$" -> "2100$"; a currency written after it stays. */
+function numbersInWords(s) {
+  return s.replace(RE_IN_WORDS, function (all, n, word, at, whole) {
+    var v = Math.round(parseFloat(n.replace(',', '.')) * (RE_MILLION.test(word) ? 1e6 : 1e3)), k = /^k$/i.test(word);
+    return v + (k || RE_CUR_NEXT.test(whole.slice(at + all.length)) ? '' : ' SYP');
+  });
+}
+function tidyText(raw) {
+  var s = toLatinDigits(raw).replace(/\u066A/g, '%')
+    .replace(/(\d)[\u00A0\u202F\u2007\u2009](?=\d{3}(?!\d))/g, '$1')                    // "1 250" with a no-break space
+    .replace(/(\d)\uFE0F?\u20E3/g, '$1. ').replace(/\uD83D\uDD1F/g, '10. ')              // keycap numbers open a list line
+    .replace(/\uD83D[\uDCB2\uDCB5]/g, ' $ ')                                              // a money emoji is the dollar sign
+    .replace(RE_INVISIBLE, '').replace(RE_SYMBOLS, ' ');
+  if (s.normalize) s = s.normalize('NFKC');   // wide digits and signs, Arabic letters in the forms a PDF uses
+  return numbersInWords(s.replace(RE_STRUCK, ' ').replace(/~(?=\s*\d)/g, ''))
+    .replace(/(^|\D)\*+/g, '$1').replace(/\*+(?=\D|$)/g, '')   // chat-app bold marks, but not the star in 1920*1200
+    .replace(/(^|\s)_+(?=\S)/g, '$1').replace(/(\S)_+(?=\s|$)/g, '$1').replace(/`+/g, '')
+    .replace(RE_PHONE, '$1 ').replace(RE_OLD_STRONG, '$1 ').replace(RE_OLD_WEAK, '$1 ')
+    .replace(RE_AR_NUM, '$1 $2').replace(RE_NUM_AR, '$1 $2').replace(/ {2,}/g, ' ');
+}
+/* Words that end up beside the price and say nothing about the goods. */
+var RE_PRICE_LEAD_END = new RegExp('(^|[\\s:=\\-\u2013\u2014|(])(?:' + LEXICON.priceWord + '|' + LEXICON.priceLead + ')\\s*[:=\\-\u2013\u2014]*\\s*$', 'i');
+var RE_ONLY_TAIL = new RegExp('^[\\s:=\\-\u2013\u2014|/.,\u060C!]*(?:(?:' + LEXICON.priceTail + ')[\\s:=\\-\u2013\u2014|/.,\u060C!]*)*$', 'i');
 var RE_NUM = /(^|[\s|:=(–—-])(?:(USD|SYP)\s*)?(\d+(?:[.,]\d+)*)(?:\s*(USD|SYP))?(?=$|[\s|),;،]|\.(?:\s|$))/g;
 
 function toNumber(s, cur) {
   if (/^\d{1,3}(?:,\d{3})+(?:\.\d+)?$/.test(s)) return parseFloat(s.replace(/,/g, ''));
-  if (cur === 'SYP' && /^\d{1,3}(?:\.\d{3})+$/.test(s)) return parseFloat(s.replace(/\./g, ''));
+  if (/^\d{1,3}(?:\.\d{3})+$/.test(s)) return parseFloat(s.replace(/\./g, ''));   // "1.250": dots between thousands, in dollars too
   return parseFloat(s.replace(',', '.'));
 }
 function parseOfferLine(raw, defCur) {
-  var line = toLatinDigits(raw).replace(/[‎‏]/g, '').replace(/\t+/g, ' | ').trim();
+  var line = tidyText(raw).replace(/\t+/g, ' | ').trim();
   if (!line) return null;
   line = line.replace(RE_SYP, '$1 SYP ').replace(RE_USD, '$1 USD ');
   line = line.replace(/^\s*(?:[-*•▪◦]+|\d{1,3}\s*[.)\-])\s+/, '');   // bullets and list numbers
@@ -2185,6 +2270,7 @@ function parseOfferLine(raw, defCur) {
     var start = m.index + m[1].length, end = m.index + m[0].length, cur = m[4] || m[2] || null;
     var hit = { start: start, end: end, cur: cur, value: toNumber(m[3], cur || defCur) };
     if (cur) { marked = hit; continue; }
+    if (/^0\d/.test(m[3]) || m[3].replace(/\D/g, '').length >= 9) continue;   // a phone number or a code, not a price
     var next = /^\s*([a-z؀-ۿ]+)/i.exec(line.slice(end));
     var prev = /([a-z؀-ۿ]+)\s*$/i.exec(line.slice(0, start));
     if ((next && UNITS[normalize(next[1])]) || (prev && LEADS[normalize(prev[1])])) continue;   // "65 W", "Gen 2"
@@ -2194,10 +2280,15 @@ function parseOfferLine(raw, defCur) {
     var tail = line.slice(plain.end).trim().split(/\s+/).filter(Boolean).length;
     if (tail > 2 && !/[-:=|–—]\s*$/.test(line.slice(0, plain.start))) plain = null;
   }
-  var chosen = marked || plain;
-  var name = chosen ? line.slice(0, chosen.start) + ' ' + line.slice(chosen.end) : line;
+  var chosen = marked || plain, before, after;
+  if (chosen) {   // "Price:", "now" in front of the price, and "only" or "/pcs" after it, are not the name
+    before = line.slice(0, chosen.start).replace(RE_PRICE_LEAD_END, '$1');
+    after = line.slice(chosen.end);
+    if (RE_ONLY_TAIL.test(after)) after = '';
+  }
+  var name = chosen ? before + ' ' + after : line;
   name = name.replace(/\b(?:USD|SYP)\b/g, ' ').replace(/\s*\|\s*/g, ' ')
-    .replace(/[\s:=\-–—،,.]+$/, '').replace(/^[\s:=\-–—]+/, '')
+    .replace(/[\s:=\-–—،,.>|/]+$/, '').replace(/^[\s:=\-–—<>|/.]+/, '')
     .replace(/\s+/g, ' ').trim();
   if (!name) return null;
   return {
@@ -2293,19 +2384,35 @@ function genOf(model) {   // "10885h" -> 10, "8250u" -> 8, "1135g7" -> 11, "11" 
   if (d.length <= 2) return Number(d);
   return Number(d.length >= 5 || d.charAt(0) === '1' ? d.slice(0, 2) : d.charAt(0));
 }
+function capWord(w) { return w.charAt(0).toUpperCase() + w.slice(1); }
+function tailLetters(model) { return (/[a-z]+\d?$/.exec(model || '') || [''])[0]; }   // "1135g7" -> "g7", "12700h" -> "h"
+var APPLE = BRANDS.filter(function (b) { return b.id === 'apple'; })[0];
+/* The processor is read with its full number when the name gives it ("Core i5-1135G7", "Ryzen 7 7445HS"), its
+   generation (Intel Core), series (Core Ultra) or M number (Apple), and the letters at the end that tell its kind. */
 function specsOf(name) {
   var s = ' ' + toLatinDigits(name).toLowerCase().replace(/[\\\/|,()]+/g, ' ').replace(/\s+/g, ' ') + ' ', sp = {}, m, at = -1;
   /* "i7-11800h", "i7 11800h", "i7-11", "i7 11th"; a bare "i5 8 256" keeps 8 for the memory */
   if ((m = /[^a-z0-9](i[3579])(?:[ -]?(\d{4,5}[a-z]{0,2}\d?)|-(\d{1,2})|[ -]?(\d{1,2})(?:th|rd|nd|st))?(?=[^a-z0-9])/.exec(s))) {
     sp.cpu = m[1]; sp.cpuLabel = 'Core ' + m[1]; sp.gen = genOf(m[2] || m[3] || m[4]); at = m.index + m[0].length;
-  } else if ((m = /[^a-z0-9]ryzen ?([3579])(?:[ -]?\d{4}[a-z]{0,2})?(?=[^a-z0-9])/.exec(s)) || (m = /[^a-z0-9]r([3579])[ -]?\d{4}[a-z]{0,2}(?=[^a-z0-9])/.exec(s))) {
+    if (m[2]) { sp.cpuName = sp.cpuLabel + '-' + m[2].toUpperCase(); sp.suffix = tailLetters(m[2]); }
+  } else if ((m = /[^a-z0-9]ryzen ai ?([579])(?: ?(hx|pro))? ?(\d{3})(?=[^a-z0-9])/.exec(s))) {
+    sp.cpu = 'ryzen'; sp.cpuLabel = 'Ryzen AI ' + m[1]; at = m.index + m[0].length;   // "ryzen ai 9 hx 370"
+    sp.cpuName = sp.cpuLabel + (m[2] ? ' ' + m[2].toUpperCase() : '') + ' ' + m[3]; sp.suffix = m[2] === 'hx' ? 'hx' : '';
+  } else if ((m = /[^a-z0-9]ryzen ?([3579])(?:[ -]?(\d{4}[a-z]{0,2}))?(?=[^a-z0-9])/.exec(s)) || (m = /[^a-z0-9]r([3579])[ -]?(\d{4}[a-z]{0,2})(?=[^a-z0-9])/.exec(s))) {
     sp.cpu = 'ryzen'; sp.cpuLabel = 'Ryzen ' + m[1]; at = m.index + m[0].length;   // "ryzen 5 5500u", "r7-7445hs"
-  } else if ((m = /[^a-z0-9]ultra ?([579])(?:[ -]?\d{3}[a-z]{0,2})?(?=[^a-z0-9])/.exec(s))) {
+    if (m[2]) { sp.cpuName = sp.cpuLabel + ' ' + m[2].toUpperCase(); sp.suffix = tailLetters(m[2]); }
+  } else if ((m = /[^a-z0-9]ultra ?([579])(?:[ -]?(\d{3}[a-z]{0,2}))?(?=[^a-z0-9])/.exec(s))) {
     sp.cpu = 'ultra'; sp.cpuLabel = 'Core Ultra ' + m[1]; at = m.index + m[0].length;
-  } else if ((m = /[^a-z0-9]core ([3579]) ?\d{3} ?[a-z]{0,2}(?=[^a-z0-9])/.exec(s))) {
+    if (m[2]) { sp.cpuName = sp.cpuLabel + ' ' + m[2].toUpperCase(); sp.series = Number(m[2].charAt(0)); sp.suffix = tailLetters(m[2]); }
+  } else if ((m = /[^a-z0-9]core ([3579]) ?(\d{3}) ?([a-z]{0,2})(?=[^a-z0-9])/.exec(s))) {
     sp.cpu = 'i' + m[1]; sp.cpuLabel = 'Core ' + m[1]; at = m.index + m[0].length;   // the newer "Core 7 150U" naming
-  } else if ((m = /[^a-z0-9](celeron|pentium|xeon|atom)(?=[^a-z0-9])/.exec(s))) {
-    sp.cpu = m[1]; sp.cpuLabel = m[1].charAt(0).toUpperCase() + m[1].slice(1); at = m.index + m[0].length;
+    sp.cpuName = sp.cpuLabel + ' ' + m[2] + m[3].toUpperCase(); sp.suffix = m[3];
+  } else if (APPLE && APPLE.re.test(normalize(name)) && (m = /[^a-z0-9]m([1-4])(?: (pro|max|ultra))?(?=[^a-z0-9])/.exec(s))) {
+    sp.cpu = 'apple'; sp.cpuLabel = 'Apple M' + m[1]; sp.mgen = Number(m[1]); at = m.index + m[0].length;   // "macbook air m2"
+    sp.cpuName = sp.cpuLabel + (m[2] ? ' ' + capWord(m[2]) : '');
+  } else if ((m = /[^a-z0-9](celeron|pentium|xeon|atom)(?: (gold|silver))?(?:[ -]?([a-z]{1,2}\d?-?\d{3,5}[a-z]{0,2}|\d{4}[a-z]{0,2}))?(?=[^a-z0-9])/.exec(s))) {
+    sp.cpu = m[1]; sp.cpuLabel = capWord(m[1]); at = m.index + m[0].length;   // "celeron n4020", "pentium gold 7505", "xeon e3-1505m"
+    if (m[3]) { sp.cpuName = sp.cpuLabel + (m[2] ? ' ' + capWord(m[2]) : '') + ' ' + m[3].toUpperCase(); sp.suffix = /^\d/.test(m[3]) ? tailLetters(m[3]) : ''; }
   }
   if (at < 0) return null;   // no processor in the name: not read as a computer
   var g = /[^a-z0-9](nvidia|rtx|gtx|quadro|radeon|intel|iris|uhd|amd)(?=[^a-z])/.exec(s.slice(at)), tail = g ? s.slice(at + g.index) : '';
@@ -2342,6 +2449,23 @@ function describe(it) {
   for (i = 0; i < BRANDS.length && !it.brand; i++) if (BRANDS[i].re.test(norm)) { it.brand = BRANDS[i].id; it.brandName = BRANDS[i].label; }
   it.chips = specChips(sp);
   if (it.offer) describeOffer(it);
+}
+/* The processor for people: its full name when known, and its generation or series. */
+function cpuText(sp) {
+  return (sp.cpuName || sp.cpuLabel) + (sp.gen ? DOT + t('spec_gen', { n: sp.gen }) : '') + (sp.series ? DOT + t('spec_series', { n: sp.series }) : '');
+}
+/* What the letters at the end of the number say: made to save the battery, balanced, or for heavy work. */
+function cpuKind(sp) {
+  var s = (sp && sp.suffix) || '';
+  if (s === 'hx') return t('cpu_hx');
+  if (/^h[ks]?$/.test(s)) return t('cpu_h');
+  if (s === 'p') return t('cpu_p');
+  if (s === 'u' || s === 'v' || /^g\d$/.test(s)) return t('cpu_u');
+  if (s === 'y') return t('cpu_y');
+  if (s === 'k' || s === 'kf') return t('cpu_k');
+  if (s === 'f') return t('cpu_f');
+  if (s === 't') return t('cpu_t');
+  return '';
 }
 function specChips(sp) {
   var c = [];
@@ -2412,10 +2536,11 @@ function loadShareInfo() {
 }
 
 /* ---------- Visitors ----------
-   A browser that opens the store as a visitor reports to the cloud while the store is on its screen: about every 40
-   seconds, soon after an item is opened or closed, and once more when it leaves. It is known only by a random number
+   A browser that opens the store as a visitor reports to the cloud while the store is on its screen: about every 20
+   seconds, soon after an item is opened or closed, and once more when it leaves (a page that closes without saying so
+   drops out of "in the store now" within a minute). It is known only by a random number
    kept in the browser; nothing else about it is sent. A device that ever signed in as staff never reports. */
-var VISIT = { id: '', on: true, last: 0, soon: null, views: null, day: '', seen: {}, via: '' };
+var VISIT = { id: '', on: true, last: 0, pinged: false, soon: null, views: null, day: '', seen: {}, via: '' };
 function visitorId() {
   var id = VISIT.id;
   if (id) return id;
@@ -2454,7 +2579,7 @@ function sitePing(gone) {
   keepVisits();   // taken off before sending: a page closing meanwhile cannot send them twice
   via = gone ? '' : VISIT.via;
   VISIT.last = gone ? 0 : Date.now();
-  if (!gone) VISIT.via = '';   // only the first report of a page says how it was opened
+  if (!gone) { VISIT.via = ''; VISIT.pinged = true; }   // only the first report of a page says how it was opened
   function back() { VISIT.views = views.concat(VISIT.views).slice(0, 40); keepVisits(); }   // not reported: the next report carries them
   api('POST', '/rest/v1/rpc/site_ping', { p_visitor: visitorId(), p_item: it ? idNum(it) : null, p_views: views, p_via: via || null, p_gone: !!gone }, 'return=minimal', true).then(function (r) {
     if (r.status === 404) VISIT.on = false;   // a cloud without the counter (before edition 12): no more reports
@@ -2462,6 +2587,20 @@ function sitePing(gone) {
   }, back);
 }
 function pingSoon() { clearTimeout(VISIT.soon); VISIT.soon = setTimeout(sitePing, 1500); }
+/* The page is closing or going to another site: a browser drops an ordinary report then, so this one goes as a plain
+   text note the browser sends even as the page goes. Such a note cannot carry the key as a header, so the key travels
+   in the address, which the cloud accepts too. */
+function siteBye() {
+  var views, body, url;
+  if (!VISIT.pinged || !VISIT.on || !isGuest()) return;
+  visitsKept();
+  views = VISIT.views.splice(0, 20);
+  keepVisits();
+  body = visitorId() + (views.length ? '|' + views.join(',') : '');
+  url = CLOUD.url + '/rest/v1/rpc/site_bye?apikey=' + encodeURIComponent(CLOUD.key);
+  try { if (navigator.sendBeacon && navigator.sendBeacon(url, new Blob([body], { type: 'text/plain' }))) return; } catch (e) { /* the request below */ }
+  try { fetch(url, { method: 'POST', body: body, keepalive: true, mode: 'no-cors', headers: { 'Content-Type': 'text/plain' } }); } catch (e) { /* it drops out within a minute anyway */ }
+}
 /* An item opened by a visitor: counted once a day for each visitor. */
 function noteView(it) {
   var id = idNum(it);
@@ -2471,29 +2610,135 @@ function noteView(it) {
   pingSoon();
 }
 
-/* ---------- Links to one item: "#p123" opens it, and the phone's back button closes it ---------- */
-var hashByApp = false;
-function routeHash() {
-  var m = /^#p(\d+)$/.exec(location.hash), list = LIST_RE.exec(location.hash);
-  if (state.screen !== 'app') return;
-  if (list) {   // "#q": a whole list, from a customer's code or message; the link is not kept in the address
-    history.replaceState(null, '', location.pathname + location.search);
-    openSharedList(list[1]);
+/* ---------- The phone's back button ----------
+   Each place the person goes into adds a step to the browser's history, so the back button takes them one place back
+   instead of leaving the site: another tab (back to the first one), a group, search or filter of the store (back to
+   its front), anything opened over the page (an item, a comparison, the camera, the photo screens, a list, the quote
+   paper), a photo made big, and the staff sign-in form. Back leaves the site only from the store's front. Closing
+   something on screen takes its step back too, so the history and the screen always agree. An item's step carries its
+   link ("#p123"): the address can be shared, and opening it shows that item over the store. */
+var NAV = [], navWait = 0, navMute = 0, navQueue = [], navTimer = null, navAdopt = false, navFresh = false, sheetGen = 0;
+var startLink = '', navPop = { hash: null, at: 0 };
+function navBase() { return location.pathname + location.search; }
+function navTop() { return NAV.length ? NAV[NAV.length - 1] : null; }
+function navIs(kind) { var top = navTop(); return !!top && top.kind === kind; }
+function navHas(kind) { return NAV.some(function (s) { return s.kind === kind; }); }
+function navEntry(push, hash) {
+  try {
+    if (push && !navAdopt) history.pushState({ raff: NAV.length }, '', navBase() + (hash || ''));
+    else history.replaceState({ raff: NAV.length }, '', navBase() + (hash || ''));
+  } catch (e) { /* a browser that keeps no history here: screens still open and close */ }
+  if (push) navAdopt = false;
+}
+/* Changes to the steps wait while the browser is still going back, so two never cross. */
+function navLater(fn) { if (navWait) navQueue.push(fn); else fn(); }
+function navFlush() { while (!navWait && navQueue.length) navQueue.shift()(); }
+function navStep(kind, undo, hash) { navLater(function () { NAV.push({ kind: kind, undo: undo }); navEntry(true, hash); }); }
+/* Back to `keep` steps without undoing anything: what they showed is already closed on screen. */
+function navCut(keep) {
+  navLater(function () {
+    var n = NAV.length - keep;
+    if (n <= 0) return;
+    navMute += n;
+    navWait++;
+    clearTimeout(navTimer);
+    navTimer = setTimeout(function () { navWait = 0; navMute = 0; NAV.length = Math.min(NAV.length, keep); navFlush(); }, 1500);   // the browser never answered
+    history.go(-n);
+  });
+}
+/* A step closed on screen, with whatever was opened over it. */
+function navDrop(kind) {
+  navLater(function () {
+    for (var i = NAV.length - 1; i >= 0; i--) if (NAV[i].kind === kind) { navCut(i); return; }
+  });
+}
+/* The browser went back (or forward): the steps above the one it shows now are undone. A step whose screen was
+   replaced by another is passed over, so one press always changes what is on screen. */
+function onNavPop(e) {
+  var to, gone, undone = false, skipped = false, top;
+  // a link with a hash, followed or typed: a new place, not a step back (its hashchange opens it)
+  if (!e.state || !(e.state.raff >= 0)) return;
+  to = e.state.raff;
+  navPop = { hash: location.hash, at: Date.now() };
+  if (to > NAV.length) { if (!navWait) history.go(NAV.length - to); return; }   // forward again: what that step showed is gone
+  gone = NAV.splice(to, NAV.length - to).reverse();   // newest first; an undo may add a step of its own after them
+  if (navWait > 0) navWait--;
+  gone.forEach(function (s) {
+    if (navMute > 0) navMute--;
+    else if (s.skip) skipped = true;
+    else { undone = true; s.undo(); }
+  });
+  if (!navWait) navMute = 0;   // nothing of the app's own is still on its way
+  if (navWait) return;
+  top = navTop();
+  if (top && top.skip) { navMute++; navWait++; history.back(); return; }
+  if (skipped && !undone && NAV.length) { navWait++; history.back(); return; }
+  clearTimeout(navTimer);
+  navFlush();
+}
+/* Something opened over the page: its step, or the step of what it replaces there (one back closes either). */
+function sheetStep(hash) {
+  var gen = ++sheetGen, fresh = navFresh;
+  navFresh = false;
+  navLater(function () {
+    var top = navTop(), under = NAV.length > 1 ? NAV[NAV.length - 2] : null, step;
+    if (top && top.kind === 'zoom' && under && under.kind === 'sheet') { under.gen = gen; return; }   // redrawn under a photo made big
+    if (!fresh && top && top.kind === 'sheet') { top.gen = gen; navEntry(false, hash); return; }
+    step = { kind: 'sheet', gen: gen };
+    step.undo = function () { if (sheetGen === step.gen) closeSheet(true); };
+    NAV.push(step);
+    navEntry(true, hash);
+  });
+}
+function tabStep() { navStep('tab', function () { if (state.tab !== 'items') goTab('items', true); }); }
+/* The store's front: no group, search or filter. */
+function atFront() { return state.cat === 'all' && !state.query.trim() && !state.brand && !state.cpu && !state.ram && !state.need && !state.lowOnly && !state.onlyHidden; }
+/* Back from a group, search or filter: the front again, or the tab the person came from. */
+function browseUndo(from) {
+  return function () {
+    resetStore();
+    if (from && from !== 'items') { goTab(from, true); tabStep(); }
+    else if (state.tab === 'items') { paintItems(); window.scrollTo(0, 0); }
+  };
+}
+function syncBrowse() {
+  navLater(function () {
+    if (state.tab !== 'items') return;
+    if (!atFront() && !navHas('browse')) navStep('browse', browseUndo('items'));
+    else if (atFront() && navIs('browse')) navDrop('browse');
+  });
+}
+/* "#p123" opens the item, "#q..." brings a list into the basket. */
+function routeLink(h) {
+  var m = /^#p(\d+)$/.exec(h || ''), list = LIST_RE.exec(h || '');
+  if (state.screen !== 'app') return false;
+  if (list) { openSharedList(list[1]); return true; }
+  if (m && byId('m' + m[1])) { if (state.sheetId !== 'm' + m[1]) openItem('m' + m[1]); return true; }
+  return false;
+}
+/* Once the store is in: the link the page was opened with. */
+function routeHash() { var h = startLink; startLink = ''; if (h) routeLink(h); }
+/* A link typed into the address, or followed, while the store is open. The address also changes when the browser goes
+   back over the app's own steps; those changes are left to the step they belong to. */
+function onHashLink() {
+  var h = location.hash, it = state.sheetId && byId(state.sheetId), top;
+  if (!h || (h === navPop.hash && Date.now() - navPop.at < 1000) || (it && h === '#p' + idNum(it))) return;
+  if (navWait) {   // the app is still going back: the link is followed once it has
+    navQueue.push(function () { if (location.hash !== h) location.hash = h; else onHashLink(); });
     return;
   }
-  if (m && byId('m' + m[1])) { if (state.sheetId !== 'm' + m[1]) openItem('m' + m[1]); }
-  else if (state.sheetId) closeSheet(true);
-}
-function setItemHash(it) {
-  var h = '#p' + idNum(it);
-  if (location.hash === h) return;
-  if (/^#p\d+$/.test(location.hash)) history.replaceState(null, '', h);   // moving from one open item to another adds no step
-  else { hashByApp = true; location.hash = h; }
-}
-function clearItemHash() {
-  if (!/^#p\d+$/.test(location.hash)) return;
-  if (hashByApp) { hashByApp = false; history.back(); }
-  else history.replaceState(null, '', location.pathname + location.search);
+  navPop.hash = null;
+  top = navTop();
+  if (top && top.kind === 'sheet') top.skip = true;   // what was open gives its place: going back passes over it
+  navAdopt = true;   // the browser already made a step for the link: the link's own step takes it
+  navFresh = true;
+  if (!routeLink(h)) navFresh = false;
+  navLater(function () {
+    if (!navAdopt) return;
+    navAdopt = false;
+    try { history.replaceState({ raff: NAV.length }, '', navBase()); } catch (e) { /* kept as it is */ }
+    if (top) top.skip = false;
+  });
 }
 
 /* ---------- Supplier lists written as blocks ----------
@@ -2502,7 +2747,7 @@ function clearItemHash() {
    it, the price as read. A block without a price stays in the list so the price can be typed in. */
 /* "No 12", "12." or, as a picture reader returns a right-to-left line, "12 No". */
 var RE_BLOCK_HEAD = new RegExp('^(?:(?:' + LEXICON.blockHead + ')\\s*[:.#-]?\\s*(\\d{1,4})\\s*[:.)-]?|\\(?(\\d{1,3})\\s*[.):-]|(\\d{1,4})\\s*(?:' + LEXICON.blockHead + '))$', 'i');
-var RE_PRICE_LINE = new RegExp('^(?:(' + LEXICON.priceWord + ')\\s*[:=-]?\\s*)?(?:(USD|SYP)\\s*)?(\\d+(?:[.,]\\d+)*)\\s*(USD|SYP)?$', 'i');
+var RE_PRICE_LINE = new RegExp('^(?:(' + LEXICON.priceWord + '|' + LEXICON.priceLead + ')\\s*[:=-]?\\s*)?(?:(USD|SYP)\\s*)?(\\d+(?:[.,]\\d+)*)\\s*(USD|SYP)?(?:\\s*/?\\s*(?:' + LEXICON.priceTail + '))*\\s*[.!]?$', 'i');
 var RE_PRICE_REV = new RegExp('^(?:(USD|SYP)\\s*)?(\\d+(?:[.,]\\d+)*)\\s*(USD|SYP)?\\s*(' + LEXICON.priceWord + ')\\s*[:=-]?$', 'i');
 var RE_NOTE_LEAD = new RegExp('^(?:' + LEXICON.noteWord + ')(?![a-z' + LEXICON.letters + '])\\s*[:\\-]*\\s*', 'i');
 var RE_HAS_TEXT = new RegExp('[a-z0-9' + LEXICON.letters + ']', 'i');
@@ -2529,9 +2774,7 @@ var RE_LEAD_DECOR = new RegExp('^(?:[^a-z0-9' + LEXICON.letters + '$#("\']|#(?!\
 var RE_INLINE_HEAD = new RegExp('^(\\d{1,3})\\s*[.)\\-]\\s+([a-z' + LEXICON.letters + '].*)$', 'i');
 var RE_AVAILABLE = new RegExp('^(?:' + LEXICON.availWord + ')$', 'i');
 function cleanListLine(raw) {
-  return toLatinDigits(raw).replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, '').replace(/[\u00AE\u2122\u00A9]/g, '')
-    .replace(/(^|\D)\*+/g, '$1').replace(/\*+(?=\D|$)/g, '')   // chat-app bold marks, but not the star in 1920*1200
-    .replace(/\u00B7/g, '-').replace(/\s+/g, ' ').replace(RE_LEAD_DECOR, '').replace(RE_TAIL_DECOR, '').replace(/[\u0640_]+$/, '').trim();
+  return tidyText(raw).replace(/\u00B7/g, '-').replace(/\s+/g, ' ').replace(RE_LEAD_DECOR, '').replace(RE_TAIL_DECOR, '').replace(/[\u0640_]+$/, '').trim();
 }
 /* A line that holds a price and nothing else: "675$", "545 $", "660", "Price: 1,140 USD". */
 function priceOf(line) {
@@ -3002,12 +3245,13 @@ function poll() {
 /* ---------- Signing in and out ---------- */
 function clearAccount() {
   stopScan();
+  navCut(0);   // the steps belonged to the account that is gone
   backup.file = null; backup.msg = '';
   finds.state = null; finds.sent = {}; finds.editKey = false; state.finds = []; state.findItems = {}; state.findsOk = false;
   state.photoJobs = []; state.jobsOk = false; photoWork.done = 0; photoWork.skipped = 0; photoWork.based = false;
   state.suppliers = {}; state.requests = []; state.supEdit = null; state.offerEdit = null; state.hidden = {}; state.onlyHidden = false;
   state.supMargins = {}; state.supMarginsOk = false; state.supOpen = {}; state.supFoldQ = {};
-  state.visits = null; state.visitsOk = null; state.visTop = false;
+  state.visits = null; state.visitsOk = null; state.visTop = false; state.visDay = '';
   state.session = null; state.me = null; state.role = null; state.busy = false; state.peekId = null;
   state.items = []; state.offers = []; state.people = []; state.events = []; state.cats = [];
   state.draft = []; state.pasteText = ''; state.supplier = ''; state.skipped = 0; state.ocrMsg = ''; state.offerQuery = ''; state.need = '';
@@ -3047,7 +3291,7 @@ function signIn(email, password) {
   state.busy = true; state.authMsg = ''; state.email = email;
   paintSignIn();
   http('POST', '/auth/v1/token?grant_type=password', { body: { email: email, password: password } }).then(function (r) {
-    if (r.ok && r.json && r.json.access_token) { setSession(r.json); state.role = null; state.items = []; state.screen = 'boot'; render(); return startSession(); }
+    if (r.ok && r.json && r.json.access_token) { navCut(0); setSession(r.json); state.role = null; state.items = []; state.screen = 'boot'; render(); return startSession(); }
     state.busy = false;
     state.authMsg = t(r.status === 429 ? 'too_many' : (r.status >= 400 && r.status < 500 ? 'bad_login' : 'net_fail'));
     paintSignIn();
@@ -3599,14 +3843,15 @@ function priceInputs(it) {
 function specFacts(it) {
   if (it.offer) {   // a supplier's device: the specs as the supplier wrote them
     var o = it.offer.sp, f = fact(t('cond'), t(it.offer.cond === 'used' ? 'cond_used' : 'cond_new'));
-    [['spec_cpu', o.cpu], ['spec_ram', o.ram], ['spec_storage', o.disk ? o.disk + (o.diskKind === 'STORAGE' ? '' : ' ' + o.diskKind) : ''], ['spec_gpu', o.gpu], ['spec_screen', o.screen]]
-      .forEach(function (r) { if (r[1]) f += fact(t(r[0]), '<span class="code">' + esc(r[1]) + '</span>'); });
+    [['spec_cpu', o.cpu], ['spec_cpu_kind', cpuKind(it.sp)], ['spec_ram', o.ram], ['spec_storage', o.disk ? o.disk + (o.diskKind === 'STORAGE' ? '' : ' ' + o.diskKind) : ''], ['spec_gpu', o.gpu], ['spec_screen', o.screen]]
+      .forEach(function (r) { if (r[1]) f += fact(t(r[0]), r[0] === 'spec_cpu_kind' ? esc(r[1]) : '<span class="code">' + esc(r[1]) + '</span>'); });
     return f + (isGuest() ? '' : fact(t('source'), '<span dir="auto">' + esc(sourceOf(it)) + '</span>'));
   }
   var sp = it.sp, h = it.brandName ? fact(t('spec_brand'), esc(it.brandName)) : '';
   function ltr(v) { return '<span class="code">' + esc(v) + '</span>'; }
   if (!sp) return h;
-  h += fact(t('spec_cpu'), ltr(sp.cpuLabel) + (sp.gen ? ' · ' + t('spec_gen', { n: sp.gen }) : ''));
+  h += fact(t('spec_cpu'), ltr(sp.cpuName || sp.cpuLabel) + (sp.gen ? DOT + t('spec_gen', { n: sp.gen }) : '') + (sp.series ? DOT + t('spec_series', { n: sp.series }) : ''));
+  if (cpuKind(sp)) h += fact(t('spec_cpu_kind'), esc(cpuKind(sp)));
   if (sp.ram) h += fact(t('spec_ram'), ltr(sp.ram + 'GB'));
   if (sp.disk) h += fact(t('spec_storage'), ltr(sp.disk + (sp.diskKind ? ' ' + sp.diskKind : '')));
   if (sp.gpu) h += fact(t('spec_gpu'), ltr(sp.gpu));
@@ -3628,7 +3873,7 @@ function specList(it) {
   }
   sp = it.sp;
   if (!sp) return r;
-  r.push([t('spec_cpu'), sp.cpuLabel + (sp.gen ? ' · ' + t('spec_gen', { n: sp.gen }) : '')]);
+  r.push([t('spec_cpu'), cpuText(sp)]);
   if (sp.ram) r.push([t('spec_ram'), sp.ram + 'GB']);
   if (sp.disk) r.push([t('spec_storage'), sp.disk + (sp.diskKind ? ' ' + sp.diskKind : '')]);
   if (sp.gpu) r.push([t('spec_gpu'), sp.gpu]);
@@ -3827,7 +4072,7 @@ function openItem(id) {
   state.sheetId = id;
   state.sheetSig = sheetSig(it);
   document.body.classList.add('lock');
-  setItemHash(it);
+  sheetStep('#p' + idNum(it));
   if (isAdmin()) sheetSugAfter(it);
   if (isGuest()) noteView(it);
   if (fresh) {
@@ -3836,10 +4081,13 @@ function openItem(id) {
     if (c) c.focus();
   }
 }
-function closeSheet(fromRoute) {
-  closeZoom();
+/* Before something else opens in the sheet's place: what was there stops, and its step stays for the new one. */
+function clearSheet() { closeZoom(true); stopScan(); state.sheetId = null; state.qrFor = ''; }
+/* fromNav: the browser went back, its step is already gone. */
+function closeSheet(fromNav) {
+  closeZoom(true);
   var wasShoot = !!$('#shoot');
-  var sh = $('#sheet'), wasItem = !!state.sheetId;
+  var sh = $('#sheet');
   stopScan();
   sh.hidden = true;
   sh.innerHTML = '';
@@ -3847,7 +4095,8 @@ function closeSheet(fromRoute) {
   state.sheetId = null;
   state.qrFor = '';
   document.body.classList.remove('lock');
-  if (wasItem && !fromRoute) clearItemHash();
+  sheetGen++;   // an older step of the sheet no longer closes anything
+  if (!fromNav) navDrop('sheet');
   if (wasShoot) {   // the new photos show on the list; uploads still going carry on in the background
     if (state.tab === 'items') paintItems();
     if (shoot && (shoot.busy || shoot.jobs.length)) toast(t('ps_bg'));
@@ -4125,9 +4374,10 @@ function openDoc() {
       (canShareFile() ? '<button class="btn grow" data-action="pdfshare">' + icon('send', 18) + t('share_pdf') + '</button>' : '') +
       '<button class="btn grow" data-action="print">' + icon('print', 18) + t('print') + '</button></div>' +
       '<div class="doc-prev">' + docPages.map(function (p) { return '<img alt="" src="' + p.toDataURL('image/jpeg', 0.85) + '">'; }).join('') + '</div></div>';
+    clearSheet();
     sh.hidden = false;
-    state.sheetId = null;
     document.body.classList.add('lock');
+    sheetStep('');
   });
 }
 function savePdf() {
@@ -4495,7 +4745,7 @@ function toggleSupplier(sup) {
 /* The customer price list of one supplier's offers, shown as text that can be edited, copied or shared. */
 function openList(sup) {
   var sh = $('#sheet');
-  closeSheet();
+  clearSheet();
   sh.innerHTML = '<div class="sheet textdoc" role="dialog" aria-modal="true" aria-label="' + t('copy_list') + '">' +
     '<div class="row"><h2 class="h grow" dir="auto">' + t('copy_list') + DOT + esc(sup) + '</h2><button class="x" id="sheet-close" data-action="close" aria-label="' + t('close') + '">' + icon('x') + '</button></div>' +
     '<p class="sub">' + t('list_hint') + '</p>' +
@@ -4504,6 +4754,7 @@ function openList(sup) {
     '<textarea class="input" id="list-text" dir="auto">' + esc(customerList(supplierList(sup))) + '</textarea></div>';
   sh.hidden = false;
   document.body.classList.add('lock');
+  sheetStep('');
 }
 function copyList() {
   var ta = $('#list-text');
@@ -4543,7 +4794,8 @@ function viewOverview() {
 }
 
 /* ---------- Visitors, on the overview ----------
-   Asked for when the overview shows and every 20 seconds while it stays on screen; only that panel is redrawn. */
+   Asked for when the overview shows, every 10 seconds while it stays on screen, and from its refresh button; only that
+   panel is redrawn. */
 var visTimer = null, visAt = 0;
 function loadVisits(force) {
   if (!isAdmin() || state.visitsOk === false || (!force && Date.now() - visAt < 4000)) return;
@@ -4561,43 +4813,57 @@ function watchVisits() {
   visTimer = setInterval(function () {
     if (state.screen !== 'app' || state.tab !== 'overview' || !$('#vis')) { clearInterval(visTimer); visTimer = null; return; }
     if (!document.hidden) loadVisits(true);
-  }, 20000);
+  }, 10000);
 }
 function paintVisits() { var el = $('#vis'); if (el) el.innerHTML = visitsInner(); }
 function visitsPanel() { return isAdmin() ? '<section class="panel" id="vis">' + visitsInner() + '</section>' : ''; }
 function dayLabel(s) { s = String(s || ''); return s.length >= 10 ? Number(s.slice(8, 10)) + '/' + Number(s.slice(5, 7)) : ''; }
-function visTip(d) { return t('vis_bar', { d: dayLabel(d.day), n: num(d.visitors, 0) }) + (d.newcomers ? ' · ' + t('vis_new', { n: num(d.newcomers, 0) }) : ''); }
+function weekday(day) {
+  var p = String(day).split('-'), names = t('vis_wd').split(',');
+  return names[new Date(Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2]))).getUTCDay()] || '';
+}
+/* "Today 16/11: 5 visitors · 2 new", or the day's name for another day */
+function visTip(d, today) {
+  return t('vis_bar', { d: (d.day === today ? t('vis_today') : weekday(d.day)) + ' ' + dayLabel(d.day), n: num(d.visitors, 0) }) +
+    (d.newcomers ? ' · ' + t('vis_new', { n: num(d.newcomers, 0) }) : '');
+}
 function vstat(n, label, sub) { return '<div class="vstat"><b>' + num(Number(n) || 0, 0) + '</b><span>' + label + '</span>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>'; }
-/* One bar a day, oldest first along the line, today in full colour; touching a bar names its day below. */
-function visBars(days) {
-  var last = days.length - 1, max = Math.max.apply(null, days.map(function (d) { return d.visitors; }).concat([1]));
-  return '<div><div class="vbars" role="img" aria-label="' + esc(t('vis_bars') + ': ' + days.map(visTip).join(t('vis_sep'))) + '">' + days.map(function (d, i) {
-    var h = d.visitors ? Math.max(6, Math.round(d.visitors / max * 100)) : 0;
-    return '<span class="vbar' + (i === last ? ' now' : '') + '" data-tip="' + esc(visTip(d)) + '" title="' + esc(visTip(d)) + '"><i style="height:' + h + '%"></i></span>';
-  }).join('') + '</div><div class="vaxis"><span>' + esc(dayLabel(days[0].day)) + '</span><span class="vtip" id="vis-tip">' + esc(visTip(days[last])) + '</span><span>' + t('vis_today') + '</span></div></div>';
+/* One bar a day since counting began (up to 14), oldest first along the line. The day picked (today at first) is in
+   full colour, with its name, date and count under the bars; touching another bar picks it. */
+function visBars(days, today) {
+  var max = Math.max.apply(null, days.map(function (d) { return d.visitors; }).concat([1])),
+    pick = days.some(function (d) { return d.day === state.visDay; }) ? state.visDay : today,
+    cur = days.filter(function (d) { return d.day === pick; })[0] || days[days.length - 1];
+  return '<div class="vchart"><p class="sub">' + t('vis_bars_hint') + '</p><div class="vbars" role="img" aria-label="' +
+    esc(t('vis_bars') + ': ' + days.map(function (d) { return visTip(d, today); }).join(t('vis_sep'))) + '">' + days.map(function (d) {
+      var h = d.visitors ? Math.max(6, Math.round(d.visitors / max * 100)) : 0;
+      return '<span class="vbar' + (d === cur ? ' sel' : '') + '" data-day="' + esc(d.day) + '" data-tip="' + esc(visTip(d, today)) + '"><i style="height:' + h + '%"></i></span>';
+    }).join('') + '</div><p class="vtip" id="vis-tip">' + esc(visTip(cur, today)) + '</p></div>';
 }
 function visItemLink(w) {
   var it = byId('m' + w.id);
   return '<button class="linkbtn" data-action="open" data-id="' + it.id + '" dir="auto">' + esc(it.name) + '</button>';
 }
 function visitsInner() {
-  var v = state.visits, days, today, yday, live, watching, top;
+  var v = state.visits, days, shown, today, yday, live, watching, top;
   if (state.visitsOk === false) return '<h2 class="h">' + t('vis_title') + '</h2><p class="sub">' + t('vis_setup') + '</p>';
   if (!v) return '<h2 class="h">' + t('vis_title') + '</h2><p class="sub">' + t('loading') + '</p>';
   days = v.days && v.days.length ? v.days : [{ day: v.today, visitors: 0 }];
+  shown = days.filter(function (d) { return !v.since || d.day >= v.since; });   // no bars for days before counting began
   today = days[days.length - 1];
   yday = days[days.length - 2] || {};
   live = Number(v.live) || 0;
   watching = (v.watching || []).filter(function (w) { return byId('m' + w.id); });   // items the app knows of (not removed since)
   top = (v.top || []).filter(function (w) { return byId('m' + w.id); }).slice(0, 5);
   return '<div class="row"><h2 class="h grow">' + t('vis_title') + '</h2><span class="vlive' + (live ? ' on' : '') + '"><i class="dot' + (live ? '' : ' off') + '"></i>' +
-    t(live ? 'vis_live' : 'vis_live0', { n: num(live, 0) }) + '</span></div>' +
+    t(live ? 'vis_live' : 'vis_live0', { n: num(live, 0) }) + '</span><button class="peek" data-action="visload" aria-label="' + t('refresh') + '" title="' + t('refresh') + '">' +
+    icon('refresh', 16) + '</button></div>' +
     (watching.length ? '<div class="vwatch"><span class="sub">' + t('vis_watching') + '</span><ul>' + watching.slice(0, 3).map(function (w) {
       return '<li>' + visItemLink(w) + (w.n > 1 ? '<small>×' + num(w.n, 0) + '</small>' : '') + '</li>';
     }).join('') + '</ul>' + (watching.length > 3 ? '<span class="sub">' + t('vis_more', { n: num(watching.length - 3, 0) }) + '</span>' : '') + '</div>' : '') +
     '<div class="vstats">' + vstat(today.visitors, t('vis_today'), today.newcomers ? t('vis_new', { n: num(today.newcomers, 0) }) : '') + vstat(yday.visitors, t('vis_yday'), '') +
     vstat(v.week, t('vis_week'), '') + vstat(v.total, t('vis_all'), v.since ? t('vis_since', { d: dayLabel(v.since) }) : '') + '</div>' +
-    visBars(days) +
+    (shown.length > 1 ? visBars(shown, v.today) : '<p class="sub">' + t('vis_bars_soon') + '</p>') +
     '<p class="sub">' + t('vis_line', { v: num(today.visits || 0, 0), p: num(today.views || 0, 0), l: num(today.via || 0, 0) }) + '</p>' +
     (top.length ? '<button class="linkbtn" data-action="vistop" aria-expanded="' + !!state.visTop + '">' + t('vis_top', { n: top.length }) + '</button>' +
       (state.visTop ? '<ol class="vtop">' + top.map(function (w) { return '<li><span>' + visItemLink(w) + '<small>' + t('vis_views', { n: num(w.n, 0) }) + '</small></span></li>'; }).join('') + '</ol>' : '') : '') +
@@ -4881,8 +5147,18 @@ function paintZoom() {
     '<div class="zpane' + (state.zoom.big ? ' in' : '') + '" data-action="zin"><img src="' + esc(photoUrl(it.photos[state.zoom.i], false)) + '" alt="' + esc(it.name) + '"></div>';
   z.hidden = false;
 }
-function openZoom(id) { state.zoom = { id: id, i: state.shot || 0, big: false }; paintZoom(); }
-function closeZoom() { var z = $('#zoom'); state.zoom = null; if (z) { z.hidden = true; z.innerHTML = ''; } }
+function openZoom(id) {
+  state.zoom = { id: id, i: state.shot || 0, big: false };
+  paintZoom();
+  if (state.zoom) navStep('zoom', function () { if (state.zoom) closeZoom(true); });   // back makes the photo small again
+}
+/* fromNav: the browser went back, its step is already gone. */
+function closeZoom(fromNav) {
+  var z = $('#zoom'), was = !!state.zoom;
+  state.zoom = null;
+  if (z) { z.hidden = true; z.innerHTML = ''; }
+  if (was && !fromNav) navDrop('zoom');
+}
 /* A tap enlarges around the tapped point; another tap brings the whole photo back. */
 function toggleZoom(e) {
   var pane = $('#zoom .zpane'), box, fx, fy;
@@ -4953,7 +5229,7 @@ function scanReader() {
 }
 function openScan() {
   var sh = $('#sheet');
-  closeSheet();
+  clearSheet();
   sh.innerHTML = '<div class="sheet scanner" role="dialog" aria-modal="true" aria-label="' + t('scan') + '">' +
     '<div class="row"><h2 class="h grow">' + t('scan') + '</h2><button class="x" id="sheet-close" data-action="close" aria-label="' + t('close') + '">' + icon('x') + '</button></div>' +
     '<div class="scanbox"><video id="scan-video" playsinline muted autoplay></video><i class="scanline"></i></div>' +
@@ -4962,6 +5238,7 @@ function openScan() {
     '<input class="input" id="scan-code" inputmode="numeric" autocomplete="off" dir="ltr"></div><button class="btn" type="submit">' + t('scan_go') + '</button></form></div>';
   sh.hidden = false;
   document.body.classList.add('lock');
+  sheetStep('');
   scan.on = true;
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { scanSay('scan_nocam'); return; }
   navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } }).then(function (stream) {
@@ -5228,30 +5505,56 @@ function paintCompareBar() {
 }
 function specRows(it) {
   var sp = it.sp || {};
-  return { spec_brand: it.brandName || '', spec_cpu: sp.cpuLabel ? sp.cpuLabel + (sp.gen ? DOT + t('spec_gen', { n: sp.gen }) : '') : '', spec_ram: sp.ram ? sp.ram + 'GB' : '',
+  return { spec_brand: it.brandName || '', spec_cpu: sp.cpuLabel ? cpuText(sp) : '', spec_cpu_kind: cpuKind(sp), spec_ram: sp.ram ? sp.ram + 'GB' : '',
     spec_storage: sp.disk ? sp.disk + (sp.diskKind ? ' ' + sp.diskKind : '') : '', spec_gpu: sp.gpu || '', spec_screen: sp.screen ? sp.screen + (sp.touch ? DOT + t('spec_touch') : '') : '',
     category: catName(catOf(it)), cmp_note: it.note || '' };
 }
+function gbOf(d) { var m = /^([\d.]+)(TB|GB)$/.exec(d || ''); return m ? Number(m[1]) * (m[2] === 'TB' ? 1000 : 1) : 0; }
+/* A processor's place in its own line: Intel Core by generation, Core Ultra by series, Apple by its M number. */
+function cpuStep(sp) {
+  if (/^i[3579]$/.test(sp.cpu || '') && sp.gen) return { line: 'core', n: sp.gen };
+  if (sp.cpu === 'ultra' && sp.series) return { line: 'ultra', n: sp.series };
+  if (sp.cpu === 'apple' && sp.mgen) return { line: 'apple', n: sp.mgen };
+  return null;
+}
+/* Where one of the two is plainly ahead: more memory, more storage, a newer processor of the same line. */
+function cmpAhead(a, b) {
+  var out = {}, sa = a.sp || {}, sb = b.sp || {}, x = cpuStep(sa), y = cpuStep(sb);
+  function mark(key, va, vb, label) { if (va > 0 && vb > 0 && va !== vb) out[key] = [va > vb ? label : '', vb > va ? label : '']; }
+  mark('spec_ram', sa.ram || 0, sb.ram || 0, t('cmp_more'));
+  mark('spec_storage', gbOf(sa.disk), gbOf(sb.disk), t('cmp_more'));
+  if (x && y && x.line === y.line) mark('spec_cpu', x.n, y.n, t('cmp_newer'));
+  return out;
+}
 function openCompare() {
-  var pair = state.cmp.map(byId).filter(Boolean), sh = $('#sheet'), rows, keys;
+  var pair = state.cmp.map(byId).filter(Boolean), sh = $('#sheet'), rows, keys, ahead, cheap = -1, cpus;
   if (pair.length < 2) return;
-  closeSheet();
+  clearSheet();
   rows = pair.map(specRows);
   keys = Object.keys(rows[0]).filter(function (k) { return rows[0][k] || rows[1][k]; });
+  ahead = cmpAhead(pair[0], pair[1]);
+  if (hasPrice(pair[0]) && hasPrice(pair[1]) && pair[0].sell !== pair[1].sell) cheap = pair[0].sell < pair[1].sell ? 0 : 1;
+  cpus = pair.map(function (it) { return (it.sp || {}).cpuName || ''; });
   sh.innerHTML = '<div class="sheet compare" role="dialog" aria-modal="true" aria-label="' + t('cmp_title') + '">' +
     '<div class="row"><h2 class="h grow">' + t('cmp_title') + '</h2><button class="x" id="sheet-close" data-action="close" aria-label="' + t('close') + '">' + icon('x') + '</button></div>' +
-    '<div class="cmpgrid">' + pair.map(function (it) {
+    '<div class="cmpgrid">' + pair.map(function (it, i) {
       return '<div class="cmpcol"><button class="item-main" data-action="open" data-id="' + it.id + '">' + coverHtml(it) + '<span class="item-name" dir="auto">' + esc(it.name) + '</span></button>' +
-        '<span class="price">' + priceHtml(it) + '</span><span class="pill ' + stockState(it) + '">' + stockLabel(it) + '</span></div>';
+        '<span class="price">' + priceHtml(it) + '</span>' + (i === cheap ? '<span class="pill new">' + t('cmp_cheaper', { d: px(Math.abs(pair[0].sell - pair[1].sell)) }) + '</span>' : '') +
+        '<span class="pill ' + stockState(it) + '">' + stockLabel(it) + '</span></div>';
     }).join('') + '</div><table class="cmptable">' + keys.map(function (k) {
       var same = rows[0][k] === rows[1][k];
       return '<tr class="' + (same ? '' : 'diff') + '"><th colspan="2">' + t(k) + '</th></tr><tr class="' + (same ? '' : 'diff') + '">' +
-        rows.map(function (r) { return '<td dir="auto">' + (r[k] ? esc(r[k]) : '<span class="sub">-</span>') + '</td>'; }).join('') + '</tr>';
+        rows.map(function (r, i) {
+          return '<td><span dir="auto">' + (r[k] ? esc(r[k]) : '<span class="sub">-</span>') + '</span>' + (ahead[k] && ahead[k][i] ? ' <span class="pill new cmpwin">' + ahead[k][i] + '</span>' : '') + '</td>';
+        }).join('') + '</tr>' +
+        (k === 'spec_cpu' && cpus[0] && cpus[1] && cpus[0] !== cpus[1] ? '<tr><td colspan="2"><a class="linkbtn" href="https://www.google.com/search?q=' +
+          encodeURIComponent(cpus[0] + ' vs ' + cpus[1]) + '" target="_blank" rel="noopener">' + icon('search', 15) + ' ' + t('cmp_cpu_web') + '</a></td></tr>' : '');
     }).join('') + '</table><p class="sub">' + t('cmp_hint') + '</p><div class="cmpgrid">' + pair.map(function (it) {
       return '<button class="btn primary" data-action="add" data-id="' + it.id + '"' + (hasPrice(it) ? '' : ' disabled') + '>' + icon('plus', 18) + addLabel() + '</button>';
     }).join('') + '</div></div>';
   sh.hidden = false;
   document.body.classList.add('lock');
+  sheetStep('');
 }
 
 /* ---------- A note on an item, written by the manager and shown to everyone (warranty, an extra, ...) ---------- */
@@ -5323,10 +5626,11 @@ function startShoot() {
   shoot.sug = false;
   finds.picks = [];
   var sh = $('#sheet');
-  closeSheet();
+  clearSheet();
   sh.innerHTML = '<div class="sheet shoot" role="dialog" aria-modal="true" aria-label="' + t('ps_title') + '" id="shoot"></div>';
   sh.hidden = false;
   document.body.classList.add('lock');
+  sheetStep('');
   paintShoot();
   shootFreshFinds();   // the suggestions the site found, as they are now
 }
@@ -5922,10 +6226,11 @@ function openReview() {
     finds.picks = [];
     if (!finds.list.length && !jobsLeft()) { toast(t('pf_nothing')); return; }
     var sh = $('#sheet');
-    closeSheet();
+    clearSheet();
     sh.innerHTML = '<div class="sheet review" role="dialog" aria-modal="true" aria-label="' + t('pf_title') + '" id="review"></div>';
     sh.hidden = false;
     document.body.classList.add('lock');
+    sheetStep('');
     paintReview();
   }, function (e) { if (e && e.gone) sessionLost(); else toast(t('net_fail')); });
 }
@@ -6380,11 +6685,26 @@ function toast(msg) {
 }
 
 /* ---------- Events ---------- */
-function goTab(tab) { flushLater(); state.tab = tab; render(); window.scrollTo(0, 0); }
+/* fromNav: the browser went back to this tab, its steps are already right. */
+function goTab(tab, fromNav) {
+  var was = state.tab;
+  flushLater(); state.tab = tab; render(); window.scrollTo(0, 0);
+  if (fromNav) return;
+  if (tab === was) { if (tab === 'items') syncBrowse(); return; }
+  if (tab !== 'items') navLater(function () { if (!navIs('tab')) tabStep(); });   // back returns to the first tab
+  else if (atFront()) navDrop('tab');
+  else navLater(function () {   // to a filtered list from another tab: back returns to that tab
+    var top = navTop();
+    if (top && top.kind === 'tab') { top.kind = 'browse'; top.undo = browseUndo(was); }
+    else navStep('browse', browseUndo(was));
+  });
+}
+/* The store's front on the first tab, with every step taken back. */
+function goHome() { resetStore(); closeSheet(true); flushLater(); state.tab = 'items'; render(); window.scrollTo(0, 0); navCut(0); }
 function setLang(l) { state.lang = l; state.langSet = true; save(); closeSheet(); state.items.forEach(describe); render(); }
 window.addEventListener('pagehide', stopScan);
 function resetStore() { state.cat = 'all'; state.query = ''; state.brand = ''; state.cpu = ''; state.ram = ''; state.need = ''; state.lowOnly = false; state.onlyHidden = false; state.limit = 60; }
-function toggle(key, v) { state[key] = state[key] === v ? '' : v; state.limit = 60; paintItems(); }
+function toggle(key, v) { state[key] = state[key] === v ? '' : v; state.limit = 60; paintItems(); syncBrowse(); }
 function person(id) { for (var i = 0; i < state.people.length; i++) if (state.people[i].id === id) return state.people[i]; return null; }
 
 document.addEventListener('click', function (e) {
@@ -6392,9 +6712,12 @@ document.addEventListener('click', function (e) {
   var el = e.target.closest ? e.target.closest('[data-action]') : null;
   if (!el || el.disabled) return;
   var a = el.getAttribute('data-action'), id = el.getAttribute('data-id'), n, p;
-  if (a === 'guest') { if (isGuest() && state.items.length) { state.screen = 'app'; render(); } else enterGuest(); }   // back to the store from the sign-in form
-  else if (a === 'account') { closeSheet(); state.screen = 'login'; state.authMsg = ''; render(); window.scrollTo(0, 0); }
-  else if (a === 'home') { resetStore(); closeSheet(); goTab('items'); }
+  if (a === 'guest') { navDrop('login'); if (isGuest() && state.items.length) { state.screen = 'app'; render(); } else enterGuest(); }   // back to the store from the sign-in form
+  else if (a === 'account') {
+    closeSheet(); state.screen = 'login'; state.authMsg = ''; render(); window.scrollTo(0, 0);
+    if (isGuest()) navStep('login', function () { if (state.screen === 'login' && isGuest() && state.items.length) { state.screen = 'app'; render(); } });
+  }
+  else if (a === 'home') goHome();
   else if (a === 'cart') goTab('quote');
   else if (a === 'logout') signOut();
   else if (a === 'retry') { state.screen = 'boot'; render(); if (state.session) startSession(); else enterGuest(); }
@@ -6407,10 +6730,10 @@ document.addEventListener('click', function (e) {
   else if (a === 'tab') goTab(el.getAttribute('data-tab'));
   else if (a === 'rate') { if (isAdmin()) goTab('settings'); }
   else if (a === 'refresh') { el.disabled = true; reload().then(function () { toast(t(pcOnline() ? 'pc_on' : 'pc_off')); }, function () { toast(t('net_fail')); paintTab(); }); }
-  else if (a === 'cat') { state.cat = el.getAttribute('data-cat'); state.brand = ''; state.cpu = ''; state.ram = ''; state.limit = 60; paintItems(); window.scrollTo(0, 0); }
-  else if (a === 'low') { state.lowOnly = !state.lowOnly; state.limit = 60; paintItems(); }
+  else if (a === 'cat') { state.cat = el.getAttribute('data-cat'); state.brand = ''; state.cpu = ''; state.ram = ''; state.limit = 60; paintItems(); window.scrollTo(0, 0); syncBrowse(); }
+  else if (a === 'low') { state.lowOnly = !state.lowOnly; state.limit = 60; paintItems(); syncBrowse(); }
   else if (a === 'instock') { state.inStockOnly = !state.inStockOnly; state.limit = 60; paintItems(); }
-  else if (a === 'onlyhidden') { state.onlyHidden = !state.onlyHidden; state.limit = 60; paintItems(); }
+  else if (a === 'onlyhidden') { state.onlyHidden = !state.onlyHidden; state.limit = 60; paintItems(); syncBrowse(); }
   else if (a === 'showhidden') { resetStore(); state.onlyHidden = true; goTab('items'); }
   else if (a === 'hideitem') { p = byId(id); if (p) setHidden(p, hideLevel(p.id) ? 0 : 1); }        // customers: hide, or show to everyone
   else if (a === 'hidestaff') { p = byId(id); if (p) setHidden(p, hideLevel(p.id) === 2 ? 1 : 2); }  // employees too, or back to them
@@ -6515,6 +6838,7 @@ document.addEventListener('click', function (e) {
   else if (a === 'osupcancel') { state.supEdit = null; paintOfferRows(); }
   else if (a === 'ofold') toggleSupplier(el.getAttribute('data-sup'));
   else if (a === 'vistop') { state.visTop = !state.visTop; paintVisits(); }
+  else if (a === 'visload') loadVisits(true);
   else if (a === 'oedit') { state.offerEdit = id; state.supEdit = null; paintOfferRows(); p = $('#oe-name'); if (p) p.focus(); }
   else if (a === 'oeditcancel') { state.offerEdit = null; paintOfferRows(); }
   else if (a === 'sreq') logRequest(el);   // the link itself opens WhatsApp
@@ -6560,7 +6884,7 @@ document.addEventListener('input', function (e) {
   if (!k) return;
   if (k === 'q') {   // a new search looks through the whole store, not only the group that was open
     if (!state.query.trim() && el.value.trim()) { state.cat = 'all'; state.brand = ''; state.cpu = ''; state.ram = ''; }
-    state.query = el.value; state.limit = 60; paintItems();
+    state.query = el.value; state.limit = 60; paintItems(); syncBrowse();
   }
   else if (k === 'defmargin') { v = parseFloat(el.value); if (v >= 0) { state.pricing.defMargin = v; reprice(); saveRules(); } }
   else if (k === 'lowat') {
@@ -6711,14 +7035,19 @@ document.addEventListener('keydown', function (e) {
   }
 });
 window.addEventListener('afterprint', function () { $('#print-area').innerHTML = ''; });
-/* a day's bar on the visitor chart, pointed at or touched: its day and count show under the bars */
+/* a day's bar on the visitor chart, pointed at or touched: picked, with its day and count under the bars */
 ['pointerover', 'click'].forEach(function (ev) {
   document.addEventListener(ev, function (e) {
     var b = e.target.closest && e.target.closest('.vbar'), tip = $('#vis-tip');
-    if (b && tip) tip.textContent = b.getAttribute('data-tip');
+    if (!b || !tip) return;
+    state.visDay = b.getAttribute('data-day');
+    tip.textContent = b.getAttribute('data-tip');
+    Array.prototype.forEach.call(document.querySelectorAll('.vbar.sel'), function (x) { x.classList.remove('sel'); });
+    b.classList.add('sel');
   });
 });
-window.addEventListener('hashchange', routeHash);
+window.addEventListener('popstate', onNavPop);
+window.addEventListener('hashchange', onHashLink);
 
 /* ---------- Lock after no activity (only when fingerprint or face unlock is on) ---------- */
 var lastAct = Date.now();
@@ -6732,15 +7061,17 @@ setInterval(function () {
 /* ---------- Keeping in step with the cloud ---------- */
 setInterval(poll, CLOUD.pollMs);
 document.addEventListener('visibilitychange', function () {
-  if (document.hidden) { flushLater(); sitePing(true); } else { poll(); sitePing(); }
+  if (document.hidden) { flushLater(); sitePing(true); } else { poll(); sitePing(); if (state.tab === 'overview') loadVisits(true); }
 });
 /* a visitor's report while the store stays on its screen */
-setInterval(function () { if (Date.now() - VISIT.last > 35000) sitePing(); }, 40000);
-window.addEventListener('pagehide', function () { sitePing(true); });
+setInterval(function () { if (Date.now() - VISIT.last > 15000) sitePing(); }, 20000);
+window.addEventListener('pagehide', siteBye);
 window.addEventListener('online', poll);
 
 /* ---------- Start ---------- */
 VISIT.via = /^#p\d+$/.test(location.hash) ? 'item' : (LIST_RE.test(location.hash) ? 'list' : '');   // opened from a shared link
+startLink = location.hash;   // opened once the store is in, as a step over it, so back shows the store
+try { history.replaceState({ raff: 0 }, '', navBase()); if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (e) { /* no history here */ }
 load();
 render();
 bioCheck();
