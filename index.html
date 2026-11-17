@@ -837,6 +837,7 @@ var LOCALES = {
     spec_storage: 'Storage',
     spec_gpu: 'Graphics',
     spec_vram: 'Graphics memory',
+    offer_shown_other: 'The store shows this device from {s} at {p}',
     gpu_own: 'Dedicated graphics card',
     vram_shared: 'Built in, uses the memory',
     spec_screen: 'Screen',
@@ -1441,6 +1442,7 @@ var LOCALES = {
     spec_storage: 'التخزين',
     spec_gpu: 'كرت الشاشة',
     spec_vram: 'ذاكرة كرت الشاشة',
+    offer_shown_other: 'المتجر يعرض نفس الجهاز من {s} بسعر {p}',
     gpu_own: 'كرت شاشة منفصل',
     vram_shared: 'مدمج، يأخذ من الرام',
     spec_screen: 'الشاشة',
@@ -1832,7 +1834,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.32';
+var APP_BUILD = '2.33';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -2396,6 +2398,10 @@ function tailLetters(model) { return (/[a-z]+\d?$/.exec(model || '') || [''])[0]
 var APPLE = BRANDS.filter(function (b) { return b.id === 'apple'; })[0];
 /* The processor is read with its full number when the name gives it ("Core i5-1135G7", "Ryzen 7 7445HS"), its
    generation (Intel Core), series (Core Ultra) or M number (Apple), and the letters at the end that tell its kind. */
+/* Ryzen numbers: four digits ("5500u", "9955hx3d"), or three in the newer naming ("ryzen 7 260", "r5 220"), which are
+   never a storage size ("r5 256"). */
+var RYZEN_NO = '(\\d{4}[a-z]{0,2}(?:3d)?|(?:1\\d[05]|2\\d0)(?![0-9])(?! ?(?:gb|g|tb|t)(?![a-z])))';
+var RE_RYZEN = new RegExp('[^a-z0-9]ryzen ?([3579])(?:[ -]{0,3}' + RYZEN_NO + ')?(?=[^a-z0-9])'), RE_RYZEN_SHORT = new RegExp('[^a-z0-9]r([3579])[ -]{0,3}' + RYZEN_NO + '(?=[^a-z0-9])');
 function specText(name) { return ' ' + toLatinDigits(name).toLowerCase().replace(/[\\\/|,()]+/g, ' ').replace(/\s+/g, ' ') + ' '; }
 var RE_GPU_WORD = /[^a-z0-9](nvidia|geforce|quadro|rtx|gtx|mx(?= ?-?\d{3}(?!\d))|radeon|amd|arc|intel|iris|uhd|vga|gpu|graphics?|dedicated)(?=[^a-z])/;
 /* The graphics card in a name's text (from specText): which card, whether it is a card of its own (own: false when it is
@@ -2433,28 +2439,33 @@ function readGpu(t, before, needRam) {
 }
 function specsOf(name, sizesAfterCard) {   // sizesAfterCard: a supplier's spec lines follow the model, so read sizes there too
   var s = specText(name), sp = {}, m, at = -1;
-  /* "i7-11800h", "i7 11800h", "i7-11", "i7 11th"; a bare "i5 8 256" keeps 8 for the memory */
-  if ((m = /[^a-z0-9](i[3579])(?:[ -]?(\d{4,5}[a-z]{0,2}\d?)|-(\d{1,2})|[ -]?(\d{1,2})(?:th|rd|nd|st))?(?=[^a-z0-9])/.exec(s))) {
+  /* "i7-11800h", "i7 11800h", "i7 - 11800h", "i3-n305", "i7-11", "i7 11th"; a bare "i5 8 256" keeps 8 for the memory */
+  if ((m = /[^a-z0-9](i[3579])(?:[ -]{0,3}(n\d{3}|\d{4,5}[a-z]{0,2}\d?)|-(\d{1,2})|[ -]?(\d{1,2})(?:th|rd|nd|st))?(?=[^a-z0-9])/.exec(s))) {
     sp.cpu = m[1]; sp.cpuLabel = 'Core ' + m[1]; sp.gen = genOf(m[2] || m[3] || m[4]); at = m.index + m[0].length;
     if (m[2]) { sp.cpuName = sp.cpuLabel + '-' + m[2].toUpperCase(); sp.suffix = tailLetters(m[2]); }
-  } else if ((m = /[^a-z0-9]ryzen ai ?([579])(?: ?(hx|pro))? ?(\d{3})(?=[^a-z0-9])/.exec(s))) {
+  } else if ((m = /[^a-z0-9]ryzen ai ?([579])(?: ?(hx|pro))?[ -]{0,3}(\d{3})(?=[^a-z0-9])/.exec(s))) {
     sp.cpu = 'ryzen'; sp.cpuLabel = 'Ryzen AI ' + m[1]; at = m.index + m[0].length;   // "ryzen ai 9 hx 370"
     sp.cpuName = sp.cpuLabel + (m[2] ? ' ' + m[2].toUpperCase() : '') + ' ' + m[3]; sp.suffix = m[2] === 'hx' ? 'hx' : '';
-  } else if ((m = /[^a-z0-9]ryzen ?([3579])(?:[ -]?(\d{4}[a-z]{0,2}))?(?=[^a-z0-9])/.exec(s)) || (m = /[^a-z0-9]r([3579])[ -]?(\d{4}[a-z]{0,2})(?=[^a-z0-9])/.exec(s))) {
-    sp.cpu = 'ryzen'; sp.cpuLabel = 'Ryzen ' + m[1]; at = m.index + m[0].length;   // "ryzen 5 5500u", "r7-7445hs"
-    if (m[2]) { sp.cpuName = sp.cpuLabel + ' ' + m[2].toUpperCase(); sp.suffix = tailLetters(m[2]); }
-  } else if ((m = /[^a-z0-9]ultra ?([579])(?:[ -]?(\d{3}[a-z]{0,2}))?(?=[^a-z0-9])/.exec(s))) {
+  } else if ((m = RE_RYZEN.exec(s)) || (m = RE_RYZEN_SHORT.exec(s))) {
+    sp.cpu = 'ryzen'; sp.cpuLabel = 'Ryzen ' + m[1]; at = m.index + m[0].length;   // "ryzen 5 5500u", "r7-7445hs", "r7 - 250", "ryzen 9 9955hx3d"
+    if (m[2]) { sp.cpuName = sp.cpuLabel + ' ' + m[2].toUpperCase(); sp.suffix = tailLetters(m[2].replace(/3d$/, '')); }
+  } else if ((m = /[^a-z0-9]ultra ?([579])(?:[ -]{0,3}(\d{3}[a-z]{0,2}))?(?=[^a-z0-9])/.exec(s))) {
     sp.cpu = 'ultra'; sp.cpuLabel = 'Core Ultra ' + m[1]; at = m.index + m[0].length;
     if (m[2]) { sp.cpuName = sp.cpuLabel + ' ' + m[2].toUpperCase(); sp.series = Number(m[2].charAt(0)); sp.suffix = tailLetters(m[2]); }
-  } else if ((m = /[^a-z0-9]core ([3579]) ?(\d{3}) ?([a-z]{0,2})(?=[^a-z0-9])/.exec(s))) {
+  } else if ((m = /[^a-z0-9]core ([3579])[ -]{0,3}(\d{3}) ?([a-z]{0,2})(?=[^a-z0-9])/.exec(s))) {
     sp.cpu = 'i' + m[1]; sp.cpuLabel = 'Core ' + m[1]; at = m.index + m[0].length;   // the newer "Core 7 150U" naming
     sp.cpuName = sp.cpuLabel + ' ' + m[2] + m[3].toUpperCase(); sp.suffix = m[3];
   } else if (APPLE && APPLE.re.test(normalize(name)) && (m = /[^a-z0-9]m([1-4])(?: (pro|max|ultra))?(?=[^a-z0-9])/.exec(s))) {
     sp.cpu = 'apple'; sp.cpuLabel = 'Apple M' + m[1]; sp.mgen = Number(m[1]); at = m.index + m[0].length;   // "macbook air m2"
     sp.cpuName = sp.cpuLabel + (m[2] ? ' ' + capWord(m[2]) : '');
-  } else if ((m = /[^a-z0-9](celeron|pentium|xeon|atom)(?: (gold|silver))?(?:[ -]?([a-z]{1,2}\d?-?\d{3,5}[a-z]{0,2}|\d{4}[a-z]{0,2}))?(?=[^a-z0-9])/.exec(s))) {
-    sp.cpu = m[1]; sp.cpuLabel = capWord(m[1]); at = m.index + m[0].length;   // "celeron n4020", "pentium gold 7505", "xeon e3-1505m"
+  } else if ((m = /[^a-z0-9](celeron|pentium|xeon|atom|athlon)(?: (gold|silver))?(?:[ -]{0,3}([a-z]{1,2}\d?-?\d{3,5}[a-z]{0,2}|\d{4}[a-z]{0,2}))?(?=[^a-z0-9])/.exec(s))) {
+    sp.cpu = m[1]; sp.cpuLabel = capWord(m[1]); at = m.index + m[0].length;   // "celeron n4020", "pentium gold 7505", "xeon e3-1505m", "athlon 7120"
     if (m[3]) { sp.cpuName = sp.cpuLabel + (m[2] ? ' ' + capWord(m[2]) : '') + ' ' + m[3].toUpperCase(); sp.suffix = /^\d/.test(m[3]) ? tailLetters(m[3]) : ''; }
+  } else if ((m = /[^a-z0-9](?:intel(?: processor)? n|n(?=(?:100|150|200|250|300|305|355)[^0-9]))(\d{2,3})(?=[^a-z0-9])/.exec(s))) {
+    sp.cpu = 'intel'; sp.cpuLabel = sp.cpuName = 'Intel N' + m[1]; at = m.index + m[0].length;   // "intel n100", "n200"
+  } else if ((m = /[^a-z0-9]snapdragon(?: ?x+)?(?: (elite|plus))?(?:[ -]*x?(\d-\d{2}-\d{3}))?(?=[^a-z0-9])/.exec(s))) {
+    sp.cpu = 'snapdragon'; sp.cpuLabel = 'Snapdragon X'; at = m.index + m[0].length;   // "snapdragon x elite", "snapdragon x1-26-100"
+    if (m[2]) sp.cpuName = 'Snapdragon X' + m[2]; else if (m[1]) sp.cpuName = 'Snapdragon X ' + capWord(m[1]);
   }
   if (at < 0) return null;   // no processor in the name: not read as a computer
   var g = RE_GPU_WORD.exec(s.slice(at)), tail = g ? s.slice(at + g.index) : '';
@@ -2977,6 +2988,118 @@ function offerNum(key) {
   return 1e12 + h;
 }
 function offerKey(o) { var sp = readNote(o.note); return normalize([o.cond === 'used' ? 'used' : 'new', o.name, sp.cpu, sp.ram, sp.disk, sp.screen, sp.gpu].join('|')); }
+/* ---------- One device in several suppliers' lists ----------
+   One supplier writes the model code ("LENOVO LEGION 5 15IRX10"), another leaves it out ("LENOVO LEGION 5"), and each
+   writes the specs its own way ("I7 13650HX", "CORE I7 - 13650HX"). A computer is matched on what is read from its row:
+   the model name without its codes, and the processor number, memory, storage, graphics card and its memory. What both
+   rows say about the screen and the model code must agree; what only one of them says cannot keep them apart. */
+var BRAND_WORDS = LEXICON.brands.map(function (b) { return b[0]; }).concat(LEXICON.brands.map(function (b) { return b[1].toLowerCase(); }));
+var RE_SPEC_WORD = /^(?:\d+(?:\.\d+)?(?:gb|g|tb|t|hz|w|watts?|mhz|ghz|inch|in|k)|i[3579](?:-.*)?|r[3579](?:-.*)?|ryzen|core|ultra|intel|amd|celeron|pentium|athlon|snapdragon|\d{3,5}[a-z]{1,2}\d?|nvidia|geforce|[rg]tx\d*|mx\d*|radeon|quadro|iris|arc|ssd|nvme|hdd|emmc|ram|l?pddr\d+x?|ddr\d+x?|gddr\d+x?|fhd\+?|uhd|qhd\+?|wuxga|wqxga|oled|ips|touch|screen|display|gaming|laptop|notebook|new|original)$/;
+function brandOf(name) { var n = normalize(name), i; for (i = 0; i < BRANDS.length; i++) if (BRANDS[i].re.test(n)) return BRANDS[i].id; return ''; }
+/* "LENOVO LOQ 15IRX9" -> family "loq", codes ["15irx9"], screen class 15; "LENOVO LOQ 15" -> family "loq", class 15. */
+function modelWords(name) {
+  var words = specText(name).trim().split(' '), fam = [], codes = [], size = 0, i, w, m;
+  for (i = 0; i < words.length; i++) {
+    w = words[i].replace(/^[-+&.:]+|[-+&.:]+$/g, '');
+    if (!w || BRAND_WORDS.indexOf(w) !== -1 || RE_SPEC_WORD.test(w)) continue;   // specs written into the name are compared as specs
+    if (w === 'gen' && /^\d{1,2}$/.test(words[i + 1] || '')) codes.push('gen' + words[++i]);
+    else if (/^(?:19|20)\d\d$/.test(w)) codes.push(w);                                            // the year
+    else if (/^1[3-8]$/.test(w)) size = Number(w);                                                 // the screen size
+    else if (/\d/.test(w) && /[a-z]/.test(w) && w.replace(/-/g, '').length >= 5) {                 // "15irx10", "fa506ncg"
+      codes.push(w);
+      if (!size && (m = /^(1[3-8])[a-z-]/.exec(w))) size = Number(m[1]);
+    } else fam.push(w);
+  }
+  return { fam: fam.join(' '), codes: codes.sort(), size: size };
+}
+/* "15.3 WUXGA 165HZ" -> class 15, "fhd", 165 Hz; "15.6 OLD 2K" (OLED) -> class 15, "2k", "oled". */
+function screenOf(text) {
+  var s = specText(text || ''), m, out = { size: 0, res: '', hz: 0, panel: '' };
+  if ((m = /[^0-9.](1[0-8])(?:\.\d)?(?=[^0-9])/.exec(s))) out.size = Number(m[1]);
+  if (/4k|uhd|2160|3840/.test(s)) out.res = '4k';
+  else if (/3k|2880|3200|2\.8k/.test(s)) out.res = '3k';
+  else if (/2\.5k|2k|qhd|wqxga|wqhd|1440|1600|2560/.test(s)) out.res = '2k';
+  else if (/fhd|1080|wuxga|1920|1200/.test(s)) out.res = 'fhd';
+  else if (/[^a-z]hd(?![a-z])|768|1366/.test(s)) out.res = 'hd';
+  if ((m = /(\d{2,3}) ?hz/.exec(s))) out.hz = Number(m[1]);
+  if (/oled|[^a-z]old(?![a-z])/.test(s)) out.panel = 'oled'; else if (/ips/.test(s)) out.panel = 'ips';
+  return out;
+}
+/* What a row says the device is, or null when it is not a computer whose processor number is known. */
+function deviceSig(name, sp, cond) {
+  var d = specsOf([name, sp.cpu, sp.ram, sp.disk, sp.gpu].join(' '), true), w = modelWords(name), scr = screenOf(sp.screen);
+  if (!d || !d.cpuName || !w.fam) return null;
+  return { key: [cond, w.fam, d.cpuName.toLowerCase(), d.ram || 0, d.disk || '', d.gpu || '', d.vram || 0].join('|'), codes: w.codes,
+    size: scr.size || w.size, res: scr.res, hz: scr.hz, panel: scr.panel, brand: brandOf(name) };
+}
+function sameDevice(a, b) {
+  function clash(x, y) { return !!x && !!y && x !== y; }
+  function within(x, y) { return x.every(function (c) { return y.indexOf(c) !== -1; }); }
+  return a.key === b.key && (within(a.codes, b.codes) || within(b.codes, a.codes)) && !clash(a.size, b.size) && !clash(a.res, b.res) &&
+    !clash(a.hz, b.hz) && !clash(a.panel, b.panel) && !clash(a.brand, b.brand);
+}
+/* Groups of rows that are one device become one: the cheapest row shows and every supplier is listed. The item keeps the
+   number of the group the manager has worked on (hidden, own price, photos, note), else of the oldest one, so its
+   photos and links stay. */
+function sameDevices(best) {
+  var buckets = {}, manual = state.pricing.manual || {}, extra = state.pricing.extra || {};
+  function rank(k) { var id = 'm' + offerNum(k); return (state.hidden[id] || manual[id] || extra[id] || state.media[id] || state.notes[id] ? '0' : '1') + (best[k].at || '9') + k; }
+  Object.keys(best).forEach(function (k) {
+    var b = best[k], o = b.o || b.own, sig = deviceSig(String(o.name), b.o ? b.sp : b.ownSp, o.cond === 'used' ? 'used' : 'new');
+    if (sig) { b.sigs = [sig]; (buckets[sig.key] = buckets[sig.key] || []).push(k); }
+  });
+  Object.keys(buckets).forEach(function (bk) {
+    var keys = buckets[bk], heads = [];
+    if (keys.length < 2) return;
+    keys.sort(function (x, y) { return rank(x) < rank(y) ? -1 : 1; });
+    keys.forEach(function (k) {
+      var b = best[k], i, h;
+      for (i = 0; i < heads.length; i++) {
+        h = best[heads[i]];
+        if (h.sigs.every(function (s) { return sameDevice(s, b.sigs[0]); })) { foldInto(h, b); delete best[k]; return; }
+      }
+      heads.push(k);
+    });
+  });
+}
+function foldInto(h, b) {
+  h.keys = h.keys.concat(b.keys); h.names = h.names.concat(b.names); h.sigs = h.sigs.concat(b.sigs);
+  h.rows = h.rows.concat(b.rows); h.from = h.from.concat(b.from);
+  if (b.at && (!h.at || b.at < h.at)) h.at = b.at;
+  if (b.o && (!h.o || b.sell < h.sell)) { h.o = b.o; h.sp = b.sp; h.sell = b.sell; }
+  if (b.own) {
+    h.ownQty += b.ownQty;
+    if (STOCK_RANK[b.ownStock] > STOCK_RANK[h.ownStock]) h.ownStock = b.ownStock;
+    if (!h.own || (Number(b.own.qty) > 0 && !(Number(h.own.qty) > 0))) { h.own = b.own; h.ownSp = b.ownSp; h.ownSell = b.ownSell; }
+  }
+}
+/* The name that says the most ("LENOVO LEGION 5 15IRX10" rather than "LENOVO LEGION 5"). */
+function fullestName(names) {
+  return names.slice().sort(function (x, y) { return modelWords(y).codes.length - modelWords(x).codes.length || y.length - x.length; })[0];
+}
+/* The first of a merged item's numbers that has something kept for it (photos, a note). */
+function memberOf(b, kept) {
+  for (var i = 0; i < b.keys.length; i++) if (kept['m' + offerNum(b.keys[i])]) return kept['m' + offerNum(b.keys[i])];
+  return '';
+}
+/* The store item a row being saved belongs to: its own number, or the item of the same device under another name, so
+   the manager's price and hiding carry over to a new list as they do for a row saved again. */
+function storeIdFor(r) {
+  var k = offerKey(r), id = 'm' + offerNum(k), sig, i, it;
+  if (byId(id)) return id;
+  for (i = 0; i < state.items.length; i++) { it = state.items[i]; if (it.offer && it.offer.keys && it.offer.keys.indexOf(k) !== -1) return it.id; }
+  sig = deviceSig(String(r.name), readNote(r.note), r.cond === 'used' ? 'used' : 'new');
+  if (sig) for (i = 0; i < state.items.length; i++) {
+    it = state.items[i];
+    if (it.offer && it.offer.sigs && it.offer.sigs.length && it.offer.sigs.every(function (s) { return sameDevice(s, sig); })) return it.id;
+  }
+  return id;
+}
+/* The row of another supplier that the store shows for this same device, being cheaper, or null. */
+function shownInstead(o) {
+  var it = !o.own && state.rowItem && byId(state.rowItem[o.id]), top = it && it.offer && !it.offer.own && it.offer.from[0];
+  return top && top.id !== o.id ? top : null;
+}
 /* The manager's own price for an offer (typed, or through an extra cost), or null when the usual rule applies. */
 function offerOwnSell(id, usdCost, sup) {
   var manual = Number(state.pricing.manual[id]) || 0, extra = Number(state.pricing.extra[id]) || 0;
@@ -2985,11 +3108,12 @@ function offerOwnSell(id, usdCost, sup) {
 function shopItems(list, used) {
   var best = {};
   state.shopOk = Array.isArray(list);
+  state.rowItem = {};
   (list || []).forEach(function (o) {
     var sp = readNote(o.note), sell = Number(o.sell), key, b, q, st;
     if (!(sell > 0)) return;
     key = offerKey(o);
-    b = best[key] = best[key] || { o: null, sp: sp, sell: 0, rows: [], from: [], own: null, ownSp: null, ownSell: 0, ownQty: 0, ownStock: 'out', at: '' };
+    b = best[key] = best[key] || { o: null, sp: sp, sell: 0, rows: [], from: [], own: null, ownSp: null, ownSell: 0, ownQty: 0, ownStock: 'out', at: '', keys: [key], names: [String(o.name)], sigs: [] };
     b.rows.push(o.id);
     if (o.added_at && (!b.at || String(o.added_at) < b.at)) b.at = String(o.added_at);   // the device's first day in the store
     if (o.own) {   // the shop's own goods outside the accounting program: what counts is how many are left
@@ -3001,20 +3125,22 @@ function shopItems(list, used) {
       return;
     }
     if (!b.o || sell < b.sell) { b.o = o; b.sp = sp; b.sell = sell; }
-    b.from.push({ id: o.id, supplier: o.supplier || '', sell: sell, no: sp.no });
+    b.from.push({ id: o.id, supplier: o.supplier || '', sell: sell, no: sp.no, name: String(o.name), sp: sp });
   });
+  sameDevices(best);
   var kinds = Object.keys(best).length ? groupsByKind() : {};
   Object.keys(best).forEach(function (k) {
     /* the shop's own goods come first while any are left; a supplier's device is shown when the shop has none */
     var b = best[k], mineOwn = !!b.own && (b.ownQty > 0 || !b.o), o = mineOwn ? b.own : b.o, sp = mineOwn ? b.ownSp : b.sp,
       cat = offerCat(o, sp, kinds), own = null, i;
-    var id = 'm' + offerNum(k), mine = (state.media[id] || '').split(',').filter(Boolean);
-    var it = { id: id, code: '', barcode: '', cat: cat, name: String(o.name), sell: mineOwn ? b.ownSell : b.sell, auto: true, min: 0,
+    var id = 'm' + offerNum(k), mine = (memberOf(b, state.media) || '').split(',').filter(Boolean);
+    var it = { id: id, code: '', barcode: '', cat: cat, name: mineOwn ? String(o.name) : fullestName(b.names), sell: mineOwn ? b.ownSell : b.sell, auto: true, min: 0,
       qty: mineOwn ? b.ownQty : 1, other: [], stock: mineOwn ? ownStockOf(b.ownQty, b.ownStock) : 'low', at: b.at,
-      note: state.notes[id] || sp.notes.join('\n'), photos: mine, photo: mine[0] || '',
+      note: memberOf(b, state.notes) || sp.notes.join('\n'), photos: mine, photo: mine[0] || '',
       offer: { rows: b.rows, from: b.from.sort(function (x, y) { return x.sell - y.sell; }), supplier: mineOwn ? '' : (o.supplier || ''), own: mineOwn,
-        ownRow: b.own ? b.own.id : '', ownQty: b.ownQty,
+        ownRow: b.own ? b.own.id : '', ownQty: b.ownQty, keys: b.keys, sigs: b.sigs,
         cond: o.cond === 'used' ? 'used' : 'new', sp: sp, note: o.note || '' } };
+    b.rows.forEach(function (r) { state.rowItem[r] = id; });
     if (isAdmin()) {
       for (i = 0; i < state.offers.length && !own; i++) if (state.offers[i].id === o.id) own = state.offers[i];
       it.raw = { cost: own ? offerUsd(own) : 0 }; it.cost = it.raw.cost; it.pending = false; it.extra = 0; it.buy = null; it.sale = null;
@@ -4054,8 +4180,8 @@ function soldOne(it, btn) {
 }
 function listPrice(o) { return o.cur === 'SYP' ? num(o.price, 0) + ' ' + t('syp_unit') : usd(o.price); }
 /* The message, with what identifies the device in the supplier's own list; the manager's also carries the price. */
-function orderText(kind, it, r) {
-  var sp = it.offer.sp, own = isAdmin() ? offerById(r.id) : null, lines = [it.name],
+function orderText(kind, it, r) {   // each supplier is sent the device as their own list names it
+  var sp = r.sp || it.offer.sp, own = isAdmin() ? offerById(r.id) : null, lines = [r.name || it.name],
     specs = [sp.cpu, sp.ram, sp.disk, sp.gpu, sp.screen].filter(Boolean).join(' / ');
   if (specs) lines.push(specs);
   lines.push(t(it.offer.cond === 'used' ? 'cond_used' : 'cond_new'));
@@ -4577,7 +4703,7 @@ function saveDraft() {
   var rows = [], updates = [], seen = firstSeen();
   state.draft.filter(function (d) { return d.price > 0; }).forEach(function (d) {
     var r = { supplier: sup, name: d.name, price: d.price, cur: d.cur, note: d.note || '' }, same = own ? ownSame(d) : null, patch, lvl, first;
-    if (state.shopOk) { r.cond = state.draftCond; r.sell = offerOwnSell('m' + offerNum(offerKey(r)), offerUsd(d), own ? '' : sup); }   // a price the manager set for this device before stays
+    if (state.shopOk) { r.cond = state.draftCond; r.sell = offerOwnSell(storeIdFor(r), offerUsd(d), own ? '' : sup); }   // a price the manager set for this device before stays
     if (same) {   // one of my own goods saved before: brought up to date instead of added twice
       patch = { price: r.price, cur: r.cur, note: r.note };
       if (state.shopOk) patch.sell = r.sell;
@@ -4590,7 +4716,7 @@ function saveDraft() {
     if (cat) r.cat = cat;
     first = seen[offerKey(r)];
     if (first) r.created_at = first;   // a device already in the store keeps its first day, so a list saved again is not all "newest"
-    lvl = hideLevel('m' + offerNum(offerKey(r)));
+    lvl = hideLevel(storeIdFor(r));
     if (lvl) r.hidden = true;               // a device hidden from customers stays hidden
     if (lvl === 2) r.staff_hidden = true;   // and so does one hidden from employees too
     rows.push(r);
@@ -4635,11 +4761,12 @@ function supplierList(sup) {
 }
 function offerRowHtml(o) {
   if (state.offerEdit === o.id) return offerEditHtml(o);
-  var it = matchItem(offerText(o)), u = offerUsd(o), s = offerSell(o);
+  var it = matchItem(offerText(o)), u = offerUsd(o), s = offerSell(o), other = shownInstead(o);
   return '<div class="orow tall"><div class="grow ocol">' + offerHead(o) +
     '<span class="meta"><span class="secret">' + icon('lock', 13) + t('offer_buy') + ' <b>' + usd(u) + '</b>' + DOT + t('offer_profit', { p: '<b>' + usd(s - u) + '</b>' }) + '</span>' +
     (o.own ? '<span class="pill ' + (o.qty > 0 ? 'ok' : 'out') + '">' + (o.qty > 0 ? t('in_stock', { n: num(o.qty, 0) }) : t('out_stock')) + '</span>' : '') +
-    (it && it.cost > 0 ? cmpPill(u, it.cost) : '') + '</span></div>' +
+    (it && it.cost > 0 ? cmpPill(u, it.cost) : '') + '</span>' +
+    (other ? '<span class="meta"><span class="pill low" dir="auto">' + esc(t('offer_shown_other', { s: other.supplier, p: usd(other.sell) })) + '</span></span>' : '') + '</div>' +
     '<div class="price"><span class="tag sm">' + usd(s) + '</span><span class="syp">' + sypOf(s) + '</span></div>' +
     '<button class="x" data-action="oedit" data-id="' + esc(o.id) + '" aria-label="' + t('sup_edit') + '">' + icon('sliders', 18) + '</button>' +
     '<button class="x" data-action="orm" data-id="' + esc(o.id) + '" aria-label="' + t('remove') + '">' + icon('x', 18) + '</button></div>';
@@ -5560,11 +5687,14 @@ function paintCompareBar() {
   bar.innerHTML = '<button class="btn primary" data-action="cmpopen"' + (state.cmp.length < 2 ? ' disabled' : '') + '>' + icon('compare', 18) +
     t(state.cmp.length < 2 ? 'cmp_pick' : 'cmp_show') + '</button><button class="x" data-action="cmpclear" aria-label="' + t('cmp_clear') + '">' + icon('x', 18) + '</button>';
 }
+/* What is read from an item, the same way for every item so two can be set side by side; for a supplier's device, the
+   supplier's own words where nothing could be read from them, and its screen as the supplier describes it. */
 function specRows(it) {
-  var sp = it.sp || {};
-  return { spec_brand: it.brandName || '', spec_cpu: sp.cpuLabel ? cpuText(sp) : '', spec_cpu_kind: cpuKind(sp), spec_ram: sp.ram ? sp.ram + 'GB' : '',
-    spec_storage: sp.disk ? sp.disk + (sp.diskKind ? ' ' + sp.diskKind : '') : '', spec_gpu: sp.gpu || (sp.vram ? t('gpu_own') : ''),
-    spec_vram: sp.vram ? sp.vram + 'GB' : (sp.gpuOwn === false ? t('vram_shared') : ''), spec_screen: sp.screen ? sp.screen + (sp.touch ? DOT + t('spec_touch') : '') : '',
+  var sp = it.sp || {}, o = it.offer ? it.offer.sp : {};
+  return { spec_brand: it.brandName || '', spec_cpu: sp.cpuName ? cpuText(sp) : (o.cpu || (sp.cpuLabel ? cpuText(sp) : '')), spec_cpu_kind: cpuKind(sp),
+    spec_ram: sp.ram ? sp.ram + 'GB' : (o.ram || ''), spec_storage: sp.disk ? sp.disk + (sp.diskKind ? ' ' + sp.diskKind : '') : (o.disk || ''),
+    spec_gpu: sp.gpu || (sp.vram ? t('gpu_own') : (o.gpu || '')),
+    spec_vram: sp.vram ? sp.vram + 'GB' : (sp.gpuOwn === false ? t('vram_shared') : ''), spec_screen: o.screen ? o.screen : sp.screen ? sp.screen + (sp.touch ? DOT + t('spec_touch') : '') : '',
     category: catName(catOf(it)), cmp_note: it.note || '' };
 }
 function gbOf(d) { var m = /^([\d.]+)(TB|GB)$/.exec(d || ''); return m ? Number(m[1]) * (m[2] === 'TB' ? 1000 : 1) : 0; }
