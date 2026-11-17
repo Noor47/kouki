@@ -838,6 +838,9 @@ var LOCALES = {
     spec_gpu: 'Graphics',
     spec_vram: 'Graphics memory',
     offer_shown_other: 'The store shows this device from {s} at {p}',
+    cat_margin_setup: 'A profit % for this category needs the latest cloud file (edition 14).',
+    cat_margin_note: 'A category named on the offers screen gives its profit % to everything in it, before the supplier\'s and the offers profit %.',
+    cat_offer_margin_note: '"{a}" and "{b}" are filled by the site itself with offers that fit no group, so they have no profit % of their own: they take the offers profit % from the supplier offers screen, or the supplier\'s own if it has one.',
     gpu_own: 'Dedicated graphics card',
     vram_shared: 'Built in, uses the memory',
     spec_screen: 'Screen',
@@ -1443,6 +1446,9 @@ var LOCALES = {
     spec_gpu: 'كرت الشاشة',
     spec_vram: 'ذاكرة كرت الشاشة',
     offer_shown_other: 'المتجر يعرض نفس الجهاز من {s} بسعر {p}',
+    cat_margin_setup: 'نسبة الربح لهذا القسم تحتاج ملف السحابة الأخير (الإصدار 14).',
+    cat_margin_note: 'نسبة القسم الذي سمّيته في شاشة العروض تنطبق على كل ما فيه، وتسبق نسبة الشركة ونسبة العروض.',
+    cat_offer_margin_note: 'القسمان «{a}» و«{b}» يملؤهما الموقع وحده بالعروض التي لا تناسب أي مجموعة، فليس لهما نسبة خاصة: يأخذان نسبة الربح على أسعار العروض من شاشة عروض الشركات، أو نسبة الشركة إن كانت لها نسبة.',
     gpu_own: 'كرت شاشة منفصل',
     vram_shared: 'مدمج، يأخذ من الرام',
     spec_screen: 'الشاشة',
@@ -1834,7 +1840,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.33';
+var APP_BUILD = '2.35';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -1863,6 +1869,7 @@ var state = {
   lapNew: '', lapUsed: '',                    // the accounting program's new and used laptop groups, found by name
   suppliers: {}, requests: [],                // suppliers' WhatsApp numbers, and what staff asked them lately
   supMargins: {}, supMarginsOk: false,        // a supplier's own profit %, set by the manager (cloud edition 11)
+  catPricingOk: false,                        // a category named on the offers screen can have its own profit % (cloud edition 14)
   supEdit: null, offerEdit: null,             // the supplier or the offer being edited on the offers screen
   supOpen: {}, supFoldQ: {},                  // suppliers unfolded on the offers screen, and those folded during a search
   visits: null, visitsOk: null, visTop: false, visDay: '',   // the visitor counter on the overview (cloud edition 12)
@@ -2035,7 +2042,7 @@ function marginOf(cat) {
   if (cat === 'offer-new' || cat === 'offer-used') return offerMarginPct();   // supplier goods have their own profit %
   var m = state.pricing.margins[cat]; return m >= 0 ? Number(m) : state.pricing.defMargin;
 }
-function autoPrice(it) { return it.cost > 0 ? roundUp(it.cost * (1 + (it.offer ? offerMarginPct(offerSupplier(it)) : marginOf(it.cat)) / 100)) : null; }
+function autoPrice(it) { return it.cost > 0 ? roundUp(it.cost * (1 + (it.offer ? offerMarginPct(offerSupplier(it), it.offer.catKey) : marginOf(it.cat)) / 100)) : null; }
 function resolveItem(it) {
   if (!it.raw) return;
   var base = it.raw.cost, b = it.buy;
@@ -2121,6 +2128,12 @@ function applyCloud(d) {
   (d.groupPricing || []).forEach(function (g) {
     if (g.margin !== null && g.margin >= 0) p.margins[g.group_id] = Number(g.margin);
     if (g.hidden) p.hidden[g.group_id] = true;
+  });
+  if (d.catPricing !== undefined) state.catPricingOk = Array.isArray(d.catPricing);   // a cloud without edition 14 has none
+  (d.catPricing || []).forEach(function (c) {   // kept under the category's id in the store: "n:Games" is "x:Games"
+    var k = 'x:' + String(c.cat).slice(2);
+    if (c.margin !== null && c.margin >= 0) p.margins[k] = Number(c.margin);
+    if (c.hidden) p.hidden[k] = true;
   });
   (d.itemPricing || []).forEach(function (r) {
     if (r.manual_price > 0) p.manual['m' + r.item_id] = Number(r.manual_price);
@@ -3101,9 +3114,9 @@ function shownInstead(o) {
   return top && top.id !== o.id ? top : null;
 }
 /* The manager's own price for an offer (typed, or through an extra cost), or null when the usual rule applies. */
-function offerOwnSell(id, usdCost, sup) {
+function offerOwnSell(id, usdCost, sup, cat) {
   var manual = Number(state.pricing.manual[id]) || 0, extra = Number(state.pricing.extra[id]) || 0;
-  return manual > 0 ? manual : (extra > 0 && usdCost > 0 ? roundUp((usdCost + extra) * (1 + offerMarginPct(sup) / 100)) : null);
+  return manual > 0 ? manual : (extra > 0 && usdCost > 0 ? roundUp((usdCost + extra) * (1 + offerMarginPct(sup, cat) / 100)) : null);
 }
 function shopItems(list, used) {
   var best = {};
@@ -3138,7 +3151,7 @@ function shopItems(list, used) {
       qty: mineOwn ? b.ownQty : 1, other: [], stock: mineOwn ? ownStockOf(b.ownQty, b.ownStock) : 'low', at: b.at,
       note: memberOf(b, state.notes) || sp.notes.join('\n'), photos: mine, photo: mine[0] || '',
       offer: { rows: b.rows, from: b.from.sort(function (x, y) { return x.sell - y.sell; }), supplier: mineOwn ? '' : (o.supplier || ''), own: mineOwn,
-        ownRow: b.own ? b.own.id : '', ownQty: b.ownQty, keys: b.keys, sigs: b.sigs,
+        ownRow: b.own ? b.own.id : '', ownQty: b.ownQty, keys: b.keys, sigs: b.sigs, catKey: String(o.cat || ''),
         cond: o.cond === 'used' ? 'used' : 'new', sp: sp, note: o.note || '' } };
     b.rows.forEach(function (r) { state.rowItem[r] = id; });
     if (isAdmin()) {
@@ -3225,22 +3238,28 @@ function offerText(o) {
 }
 /* The profit % on a supplier's offers: its own when the manager gave it one, else the offers one, else the general
    one. The shop's own goods (no supplier here) take the offers one. */
-function offerMarginPct(sup) {
-  var m = sup ? state.supMargins[sup] : undefined;
+/* An offer's profit %: its category's (one named on the offers screen), else its supplier's, else the offers one. */
+function offerMarginPct(sup, cat) {
+  var c = catMarginOf(cat), m = sup ? state.supMargins[sup] : undefined;
+  if (c !== null) return c;
   if (m >= 0) return m;
   return state.offerMargin !== null && state.offerMargin >= 0 ? state.offerMargin : state.pricing.defMargin;
 }
 function supMarginOf(sup) { var m = state.supMargins[sup]; return m >= 0 ? m : null; }
+function catMarginOf(cat) {   // "n:Games" as an offer keeps it, or "x:Games" as the store shows it
+  var m = /^[nx]:./.test(cat || '') ? state.pricing.margins['x:' + cat.slice(2)] : undefined;
+  return m >= 0 ? Number(m) : null;
+}
 function offerSupplier(it) { return it.offer && !it.offer.own ? it.offer.supplier || '' : ''; }
 /* Suggested selling price of an offer: its price in dollars plus its profit percent, rounded like stock prices.
    sup: whose offer it is, for a row not saved yet (otherwise the row's own supplier). */
-function offerSell(o, sup) {
+function offerSell(o, sup, cat) {
   var u = offerUsd(o);
   if (sup === undefined) sup = o.own ? '' : o.supplier || '';
-  return u > 0 ? roundUp(u * (1 + offerMarginPct(sup) / 100)) : 0;
+  return u > 0 ? roundUp(u * (1 + offerMarginPct(sup, cat === undefined ? o.cat : cat) / 100)) : 0;
 }
-function offerLine(o, sup) {   // "sell $1,003.00 . profit $108.00"
-  var u = offerUsd(o), s = offerSell(o, sup);
+function offerLine(o, sup, cat) {   // "sell $1,003.00 . profit $108.00"
+  var u = offerUsd(o), s = offerSell(o, sup, cat);
   return t('offer_sell', { p: usd(s) }) + DOT + t('offer_profit', { p: usd(s - u) });
 }
 /* A supplier's saved offers as text for customers: specs and selling prices, never the purchase price. */
@@ -3365,6 +3384,7 @@ function fetchData() {
     add('rules', api('GET', '/rest/v1/pricing_rules?select=*').then(need));
     add('offers', pages('/rest/v1/offers?select=*&order=created_at.desc,id'));
     add('supMargins', pagesSoft('/rest/v1/supplier_pricing?select=supplier,margin&order=supplier'));
+    add('catPricing', pagesSoft('/rest/v1/offer_cat_pricing?select=cat,margin,hidden&order=cat'));
     add('people', pages('/rest/v1/profiles?select=*&order=created_at,id'));
     add('events', api('GET', '/rest/v1/stock_events?select=*&order=id.desc&limit=40').then(need));
     add('finds', pagesSoft('/rest/v1/photo_finds?select=query,label,kind,status,results,note,photo&status=in.(' + FIND_STATES + ')&order=query'));
@@ -3431,7 +3451,7 @@ function clearAccount() {
   finds.state = null; finds.sent = {}; finds.editKey = false; state.finds = []; state.findItems = {}; state.findsOk = false;
   state.photoJobs = []; state.jobsOk = false; photoWork.done = 0; photoWork.skipped = 0; photoWork.based = false;
   state.suppliers = {}; state.requests = []; state.supEdit = null; state.offerEdit = null; state.hidden = {}; state.onlyHidden = false;
-  state.supMargins = {}; state.supMarginsOk = false; state.supOpen = {}; state.supFoldQ = {};
+  state.supMargins = {}; state.supMarginsOk = false; state.catPricingOk = false; state.supOpen = {}; state.supFoldQ = {};
   state.visits = null; state.visitsOk = null; state.visTop = false; state.visDay = '';
   state.session = null; state.me = null; state.role = null; state.busy = false; state.peekId = null;
   state.items = []; state.offers = []; state.people = []; state.events = []; state.cats = [];
@@ -3553,7 +3573,14 @@ function savePricing(id) {
 }
 function saveGroup(cat) {
   later('group-' + cat, function () {
-    var m = state.pricing.margins[cat], hidden = !!state.pricing.hidden[cat], has = m >= 0;
+    var m = state.pricing.margins[cat], hidden = !!state.pricing.hidden[cat], has = m >= 0, named = 'n:' + cat.slice(2);
+    if (/^x:/.test(cat)) {   // a category named on the offers screen, kept by its name
+      sent(has || hidden
+        ? api('POST', '/rest/v1/offer_cat_pricing?on_conflict=cat', [{ cat: named, margin: has ? Number(m) : null, hidden: hidden }], 'resolution=merge-duplicates,return=minimal')
+        : api('DELETE', '/rest/v1/offer_cat_pricing?cat=eq.' + encodeURIComponent(named), undefined, 'return=minimal'));
+      return;
+    }
+    if (!/^\d+$/.test(cat)) return;   // only the accounting program's groups have a row of their own
     sent(has || hidden
       ? api('POST', '/rest/v1/group_pricing?on_conflict=group_id', [{ group_id: Number(cat), margin: has ? Number(m) : null, hidden: hidden }], 'resolution=merge-duplicates,return=minimal')
       : api('DELETE', '/rest/v1/group_pricing?group_id=eq.' + Number(cat), undefined, 'return=minimal'));
@@ -4635,7 +4662,8 @@ function offerHead(o) {
     (info.notes.length ? '<span class="onote" dir="auto">' + esc(info.notes.join(DOT)) + '</span>' : '');
 }
 function draftSupplier() { return state.draftOwn ? '' : state.supplier.trim(); }   // whose profit % the rows being added take
-function draftCalc(d) { return d.price > 0 ? offerLine(d, draftSupplier()) : ''; }
+function draftCat() { return catChosen(state.draftCat, state.draftCatName, state.draftCond); }   // the category the rows being added go to
+function draftCalc(d) { return d.price > 0 ? offerLine(d, draftSupplier(), draftCat()) : ''; }
 function sameSupplier() { var sup = state.supplier.trim(); return sup ? state.offers.filter(function (o) { return o.supplier === sup && !o.own; }) : []; }
 function paintDraft() {
   var el = $('#draft');
@@ -4703,7 +4731,7 @@ function saveDraft() {
   var rows = [], updates = [], seen = firstSeen();
   state.draft.filter(function (d) { return d.price > 0; }).forEach(function (d) {
     var r = { supplier: sup, name: d.name, price: d.price, cur: d.cur, note: d.note || '' }, same = own ? ownSame(d) : null, patch, lvl, first;
-    if (state.shopOk) { r.cond = state.draftCond; r.sell = offerOwnSell(storeIdFor(r), offerUsd(d), own ? '' : sup); }   // a price the manager set for this device before stays
+    if (state.shopOk) { r.cond = state.draftCond; r.sell = offerOwnSell(storeIdFor(r), offerUsd(d), own ? '' : sup, cat); }   // a price the manager set for this device before stays
     if (same) {   // one of my own goods saved before: brought up to date instead of added twice
       patch = { price: r.price, cur: r.cur, note: r.note };
       if (state.shopOk) patch.sell = r.sell;
@@ -5082,12 +5110,16 @@ function pricingPanel() {
     inputField('def-margin', 'defmargin', 'def_margin', p.defMargin, ' type="number" inputmode="decimal" min="0" step="any"') +
     inputField('low-at', 'lowat', 'low_at', p.lowAt, ' type="number" inputmode="numeric" min="0" step="1"') +
     '<div class="field"><span class="lbl">' + t('group_margin') + '</span><div>' + state.cats.map(function (c, i) {
-      var m = p.margins[c.id], name = esc(catName(c));
+      var m = p.margins[c.id], name = esc(catName(c)), named = /^x:/.test(c.id);
+      if (c.id === 'offer-new' || c.id === 'offer-used') return '';   // these follow the offers profit %, set on the offers screen
+      if (named && !state.catPricingOk) return '<div class="prow"><span class="nm grow" dir="auto">' + name + '</span><span class="sub">' + t('cat_margin_setup') + '</span></div>';
       return '<div class="prow"><span class="nm grow" dir="auto">' + name + '</span>' +
         '<input class="input mini" id="gm-' + i + '" data-input="gmargin" data-cat="' + esc(c.id) + '" type="number" inputmode="decimal" min="0" step="any" placeholder="' + p.defMargin +
         '" value="' + (m >= 0 ? m : '') + '" aria-label="' + name + '">' +
         '<label class="pin" for="gs-' + i + '"><input type="checkbox" id="gs-' + i + '" data-input="gshow" data-cat="' + esc(c.id) + '"' + (p.hidden[c.id] ? '' : ' checked') + '>' + t('show_group') + '</label></div>';
-    }).join('') + '</div></div></section>';
+    }).join('') + '</div>' +
+    (state.cats.some(function (c) { return /^x:/.test(c.id); }) && state.catPricingOk ? '<p class="sub">' + t('cat_margin_note') + '</p>' : '') +
+    (state.cats.some(function (c) { return c.id === 'offer-new' || c.id === 'offer-used'; }) ? '<p class="sub">' + esc(t('cat_offer_margin_note', { a: t('cat_offer_new'), b: t('cat_offer_used') })) + '</p>' : '') + '</div></section>';
 }
 function peoplePanel() {
   var me = state.session ? state.session.uid : '';
@@ -5975,7 +6007,8 @@ var BACKUP_TABLES = [
   ['offers', '/rest/v1/offers?select=*&order=created_at,id', 'id'],
   ['item_media', '/rest/v1/item_media?select=*&order=item_id', 'item_id'],
   ['suppliers', '/rest/v1/suppliers?select=name,whatsapp&order=name', 'name', true],
-  ['supplier_pricing', '/rest/v1/supplier_pricing?select=supplier,margin&order=supplier', 'supplier', true]
+  ['supplier_pricing', '/rest/v1/supplier_pricing?select=supplier,margin&order=supplier', 'supplier', true],
+  ['offer_cat_pricing', '/rest/v1/offer_cat_pricing?select=cat,margin,hidden&order=cat', 'cat', true]
 ];
 var backup = { busy: false, msg: '', file: null };   // file: a backup that was opened and waits for the manager's yes
 
@@ -6121,6 +6154,7 @@ function runRestore() {
     function () { return upsertRows('offers', 'id', cleanRows(rowsOf(info, 'offers'))); },
     function () { return softRows('suppliers', 'name', cleanRows(rowsOf(info, 'suppliers'))); },
     function () { return softRows('supplier_pricing', 'supplier', cleanRows(rowsOf(info, 'supplier_pricing'))); },
+    function () { return softRows('offer_cat_pricing', 'cat', cleanRows(rowsOf(info, 'offer_cat_pricing'))); },
     function () {   // the picture files go in before the rows that name them
       return eachLimit(files, 3, function (name) {
         return f.zip.file('photos/' + name).async('blob').then(function (b) {
@@ -7107,8 +7141,11 @@ document.addEventListener('input', function (e) {
     v = parseInt(el.value, 10);
     if (d) d.qty = v >= 0 ? v : null;
   }
-  else if (k === 'dcat') state.draftCat = el.value;
-  else if (k === 'dcatname') state.draftCatName = el.value;
+  else if (k === 'dcat' || k === 'dcatname') {   // a category with its own profit % changes the prices worked out below
+    v = offerMarginPct(draftSupplier(), draftCat());
+    if (k === 'dcat') state.draftCat = el.value; else state.draftCatName = el.value;
+    if (offerMarginPct(draftSupplier(), draftCat()) !== v) paintDraft();
+  }
   else if (k === 'replold') { state.replaceOld = el.checked; state.replaceTouched = true; }
   else if (k === 'omargin') {   // profit % for supplier offers; empty goes back to the general one
     v = parseFloat(el.value);
@@ -7172,7 +7209,7 @@ document.addEventListener('change', function (e) {
     resolveItem(it);
     savePricing(id);
     if (it.offer) {   // the store reads an offer's price from its rows in the cloud
-      sent(api('PATCH', '/rest/v1/offers?id=in.(' + it.offer.rows.map(encodeURIComponent).join(',') + ')', { sell: offerOwnSell(id, it.raw.cost, offerSupplier(it)) }, 'return=minimal'));
+      sent(api('PATCH', '/rest/v1/offers?id=in.(' + it.offer.rows.map(encodeURIComponent).join(',') + ')', { sell: offerOwnSell(id, it.raw.cost, offerSupplier(it), it.offer.catKey) }, 'return=minimal'));
     }
     if (state.tab === 'items') paintItems();
     openItem(id);
