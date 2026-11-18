@@ -1840,7 +1840,7 @@ var STORE_KEY = 'raff-app-v1';
 /* Address and public key of the cloud project. Both are meant to be public: the cloud itself decides
    what each account may read, and a guest key can read the guest catalog only. */
 var CLOUD = { url: String(RAFF_CLOUD_URL).trim().replace(/\/+$/, ''), key: String(RAFF_CLOUD_KEY).trim(), pollMs: 10000 };   // the two values at the top of the page
-var APP_BUILD = '2.35';
+var APP_BUILD = '2.37';
 var state = {
   lang: 'ar', langSet: false,   // Arabic unless this device's user picked English
   bookRate: 0, rateSrc: 'books', rateManual: 0,   // the rate of the accounting program, or one the manager types
@@ -2322,6 +2322,8 @@ function parseOfferLine(raw, defCur) {
 /* A list is read block by block when its devices are numbered ("No 12" on its own line), or when prices sit on
    lines of their own; otherwise line by line. */
 function parseOfferText(text, defCur) {
+  var flat = parseFlatTable(String(text), defCur);
+  if (flat) return flat;
   var lines = String(text).split(/\r?\n/), clean = lines.map(cleanListLine);
   if (clean.filter(function (l) { return RE_BLOCK_HEAD.test(l); }).length >= 2) return parseOfferBlocks(clean, defCur, true);
   if (clean.filter(function (l) { return RE_INLINE_HEAD.test(l); }).length >= 2 && clean.some(function (l) { return !!labelOf(l); })) return parseOfferBlocks(clean, defCur, 'inline');
@@ -2415,7 +2417,7 @@ var APPLE = BRANDS.filter(function (b) { return b.id === 'apple'; })[0];
    never a storage size ("r5 256"). */
 var RYZEN_NO = '(\\d{4}[a-z]{0,2}(?:3d)?|(?:1\\d[05]|2\\d0)(?![0-9])(?! ?(?:gb|g|tb|t)(?![a-z])))';
 var RE_RYZEN = new RegExp('[^a-z0-9]ryzen ?([3579])(?:[ -]{0,3}' + RYZEN_NO + ')?(?=[^a-z0-9])'), RE_RYZEN_SHORT = new RegExp('[^a-z0-9]r([3579])[ -]{0,3}' + RYZEN_NO + '(?=[^a-z0-9])');
-function specText(name) { return ' ' + toLatinDigits(name).toLowerCase().replace(/[\\\/|,()]+/g, ' ').replace(/\s+/g, ' ') + ' '; }
+function specText(name) { return ' ' + toLatinDigits(name).toLowerCase().replace(/[\\\/|,()_]+/g, ' ').replace(/\s+/g, ' ') + ' '; }
 var RE_GPU_WORD = /[^a-z0-9](nvidia|geforce|quadro|rtx|gtx|mx(?= ?-?\d{3}(?!\d))|radeon|amd|arc|intel|iris|uhd|vga|gpu|graphics?|dedicated)(?=[^a-z])/;
 /* The graphics card in a name's text (from specText): which card, whether it is a card of its own (own: false when it is
    part of the processor, null when the name does not say), and its own memory (VRAM), written right after the card
@@ -2441,7 +2443,7 @@ function readGpu(t, before, needRam) {
   else if ((m = /vga|gpu|graphics?|dedicated/.exec(t))) hit('', true);   // a card of its own, its maker not written
   if (!r) return null;
   if (r.own !== false) {
-    m = /^(?:[ -]+(?:ti|super|max-?q|mobile|laptop|gddr\d*x?|ddr\d+x?|vram|graphics?|card|dedicated|memory))*[ -]*(\d{1,2}) ?gb?(?![a-z0-9])/.exec(t.slice(r.end));
+    m = /^(?:[ -]+(?:ti|super|max-?q|mobile|laptop|with|gddr\d*x?|ddr\d+x?|vram|graphics?|card|dedicated|memory))*[ -]*(\d{1,2}) ?gb?(?![a-z0-9])/.exec(t.slice(r.end));
     next = m && /^[ -]*(\d+(?:\.\d+)?) ?(tb|gb?)?(?![a-z0-9.])/.exec(t.slice(r.end + m[0].length));
     if (m && VRAM_SIZES.indexOf(Number(m[1])) !== -1 && !(needRam && next && (next[2] === 'tb' || DISK_SIZES.indexOf(Number(next[1])) !== -1))) {
       r.vram = Number(m[1]); r.end += m[0].length;
@@ -2465,7 +2467,7 @@ function specsOf(name, sizesAfterCard) {   // sizesAfterCard: a supplier's spec 
   } else if ((m = /[^a-z0-9]ultra ?([579])(?:[ -]{0,3}(\d{3}[a-z]{0,2}))?(?=[^a-z0-9])/.exec(s))) {
     sp.cpu = 'ultra'; sp.cpuLabel = 'Core Ultra ' + m[1]; at = m.index + m[0].length;
     if (m[2]) { sp.cpuName = sp.cpuLabel + ' ' + m[2].toUpperCase(); sp.series = Number(m[2].charAt(0)); sp.suffix = tailLetters(m[2]); }
-  } else if ((m = /[^a-z0-9]core ([3579])[ -]{0,3}(\d{3}) ?([a-z]{0,2})(?=[^a-z0-9])/.exec(s))) {
+  } else if ((m = /[^a-z0-9]core ([3579])[ -]{0,3}(\d{3}) ?([uhpvx]{0,2})(?=[^a-z0-9])/.exec(s))) {
     sp.cpu = 'i' + m[1]; sp.cpuLabel = 'Core ' + m[1]; at = m.index + m[0].length;   // the newer "Core 7 150U" naming
     sp.cpuName = sp.cpuLabel + ' ' + m[2] + m[3].toUpperCase(); sp.suffix = m[3];
   } else if (APPLE && APPLE.re.test(normalize(name)) && (m = /[^a-z0-9]m([1-4])(?: (pro|max|ultra))?(?=[^a-z0-9])/.exec(s))) {
@@ -2825,18 +2827,20 @@ var RE_PRICE_LINE = new RegExp('^(?:(' + LEXICON.priceWord + '|' + LEXICON.price
 var RE_PRICE_REV = new RegExp('^(?:(USD|SYP)\\s*)?(\\d+(?:[.,]\\d+)*)\\s*(USD|SYP)?\\s*(' + LEXICON.priceWord + ')\\s*[:=-]?$', 'i');
 var RE_NOTE_LEAD = new RegExp('^(?:' + LEXICON.noteWord + ')(?![a-z' + LEXICON.letters + '])\\s*[:\\-]*\\s*', 'i');
 var RE_HAS_TEXT = new RegExp('[a-z0-9' + LEXICON.letters + ']', 'i');
-var SPEC_LABELS = [
-  ['cpu', /^(?:cpu|processor)(?![a-z])[\s:=-]*/i],
-  ['ram', /^(?:ram|memory)(?![a-z])[\s:=-]*/i],
-  ['disk', /^(ssd|hdd|storage|nvme|emmc|hard ?dis[ck]|hard)(?![a-z])[\s:=-]*/i],
-  ['screen', /^(?:disp[a-z]*|screen|lcd)(?![a-z])[\s:=-]*/i],
-  ['gpu', /^(?:gpu|gup|vga|graphics? ?card|graphics?)(?![a-z])[\s:=-]*/i]
+var SPEC_LABELS = [   // "CPU: ...", "SSD.: ...", "Storage : ..."
+  ['cpu', /^(?:cpu|processor)(?![a-z])[\s.:=-]*/i],
+  ['ram', /^(?:ram|memory)(?![a-z])[\s.:=-]*/i],
+  ['disk', /^(ssd|hdd|storage|nvme|emmc|hard ?dis[ck]|hard)(?![a-z])[\s.:=-]*/i],
+  ['screen', /^(?:disp[a-z]*|screen|lcd)(?![a-z])[\s.:=-]*/i],
+  ['gpu', /^(?:gpu|gup|vga|graphics? ?card|graphics?)(?![a-z])[\s.:=-]*/i]
 ];
 /* A spec line written without its label, recognised by how it starts. */
 var SPEC_GUESS = [
-  ['gpu', /^(?:nvidia|geforce|rtx|gtx|mx ?\d{3}|radeon|intel (?:uhd|iris|arc|hd)|iris |arc )/i],
-  ['cpu', /^(?:(?:intel )?(?:core|celeron|pentium|xeon|atom)(?![a-z])|(?:amd )?(?:ryzen|athlon)(?![a-z])|(?:amd )?r[3579] |i[3579][ -]|ultra [3579]|snapdragon|apple m\d)/i],
-  ['screen', /^\d{2}(?:\.\d)?\s*(?:"|''|inch(?:es)?)?\s*(?:fhd|hd|qhd|uhd|wuxga|wqxga|2k|2\.8k|3k|4k|oled|ips)(?![a-z])/i]
+  ['gpu', /^(?:nvidia|geforce|rtx|gtx|mx ?\d{3}|(?:amd )?radeon|intel (?:uhd|iris|arc|hd)|iris |arc )/i],
+  ['cpu', /^(?:ai\s*[\/|-]?\s*)?(?:(?:intel )?(?:core|celeron|pentium|xeon|atom)(?![a-z])|(?:amd )?(?:ryzen|athlon)(?![a-z])|(?:amd )?r[3579] |i[3579][ -]|(?:intel )?ultra [3579]|snapdragon|apple m\d)/i],
+  ['ram', /^(?:\d{1,2}\s*(?:gb|g)?\s*(?:(?:ram|sodimm)\s*)?(?:l?pddr\d|ddr\d|ram|sodimm)|(?:l?pddr\d|ddr\d)\s*\d{1,2}\s*(?:gb|g))(?![a-z])/i],   // "8GB DDR5", "8 DDR4", "16GB RAM DDR4"
+  ['disk', /^(?:\d{3,4}\s*(?:gb|g)?|\d(?:\.\d)?\s*(?:tb|t|tera))\s*(?:ssd|nvme|hdd|emmc|ufs|pcie|m\.?2|sata|solid|katı)/i],   // "256GB NVMe", "512 SSD", "1TERA SSD"
+  ['screen', /^\d{2}(?:[.,]\s?\d)?\s*(?:["”'′]{1,2}|inch(?:es)?|\s)*(?:full ?hd|fhd|hd|qhd|uhd|wuxga|wqxga|2\.5k|2k|2\.8k|3k|4k|oled|ips|touch)(?![a-z])/i]
 ];
 /* Extras a seller lists under the specs: they belong to the device above them even after an empty line. */
 var RE_EXTRA_LINE = /^(?:windows|win ?1[01]|ethernet|rj ?-?45|camera|camer|keyboard|audio|colou?r|adapter|wi-?fi|bluetooth|battery|office|npu)(?![a-z])/i;
@@ -2845,7 +2849,7 @@ var DOT = ' \u00B7 ';   // joins the parts of a saved note
 /* Bullets, stars, emoji and other decoration around a line say nothing about the goods. */
 var RE_LEAD_DECOR = new RegExp('^(?:[^a-z0-9' + LEXICON.letters + '$#("\']|#(?!\\s*\\d))+', 'i'), RE_TAIL_DECOR = new RegExp('[^a-z0-9' + LEXICON.letters + '$%)"\'.+]+$', 'i');
 /* "3. ASUS TUF A16": the number and the model on one line. */
-var RE_INLINE_HEAD = new RegExp('^(\\d{1,3})\\s*[.)\\-]\\s+([a-z' + LEXICON.letters + '].*)$', 'i');
+var RE_INLINE_HEAD = new RegExp('^(\\d{1,3})\\s*(?:[.)]\\s*|-\\s+)([a-z' + LEXICON.letters + '].*)$', 'i');   // "1.Asus", "2 .DELL"; "3-cell" is no heading
 var RE_AVAILABLE = new RegExp('^(?:' + LEXICON.availWord + ')$', 'i');
 function cleanListLine(raw) {
   return tidyText(raw).replace(/\u00B7/g, '-').replace(/\s+/g, ' ').replace(RE_LEAD_DECOR, '').replace(RE_TAIL_DECOR, '').replace(/[\u0640_]+$/, '').trim();
@@ -2866,19 +2870,33 @@ function labelOf(line) {
     var m = SPEC_LABELS[i][1].exec(line);
     if (m) {
       var out = { key: SPEC_LABELS[i][0], value: line.slice(m[0].length).replace(/[\u0640_.,;:\s-]+$/, '') };
+      if (out.key === 'disk') out.value = out.value.replace(/(^|\s)(120|128|240|256|480|512)6(?=\s|$)/, '$1$2G');   // "5126": a 512G typed with a 6
       if (out.key === 'disk') {   // "Hard: 512GB SSD" is an SSD whatever the label says
         out.kind = /ssd|nvme/i.test(line) ? 'SSD' : (/hdd/i.test(line) ? 'HDD' : 'STORAGE');
         out.value = out.value.replace(new RegExp('(^|\\s)' + out.kind + '(?=\\s|$)', 'i'), ' ').replace(/\s+/g, ' ').trim() || out.value;
       }
       if (out.key === 'screen') out.value = out.value.replace(/(\d),(\d)/, '$1.$2');   // "15,6"
+      if (out.key === 'ram') out.value = ramTotal(out.value);
       return out;
     }
   }
   return null;
 }
 function guessOf(line) {
-  for (var i = 0; i < SPEC_GUESS.length; i++) if (SPEC_GUESS[i][1].test(line)) return { key: SPEC_GUESS[i][0], value: line.replace(/[.,;:\s-]+$/, '') };
+  for (var i = 0; i < SPEC_GUESS.length; i++) {
+    if (!SPEC_GUESS[i][1].test(line)) continue;
+    var out = { key: SPEC_GUESS[i][0], value: line.replace(/[.,;:\s-]+$/, '') };
+    if (out.key === 'ram') out.value = ramTotal(out.value);
+    if (out.key === 'disk') out.kind = /ssd|nvme|pcie|m\.?2|solid|katı/i.test(line) ? 'SSD' : (/hdd|sata/i.test(line) ? 'HDD' : 'STORAGE');
+    return out;
+  }
   return null;
+}
+/* Two memory sticks as the total: "DDR5 8G+8G [ON BD.]" -> "16GB DDR5 (8G+8G) [ON BD.]". */
+function ramTotal(v) {
+  var m = /(\d{1,2})\s*gb?\s*\+\s*(\d{1,2})\s*gb?(?![a-z])/i.exec(v);
+  if (!m || /\d\s*gb?(?![a-z])/i.test(v.slice(0, m.index))) return v;
+  return (Number(m[1]) + Number(m[2])) + 'GB ' + (v.slice(0, m.index) + '(' + m[0].replace(/\s+/g, '') + ')' + v.slice(m.index + m[0].length)).replace(/\s+/g, ' ').trim();
 }
 function specNote(row) {
   var s = row.spec, out = [];
@@ -2909,17 +2927,28 @@ function readNote(note) {
 /* Short labels for the spec chips: "512GB NVME PCIE G4" -> "512GB SSD", "16.0 WUXGA 144Hz" -> 16.0" WUXGA 144Hz. */
 function offerChips(sp) {
   var c = [], m, kind, extra;
-  if (sp.cpu) c.push(sp.cpu.replace(/^(?:intel|amd)\s+/i, '').replace(/[.\s]+$/, '').split(' ').slice(0, 4).join(' '));
-  if (sp.ram) c.push(sp.ram.split(' ').slice(0, 2).join(' '));
-  if (sp.disk) {
-    m = /(\d+(?:\.\d+)?)\s*(tb|gb|g|t)(?![a-z])/i.exec(sp.disk);
-    kind = (/ufs|emmc/i.exec(sp.disk) || [sp.diskKind === 'STORAGE' ? '' : sp.diskKind])[0].toUpperCase();
-    c.push(m ? m[1] + (/^t/i.test(m[2]) ? 'TB' : 'GB') + (kind ? ' ' + kind : '') : sp.disk.slice(0, 18));
+  if (sp.cpu) {   // "AI /Intel Core Ultra 5 225U", "Core i3-1315U 3.3GHz 10MB", "Intel i5_13420H"
+    c.push(sp.cpu.replace(/^(?:ai\s*[\/|-]?\s*)?(?:(?:intel|amd)\s+)?/i, '').replace(/_/g, '-').replace(/\s*\(.*$/, '').replace(/\s+\d+(?:\.\d+)?\s?(?:ghz|mhz|mb)\b.*$/i, '')
+      .replace(/(\d{4,5}) ([hu]x?|hs|p)$/i, '$1$2').replace(/\s+(?:processor|i̇?şlemci|İşlemci)$/i, '').replace(/[.\s]+$/, '').split(' ').slice(0, 4).join(' '));
   }
-  if (sp.gpu) c.push(sp.gpu.replace(/^(?:nvidia|geforce|amd|intel)\s+/i, '').split(' ').slice(0, 3).join(' '));
+  if (sp.ram) {   // "DDR5 8G [ON BD.]" -> 8GB DDR5, "8 DDR4" -> 8GB DDR4
+    m = /(?:^|[^0-9.])(\d{1,2})\s*(?:gb?(?![a-z])|(?=\s*(?:l?pddr|ddr|ram|sodimm)))/i.exec(sp.ram);
+    kind = /l?pddr\d+x?|ddr\d/i.exec(sp.ram);
+    c.push(m ? m[1] + 'GB' + (kind ? ' ' + kind[0].toUpperCase() : '') : sp.ram.split(' ').slice(0, 2).join(' '));
+  }
+  if (sp.disk) {
+    m = /(\d+(?:\.\d+)?)\s*(tb|gb|g|t|tera)?(?![a-z0-9.])/i.exec(sp.disk);
+    if (m && !m[2] && !(Number(m[1]) >= 100)) m = null;   // a bare number is a size only when it is one ("512 SSD")
+    kind = (/ufs|emmc/i.exec(sp.disk) || [sp.diskKind === 'STORAGE' ? '' : sp.diskKind])[0].toUpperCase();
+    c.push(m ? m[1] + (/^t/i.test(m[2] || '') ? 'TB' : 'GB') + (kind ? ' ' + kind : '') : sp.disk.slice(0, 18));
+  }
+  if (sp.gpu) {   // "NVIDIA GeForce RTX 4050 with 6 GB GDDR6 Dedicated VRAM" -> RTX 4050 6GB
+    c.push(sp.gpu.replace(/\b(?:nvidia|geforce|amd|intel|with|dedicated|vram|gddr\d+x?)\b/gi, ' ').replace(/(\d+)\s*gb?(?![a-z])/i, '$1GB')
+      .replace(/\s+/g, ' ').trim().split(' ').filter(function (w, i, a) { return i < 3 || (i === 3 && /^\d+GB$/.test(w)); }).join(' '));   // "RTX 5070 Ti 12GB" keeps its memory
+  }
   if (sp.screen) {
     m = /\d{2}(?:\.\d)?/.exec(sp.screen);
-    extra = (sp.screen.match(/fhd|qhd|uhd|wuxga|wqxga|2\.8k|2k|3k|4k|oled|ips|\d{2,3} ?hz/gi) || []).slice(0, 2).join(' ');
+    extra = (sp.screen.replace(/full ?hd/gi, 'FHD').match(/fhd|qhd|uhd|wuxga|wqxga|2\.8k|2k|3k|4k|oled|ips|\d{2,3} ?hz/gi) || []).slice(0, 2).join(' ');
     c.push(m ? m[0] + '"' + (extra ? ' ' + extra : '') : sp.screen.slice(0, 18));
   }
   return c;
@@ -2935,6 +2964,10 @@ function parseBlock(lines, no, defCur, named) {
     }
   }
   lines = lines.filter(function (l) { return !RE_AVAILABLE.test(l); });
+  /* "8.HP OmniBook 3 Laptop" then "16-bu0022nt": the model number on the next line belongs to the name */
+  if (named && lines.length && /^[a-z0-9]+(?:[-\/][a-z0-9]+)+$/i.test(lines[0]) && /\d/.test(lines[0]) && /[a-z]/i.test(lines[0]) && !labelOf(lines[0]) && !guessOf(lines[0])) {
+    named += ' ' + lines.shift();
+  }
   for (i = 0; !named && i < lines.length && title < 0; i++) if (/^[a-z]/i.test(lines[i]) && !labelOf(lines[i])) title = i;
   if (!named && title < 0 && lines.length) title = 0;
   if (!named && title < 0) return null;
@@ -2963,11 +2996,12 @@ function parseBlock(lines, no, defCur, named) {
 /* lines: cleaned lines. headed: blocks open with a number line; otherwise a block ends at its price line,
    and a new one starts after an empty line unless that line is still a spec. */
 function parseOfferBlocks(lines, defCur, headed) {
-  var blocks = [], cur = null, gap = true, rows = [], dropped = 0, usd = 0, syp = 0;
+  var blocks = [], cur = null, gap = true, rows = [], dropped = 0, usd = 0, syp = 0, last = 0;
   lines.forEach(function (line) {
-    var m = RE_BLOCK_HEAD.exec(line), text = !!line && RE_HAS_TEXT.test(line), im = headed === 'inline' && RE_INLINE_HEAD.exec(line);
+    var m = RE_BLOCK_HEAD.exec(line), text = !!line && RE_HAS_TEXT.test(line), im = headed === 'inline' && RE_INLINE_HEAD.exec(line), n = im ? Number(im[1]) : 0;
+    if (im && last && n !== 1 && !(n > last && n <= last + 3)) im = null;   // the numbers go on from the last device: "3-cell" under device 9 is a spec
     if (headed) {
-      if (im) { cur = { no: Number(im[1]), lines: [], named: im[2] }; blocks.push(cur); }
+      if (im) { last = n; cur = { no: n, lines: [], named: im[2] }; blocks.push(cur); }
       else if (m) { cur = { no: Number(m[1] || m[2] || m[3]), lines: [] }; blocks.push(cur); }
       else if (cur && text) cur.lines.push(line);
       return;
@@ -2987,6 +3021,95 @@ function parseOfferBlocks(lines, defCur, headed) {
   if (usd + syp) rows.forEach(function (r) { if (!r.explicit) r.cur = syp > usd ? 'SYP' : 'USD'; });   // a bare price follows the rest of the list
   rows.skipped = dropped;
   return rows;
+}
+
+/* ---------- A price table copied out of a PDF ----------
+   Its columns come out one after the other, a section at a time: the part numbers, the descriptions, then the
+   prices ("LENOVO 83HF00G3RI 83TD0000US ... LENOVO V15 G5 IRL Intel Core i3-1315U ..., Business Black. ... DELL
+   $435 $820 ..."). A description starts with the brand and holds a processor. A run of prices belongs to the
+   descriptions before it that have none yet, in their order, when there are just as many; otherwise those devices
+   wait for their prices to be typed in, as a wrong price is worse than none. */
+var RE_FLAT_PRICE = /\$\s?(\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?(?![\d,])|(\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?\s?\$/g;
+var RE_FLAT_BRAND = /(^|[\s.,;:])(lenovo|dell|hp|asus|acer|msi|apple|samsung|huawei|microsoft|gigabyte|razer|toshiba|lg|xiaomi|honor|infinix|chuwi)(?=\s)/gi;
+var RE_FLAT_CPU = /(?:^|\s)(?:intel|amd|core|ryzen|ultra|apple m\d|snapdragon|celeron|pentium|athlon|i[3579][ -]\d)/i;
+var RE_FLAT_NOISE = /^(?:\d+\s?x\s|\d+\s?mb$|[pe]-core|up to |max turbo|\d+ reset|1x? kensington|kensington)/i;   // ports, cache, clocks
+var RE_PART_NO = /^(?=[a-z0-9\-\/]*\d[a-z0-9\-\/]*\d)(?=[a-z0-9\-\/]*[a-z])[a-z0-9][a-z0-9\-\/]{4,}$/i;
+function parseFlatTable(text, defCur) {
+  var s = ' ' + tidyText(text).replace(/\s+/g, ' ') + ' ', toks = [], runs = [], pieces = [], rows = [], pend = [], cash = [], m, from = 0, maxRun = 0, found = 0;
+  var lines = String(text).split(/\n/).filter(function (l) { return l.trim(); }).length;
+  RE_FLAT_PRICE.lastIndex = 0;
+  while ((m = RE_FLAT_PRICE.exec(s))) toks.push({ at: m.index, end: m.index + m[0].length, v: Number((m[1] || m[2]).replace(/,/g, '')) });
+  toks.forEach(function (t) {   // prices side by side make one run
+    var r = runs[runs.length - 1];
+    if (r && !s.slice(r.end, t.at).trim()) { r.prices.push(t.v); r.end = t.end; } else runs.push({ at: t.at, end: t.end, prices: [t.v] });
+  });
+  runs.forEach(function (r) { maxRun = Math.max(maxRun, r.prices.length); pieces.push({ text: s.slice(from, r.at), run: r }); from = r.end; });
+  if (maxRun < 2) return null;   // every price next to its own device: an ordinary list
+  pieces.push({ text: s.slice(from), run: null });
+  pieces.forEach(function (p) { var d = flatDescriptions(p.text); p.descs = d.descs; p.parts = d.parts; found += d.descs.length; });
+  if (found < 3 || !(maxRun >= 3 || lines <= found)) return null;
+  function settle() { pend.forEach(function (p) { rows.push(flatRow(p.d, p.price, p.pn)); }); pend = []; cash = []; }
+  pieces.forEach(function (p) {
+    if (p.descs.length) {
+      settle();   // a section still waiting when the next one starts: its prices did not fit
+      pend = p.descs.map(function (d, k) { return { d: d, pn: p.parts.length === p.descs.length ? p.parts[k] : '' }; });
+    }
+    if (!p.run) return;
+    cash = cash.concat(p.run.prices);
+    if (cash.length === pend.length && pend.length) { pend.forEach(function (x, k) { x.price = cash[k]; }); settle(); }
+    else if (cash.length > pend.length) settle();
+  });
+  settle();
+  rows.forEach(function (r) { if (r.price == null) r.cur = defCur; });
+  return rows;
+}
+/* A stretch of the table between two runs of prices: the descriptions in it, and the part numbers around them. */
+function flatDescriptions(text) {
+  var at = [], descs = [], parts = [], junk, m, i, chunk;
+  RE_FLAT_BRAND.lastIndex = 0;
+  while ((m = RE_FLAT_BRAND.exec(text))) at.push(m.index + m[1].length);
+  junk = at.length ? text.slice(0, at[0]) : text;
+  for (i = 0; i < at.length; i++) {
+    chunk = text.slice(at[i], i + 1 < at.length ? at[i + 1] : text.length).trim();
+    if (RE_FLAT_CPU.test(chunk.slice(0, 160)) && specsOf(chunk)) descs.push(chunk); else junk += ' ' + chunk;   // a brand alone heads a section
+  }
+  junk.split(/\s+/).forEach(function (w) { if (RE_PART_NO.test(w)) parts.push(w.toUpperCase()); });
+  return { descs: descs, parts: parts };
+}
+/* "Intel Core 5 210H 2.2 GHz ( 12MB Cache, up to 4.8 GHz ) 16GB DDR5 , 512GB SSD": its parts, commas inside brackets kept. */
+function flatParts(t) {
+  var out = [], cur = '', depth = 0, i, ch;
+  for (i = 0; i < t.length; i++) {
+    ch = t.charAt(i);
+    if (ch === '(') depth++;
+    else if (ch === ')' && depth > 0) {
+      depth--; cur += ch;
+      if (!depth && /^\s*\d+\s*(?:gb|tb)(?![a-z])/i.test(t.slice(i + 1))) { out.push(cur); cur = ''; }   // the memory right after the processor's brackets
+      continue;
+    } else if (ch === ',' && !depth) { out.push(cur); cur = ''; continue; }
+    cur += ch;
+  }
+  out.push(cur);
+  return out.map(function (p) { return p.replace(/\s+/g, ' ').replace(/^[\s.,;:]+|[\s,;:]+$/g, '').replace(/\s*\.$/, ''); }).filter(Boolean);
+}
+function flatRow(d, price, pn) {
+  var row = { block: true, no: 0, name: '', spec: {}, notes: [], price: price > 0 ? price : null, cur: 'USD', explicit: price > 0 }, m, cut;
+  d = d.replace(/\.\s+([a-z][a-z ]{0,30})$/i, function (all, tail) { return /\d/.test(tail) ? all : '.'; });   // "silver. LAPTOP GAMING": the next heading
+  m = RE_FLAT_CPU.exec(d);
+  cut = m ? m.index + (/^\s/.test(m[0]) ? 1 : 0) : d.length;
+  row.name = d.slice(0, cut).replace(/\s+/g, ' ').trim();
+  flatParts(d.slice(cut)).forEach(function (p, k) {
+    var hit = labelOf(p) || guessOf(p);
+    if (k === 0 && (!hit || hit.key !== 'cpu')) hit = { key: 'cpu', value: p };   // the description goes on with its processor
+    if (hit && hit.key === 'cpu') hit.value = hit.value.replace(/\s*(?:\(|\d+C\b|\d+(?:\.\d+)?\s?GHz).*$/i, '').trim();
+    if (hit && hit.value && !row.spec[hit.key]) {
+      row.spec[hit.key] = hit.value;
+      if (hit.key === 'disk') row.spec.diskKind = hit.kind || 'SSD';
+    } else if (!RE_FLAT_NOISE.test(p) && RE_HAS_TEXT.test(p)) row.notes.push(p);
+  });
+  if (pn) row.notes.unshift('P/N ' + pn);
+  row.note = specNote(row);
+  return row;
 }
 
 /* ---------- Supplier offers as goods in the store ----------
@@ -3603,8 +3726,12 @@ function saveSetting(key) {
     sent(api('POST', '/rest/v1/app_settings?on_conflict=key', [{ key: key, scope: scope, value: value }], 'resolution=merge-duplicates,return=minimal'));
   });
 }
+/* The rows of one list differ in what they carry: a device seen before keeps its first day, a hidden one stays hidden.
+   The cloud takes rows that differ only when told every column, and gives each row its own default for the rest. */
 function addOffers(rows) {
-  return sent(api('POST', '/rest/v1/offers', rows, 'return=representation')).then(function (r) {
+  var cols = [];
+  rows.forEach(function (r) { Object.keys(r).forEach(function (k) { if (cols.indexOf(k) === -1) cols.push(k); }); });
+  return sent(api('POST', '/rest/v1/offers?columns=' + cols.join(','), rows, 'return=representation,missing=default')).then(function (r) {
     if (!r || !Array.isArray(r.json)) return 0;
     r.json.forEach(function (o) { state.offers.unshift(offerRow(o)); });
     return r.json.length;
@@ -4207,8 +4334,8 @@ function soldOne(it, btn) {
 }
 function listPrice(o) { return o.cur === 'SYP' ? num(o.price, 0) + ' ' + t('syp_unit') : usd(o.price); }
 /* The message, with what identifies the device in the supplier's own list; the manager's also carries the price. */
-function orderText(kind, it, r) {   // each supplier is sent the device as their own list names it
-  var sp = r.sp || it.offer.sp, own = isAdmin() ? offerById(r.id) : null, lines = [r.name || it.name],
+function orderText(kind, it, r) {   // each supplier is sent the device as their own list names it, with its part number
+  var sp = r.sp || it.offer.sp, own = isAdmin() ? offerById(r.id) : null, lines = [r.name || it.name].concat((sp.notes || []).filter(function (n) { return /^P\/N /.test(n); })),
     specs = [sp.cpu, sp.ram, sp.disk, sp.gpu, sp.screen].filter(Boolean).join(' / ');
   if (specs) lines.push(specs);
   lines.push(t(it.offer.cond === 'used' ? 'cond_used' : 'cond_new'));
@@ -4730,8 +4857,10 @@ function saveDraft() {
   }
   var rows = [], updates = [], seen = firstSeen();
   state.draft.filter(function (d) { return d.price > 0; }).forEach(function (d) {
-    var r = { supplier: sup, name: d.name, price: d.price, cur: d.cur, note: d.note || '' }, same = own ? ownSame(d) : null, patch, lvl, first;
-    if (state.shopOk) { r.cond = state.draftCond; r.sell = offerOwnSell(storeIdFor(r), offerUsd(d), own ? '' : sup, cat); }   // a price the manager set for this device before stays
+    var r = { supplier: sup, name: d.name, price: d.price, cur: d.cur, note: d.note || '' }, same = own ? ownSame(d) : null, patch, lvl, first, sid, sameIt;
+    if (state.shopOk) r.cond = state.draftCond;
+    sid = storeIdFor(r);   // the store item of this device, also when another list names it otherwise
+    if (state.shopOk) r.sell = offerOwnSell(sid, offerUsd(d), own ? '' : sup, cat);   // a price the manager set for this device before stays
     if (same) {   // one of my own goods saved before: brought up to date instead of added twice
       patch = { price: r.price, cur: r.cur, note: r.note };
       if (state.shopOk) patch.sell = r.sell;
@@ -4743,8 +4872,9 @@ function saveDraft() {
     if (own) { r.own = true; r.qty = typeof d.qty === 'number' ? d.qty : 1; }
     if (cat) r.cat = cat;
     first = seen[offerKey(r)];
+    if (!first && (sameIt = byId(sid)) && sameIt.offer && sameIt.at) first = sameIt.at;   // the same device written another way
     if (first) r.created_at = first;   // a device already in the store keeps its first day, so a list saved again is not all "newest"
-    lvl = hideLevel(storeIdFor(r));
+    lvl = hideLevel(sid);
     if (lvl) r.hidden = true;               // a device hidden from customers stays hidden
     if (lvl === 2) r.staff_hidden = true;   // and so does one hidden from employees too
     rows.push(r);
